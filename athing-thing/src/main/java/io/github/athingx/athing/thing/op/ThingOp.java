@@ -31,6 +31,11 @@ public interface ThingOp {
      */
     OpBind<byte[]> bind(String express);
 
+    /**
+     * 操作组绑定
+     *
+     * @return 操作组绑定
+     */
     OpGroupBind group();
 
 

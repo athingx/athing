@@ -46,34 +46,13 @@ public class ThingBuilder {
     }
 
     public Thing build() throws ThingException {
-
-        // 检查参数
         Objects.requireNonNull(mcFactory, "client is required!");
         Objects.requireNonNull(executorFactory, "executor is required!");
-
-        final IMqttAsyncClient client = buildingClient();
-        final ExecutorService executor = buildingExecutor();
-
-        try {
-            return new ThingImpl(path, client, executor);
-        } catch (Exception e) {
-
-            // 构建设备失败，需要销毁已分配的资源
-
-            // 销毁MQTT客户端
-            try {
-                client.close();
-            } catch (MqttException mcCause) {
-                // ignore
-            }
-
-            // 销毁线程池
-            executor.shutdown();
-
-            // 继续对外抛出
-            throw new ThingException(path, "init thing error!", e);
-
-        }
+        return new ThingImpl(
+                path,
+                Objects.requireNonNull(buildingClient()),
+                Objects.requireNonNull(buildingExecutor())
+        );
     }
 
 }

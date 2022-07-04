@@ -35,7 +35,7 @@ public class ThingOpImpl implements ThingOp {
 
     @Override
     public OpGroupBind group() {
-        return null;
+        return linker.group();
     }
 
 

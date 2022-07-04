@@ -4,17 +4,13 @@ import io.github.athingx.athing.common.util.GsonFactory;
 import io.github.athingx.athing.thing.ThingPath;
 import io.github.athingx.athing.thing.impl.util.CompletableFutureUtils;
 import io.github.athingx.athing.thing.impl.util.TokenSequencer;
-import io.github.athingx.athing.thing.op.OpBind;
-import io.github.athingx.athing.thing.op.OpBinder;
-import io.github.athingx.athing.thing.op.OpCaller;
-import io.github.athingx.athing.thing.op.OpData;
-import org.eclipse.paho.client.mqttv3.IMqttActionListener;
-import org.eclipse.paho.client.mqttv3.IMqttAsyncClient;
-import org.eclipse.paho.client.mqttv3.IMqttToken;
-import org.eclipse.paho.client.mqttv3.MqttMessage;
+import io.github.athingx.athing.thing.op.*;
+import org.eclipse.paho.client.mqttv3.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -22,6 +18,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 import static io.github.athingx.athing.thing.impl.util.CompletableFutureUtils.tryCatchExecute;
 import static io.github.athingx.athing.thing.impl.util.CompletableFutureUtils.whenCompleted;
@@ -47,14 +44,14 @@ class ThingOpLinker {
     }
 
     /**
-     * @see io.github.athingx.athing.thing.op.ThingOp#genToken()
+     * @see ThingOp#genToken()
      */
     String genToken() {
         return sequencer.next();
     }
 
     /**
-     * @see io.github.athingx.athing.thing.op.ThingOp#data(String, OpData)
+     * @see ThingOp#data(String, OpData)
      */
     CompletableFuture<Void> data(String topic, OpData data) {
         return post(topic, data)
@@ -78,10 +75,93 @@ class ThingOpLinker {
     }
 
     /**
-     * @see io.github.athingx.athing.thing.op.ThingOp#bind(String)
+     * @see ThingOp#bind(String)
      */
     OpBind<byte[]> bind(String express) {
-        return new ByteOpBindImpl<>(express, (topic, bytes) -> completedFuture(bytes));
+        return new ByteOpBindImpl<>(express, client::subscribe, (topic, bytes) -> completedFuture(bytes));
+    }
+
+    /**
+     * @see ThingOp#group()
+     */
+    OpGroupBind group() {
+
+        // 订阅项集合
+        final List<Subscriber.Item> items = new ArrayList<>();
+        return new OpGroupBind() {
+
+            /*
+             * 绑定时，构造一个订阅代理，在代理中将所有bind(express)的订阅记录到订阅项集合中，
+             * 在bind()的时候批量订阅
+             */
+            @Override
+            public OpBind<byte[]> bind(String express) {
+                return new ByteOpBindImpl<>(
+                        express,
+                        (exp, qos, ctx, callback, listener) -> items.add(new Subscriber.Item(exp, qos, callback, listener)),
+                        (topic, bytes) -> completedFuture(bytes)
+                );
+            }
+
+            /*
+             * 提交订阅，在此方法中完成批量订阅
+             */
+            @Override
+            public CompletableFuture<OpBinder> commit() {
+
+                // 检查至少要绑定过一个才能提交
+                if (items.isEmpty()) {
+                    throw new IllegalStateException("commit failure: at least once bind");
+                }
+
+                // 参数准备
+                final int size = items.size();
+                final String[] expressArray = new String[size];
+                final int[] qosArray = new int[size];
+                final IMqttActionListener[] callbackArray = new IMqttActionListener[size];
+                final IMqttMessageListener[] listenerArray = new IMqttMessageListener[size];
+
+                // 填充参数
+                for (int index = 0; index < size; index++) {
+                    final Subscriber.Item item = items.get(index);
+                    expressArray[index] = item.express();
+                    qosArray[index] = item.qos();
+                    callbackArray[index] = item.callback();
+                    listenerArray[index] = item.listener();
+                }
+
+                // MQTT批量订阅
+                return CompletableFutureUtils.<OpBinder>tryCatchExecute(future -> client.subscribe(expressArray, qosArray, new Object(),
+                                new IMqttActionListener() {
+                                    @Override
+                                    public void onSuccess(IMqttToken token) {
+                                        Stream.of(callbackArray).forEach(callback -> callback.onSuccess(token));
+                                        future.complete(() -> CompletableFutureUtils.<Void>tryCatchExecute(unbindF -> client.unsubscribe(
+                                                        expressArray,
+                                                        new Object(),
+                                                        new MqttFutureCallback<>(unbindF)
+                                                ))
+                                                .whenComplete(whenCompleted(
+                                                        v -> logger.debug("{}/op/group/unbind success; express={};", path, String.join(",", expressArray)),
+                                                        ex -> logger.warn("{}/op/group/unbind failure; express={};", path, String.join(",", expressArray), ex)
+                                                )));
+                                    }
+
+                                    @Override
+                                    public void onFailure(IMqttToken token, Throwable ex) {
+                                        Stream.of(callbackArray).forEach(callback -> callback.onFailure(token, ex));
+                                        future.completeExceptionally(ex);
+                                    }
+                                },
+                                listenerArray
+                        ))
+                        .whenComplete(whenCompleted(
+                                v -> logger.debug("{}/op/group/bind success; express={};", path, String.join(",", expressArray)),
+                                ex -> logger.warn("{}/op/group/bind failure; express={};", path, String.join(",", expressArray), ex)
+                        ));
+            }
+
+        };
     }
 
     /**
@@ -116,6 +196,33 @@ class ThingOpLinker {
     }
 
     /**
+     * 订阅器
+     */
+    private interface Subscriber {
+
+        /**
+         * 用于代理MQTT客户端实现
+         *
+         * @see IMqttAsyncClient#subscribe(String[], int[], Object, IMqttActionListener, IMqttMessageListener[])
+         */
+        void subscribe(String topicFilter, int qos, Object userContext, IMqttActionListener callback, IMqttMessageListener messageListener) throws MqttException;
+
+        /**
+         * 订阅项
+         *
+         * @param express  订阅表达式
+         * @param qos      QOS
+         * @param callback 订阅回调
+         * @param listener 消息监听器
+         */
+        record Item(String express, int qos, IMqttActionListener callback, IMqttMessageListener listener) {
+
+        }
+
+    }
+
+
+    /**
      * 操作绑定内部实现；
      * 初始源用MqttMessage中来，所以绑定源头为{@code byte[]}
      *
@@ -124,20 +231,22 @@ class ThingOpLinker {
     private class ByteOpBindImpl<V> extends OpBindImpl<byte[], V> {
 
         private final String express;
+        private final Subscriber subscriber;
 
-        ByteOpBindImpl(String express, BiFunction<String, ? super byte[], CompletableFuture<V>> mapper) {
+        ByteOpBindImpl(String express, Subscriber subscriber, BiFunction<String, ? super byte[], CompletableFuture<V>> mapper) {
             super(mapper);
             this.express = express;
+            this.subscriber = subscriber;
         }
 
         @Override
         <R> OpBindImpl<byte[], R> newOpBind(BiFunction<String, ? super byte[], CompletableFuture<R>> mapper) {
-            return new ByteOpBindImpl<>(express, mapper);
+            return new ByteOpBindImpl<>(express, subscriber, mapper);
         }
 
         @Override
         public CompletableFuture<OpBinder> bind(BiConsumer<String, ? super V> fn) {
-            return CompletableFutureUtils.<OpBinder>tryCatchExecute(bindF -> client.subscribe(express, 1, new Object(),
+            return CompletableFutureUtils.<OpBinder>tryCatchExecute(bindF -> subscriber.subscribe(express, 1, new Object(),
                             new MqttFutureCallback<>(bindF, () -> () ->
                                     CompletableFutureUtils.<Void>tryCatchExecute(unbindF -> client.unsubscribe(
                                                     express,
@@ -167,7 +276,7 @@ class ThingOpLinker {
         @Override
         public <P extends OpData, R extends OpData> CompletableFuture<OpCaller<P, R>> call(Option opOption, BiFunction<String, ? super V, ? extends R> fn) {
             final Map<String, CompletableFuture<R>> futureMap = new ConcurrentHashMap<>();
-            return tryCatchExecute(bindF -> client.subscribe(express, 1, new Object(),
+            return tryCatchExecute(bindF -> subscriber.subscribe(express, 1, new Object(),
                     new MqttFutureCallback<>(bindF, () -> new OpCaller<>() {
 
                         @Override
