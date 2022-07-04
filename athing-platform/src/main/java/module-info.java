@@ -1,0 +1,2 @@
+module athing.platform {
+}
