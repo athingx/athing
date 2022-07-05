@@ -1,4 +1,4 @@
-package io.github.athingx.athing.common.util;
+package io.github.athingx.athing.common;
 
 import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;

@@ -1,6 +1,6 @@
 package io.github.athingx.athing.thing.impl.op;
 
-import io.github.athingx.athing.common.util.GsonFactory;
+import io.github.athingx.athing.common.GsonFactory;
 import io.github.athingx.athing.thing.ThingPath;
 import io.github.athingx.athing.thing.impl.util.CompletableFutureUtils;
 import io.github.athingx.athing.thing.impl.util.TokenSequencer;

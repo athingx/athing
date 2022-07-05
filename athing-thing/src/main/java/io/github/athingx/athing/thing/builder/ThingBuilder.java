@@ -9,14 +9,32 @@ import org.eclipse.paho.client.mqttv3.MqttException;
 
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
 public class ThingBuilder {
 
     private final ThingAccess access;
     private final ThingPath path;
+
+
     private MqttClientFactory mcFactory;
-    private Function<ThingPath, ExecutorService> executorFactory;
+
+
+    private Function<ThingPath, ExecutorService> executorFactory = path-> Executors.newFixedThreadPool(20, new ThreadFactory() {
+
+        private final AtomicInteger indexRef = new AtomicInteger(1000);
+
+        @Override
+        public Thread newThread(Runnable r) {
+            final Thread worker = new Thread(r, "%s/executor/daemon-%d".formatted(path, indexRef.incrementAndGet()));
+            worker.setDaemon(true);
+            return worker;
+        }
+
+    });
 
     public ThingBuilder(ThingAccess access) {
         this.access = access;

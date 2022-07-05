@@ -1,6 +1,6 @@
 package io.github.athingx.athing.thing.function;
 
-import io.github.athingx.athing.common.util.GsonFactory;
+import io.github.athingx.athing.common.GsonFactory;
 
 import java.lang.reflect.Type;
 import java.nio.charset.Charset;

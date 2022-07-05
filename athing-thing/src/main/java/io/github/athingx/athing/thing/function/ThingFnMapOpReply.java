@@ -1,7 +1,7 @@
 package io.github.athingx.athing.thing.function;
 
 import com.google.gson.reflect.TypeToken;
-import io.github.athingx.athing.common.util.GsonFactory;
+import io.github.athingx.athing.common.GsonFactory;
 import io.github.athingx.athing.thing.ThingPath;
 import io.github.athingx.athing.thing.op.OpReply;
 import io.github.athingx.athing.thing.op.ThingOpException;
