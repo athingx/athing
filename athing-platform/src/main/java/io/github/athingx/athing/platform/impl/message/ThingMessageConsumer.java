@@ -1,6 +1,5 @@
 package io.github.athingx.athing.platform.impl.message;
 
-import io.github.athingx.athing.platform.api.ThingPlatformException;
 import io.github.athingx.athing.platform.api.message.ThingMessageListener;
 import io.github.athingx.athing.platform.api.message.decoder.ThingMessageDecoder;
 import org.slf4j.Logger;

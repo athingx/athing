@@ -2,8 +2,8 @@ package io.github.athingx.athing.thing.impl;
 
 import io.github.athingx.athing.thing.api.Thing;
 import io.github.athingx.athing.thing.api.ThingPath;
-import io.github.athingx.athing.thing.impl.op.ThingOpImpl;
 import io.github.athingx.athing.thing.api.op.ThingOp;
+import io.github.athingx.athing.thing.impl.op.ThingOpImpl;
 import org.eclipse.paho.client.mqttv3.IMqttAsyncClient;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.slf4j.Logger;

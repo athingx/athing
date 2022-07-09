@@ -2,8 +2,6 @@ package io.github.athingx.athing.platform.api;
 
 import io.github.athingx.athing.platform.api.message.decoder.ThingMessageDecoder;
 
-import java.io.Closeable;
-
 /**
  * 设备平台
  */
