@@ -1,5 +1,6 @@
 package io.github.athingx.athing.thing.builder;
 
+import io.github.athingx.athing.thing.api.ThingPath;
 import org.eclipse.paho.client.mqttv3.IMqttAsyncClient;
 import org.eclipse.paho.client.mqttv3.MqttException;
 
@@ -11,10 +12,10 @@ public interface MqttClientFactory {
     /**
      * 生产MQTT客户端
      *
-     * @param access 设备访问
+     * @param path 设备路径
      * @return MQTT异步客户端
      * @throws MqttException 生产异常
      */
-    IMqttAsyncClient make(ThingAccess access) throws MqttException;
+    IMqttAsyncClient make(ThingPath path) throws MqttException;
 
 }

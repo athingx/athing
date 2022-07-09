@@ -1,10 +1,10 @@
 package io.github.athingx.athing.thing.impl.op;
 
 import io.github.athingx.athing.common.GsonFactory;
-import io.github.athingx.athing.thing.ThingPath;
+import io.github.athingx.athing.thing.api.ThingPath;
+import io.github.athingx.athing.thing.api.op.*;
 import io.github.athingx.athing.thing.impl.util.CompletableFutureUtils;
 import io.github.athingx.athing.thing.impl.util.TokenSequencer;
-import io.github.athingx.athing.thing.op.*;
 import org.eclipse.paho.client.mqttv3.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

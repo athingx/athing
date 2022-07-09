@@ -1,10 +1,10 @@
 package io.github.athingx.athing.thing.impl.op;
 
-import io.github.athingx.athing.thing.ThingPath;
-import io.github.athingx.athing.thing.op.OpBind;
-import io.github.athingx.athing.thing.op.OpData;
-import io.github.athingx.athing.thing.op.OpGroupBind;
-import io.github.athingx.athing.thing.op.ThingOp;
+import io.github.athingx.athing.thing.api.ThingPath;
+import io.github.athingx.athing.thing.api.op.OpBind;
+import io.github.athingx.athing.thing.api.op.OpData;
+import io.github.athingx.athing.thing.api.op.OpGroupBind;
+import io.github.athingx.athing.thing.api.op.ThingOp;
 import org.eclipse.paho.client.mqttv3.IMqttAsyncClient;
 
 import java.util.concurrent.CompletableFuture;

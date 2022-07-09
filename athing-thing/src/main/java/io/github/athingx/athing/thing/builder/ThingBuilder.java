@@ -1,75 +1,46 @@
 package io.github.athingx.athing.thing.builder;
 
-import io.github.athingx.athing.thing.Thing;
-import io.github.athingx.athing.thing.ThingException;
-import io.github.athingx.athing.thing.ThingPath;
+import io.github.athingx.athing.thing.api.Thing;
+import io.github.athingx.athing.thing.api.ThingPath;
 import io.github.athingx.athing.thing.impl.ThingImpl;
-import org.eclipse.paho.client.mqttv3.IMqttAsyncClient;
-import org.eclipse.paho.client.mqttv3.MqttException;
 
-import java.util.Objects;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Function;
 
+import static java.util.concurrent.Executors.newFixedThreadPool;
+
+/**
+ * 设备构造器
+ */
 public class ThingBuilder {
 
-    private final ThingAccess access;
+    private final AtomicInteger seqRef = new AtomicInteger(1000);
     private final ThingPath path;
-
-
     private MqttClientFactory mcFactory;
+    private ExecutorServiceFactory esFactory = path -> newFixedThreadPool(20, r ->
+            new Thread(r) {{
+                setDaemon(true);
+                setName("%s/executor-%d".formatted(path, seqRef.incrementAndGet()));
+            }});
 
-
-    private Function<ThingPath, ExecutorService> executorFactory = path-> Executors.newFixedThreadPool(20, new ThreadFactory() {
-
-        private final AtomicInteger indexRef = new AtomicInteger(1000);
-
-        @Override
-        public Thread newThread(Runnable r) {
-            final Thread worker = new Thread(r, "%s/executor/daemon-%d".formatted(path, indexRef.incrementAndGet()));
-            worker.setDaemon(true);
-            return worker;
-        }
-
-    });
-
-    public ThingBuilder(ThingAccess access) {
-        this.access = access;
-        this.path = new ThingPath(access.getProductId(), access.getThingId());
+    public ThingBuilder(ThingPath path) {
+        this.path = path;
     }
 
-    public ThingBuilder client(MqttClientFactory factory) {
-        this.mcFactory = Objects.requireNonNull(factory);
+    public ThingBuilder client(MqttClientFactory mcFactory) {
+        this.mcFactory = mcFactory;
         return this;
     }
 
-    public ThingBuilder executor(Function<ThingPath, ExecutorService> factory) {
-        this.executorFactory = Objects.requireNonNull(factory);
+    public ThingBuilder executor(ExecutorServiceFactory esFactory) {
+        this.esFactory = esFactory;
         return this;
     }
 
-    private IMqttAsyncClient buildingClient() throws ThingException {
-        try {
-            return Objects.requireNonNull(mcFactory.make(access));
-        } catch (MqttException cause) {
-            throw new ThingException(path, "init mqtt-client error!", cause);
-        }
-    }
-
-    private ExecutorService buildingExecutor() {
-        return Objects.requireNonNull(executorFactory.apply(path));
-    }
-
-    public Thing build() throws ThingException {
-        Objects.requireNonNull(mcFactory, "client is required!");
-        Objects.requireNonNull(executorFactory, "executor is required!");
+    public Thing build() throws Exception {
         return new ThingImpl(
                 path,
-                Objects.requireNonNull(buildingClient()),
-                Objects.requireNonNull(buildingExecutor())
+                mcFactory.make(path),
+                esFactory.make(path)
         );
     }
 

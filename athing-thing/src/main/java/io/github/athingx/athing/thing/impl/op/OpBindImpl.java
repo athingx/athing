@@ -1,6 +1,6 @@
 package io.github.athingx.athing.thing.impl.op;
 
-import io.github.athingx.athing.thing.op.OpBind;
+import io.github.athingx.athing.thing.api.op.OpBind;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiFunction;
