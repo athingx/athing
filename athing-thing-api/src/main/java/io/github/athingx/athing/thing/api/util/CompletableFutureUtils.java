@@ -1,4 +1,4 @@
-package io.github.athingx.athing.thing.impl.util;
+package io.github.athingx.athing.thing.api.util;
 
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
@@ -19,6 +19,23 @@ public class CompletableFutureUtils {
         final CompletableFuture<T> future = new CompletableFuture<>();
         try {
             fn.execute(future);
+        } catch (Throwable cause) {
+            future.completeExceptionally(cause);
+        }
+        return future;
+    }
+
+    @FunctionalInterface
+    public interface Completed<T> {
+
+        T complete() throws Throwable;
+
+    }
+
+    public static <T> CompletableFuture<T> tryCatchCompleted(Completed<T> fn) {
+        final CompletableFuture<T> future = new CompletableFuture<>();
+        try {
+            future.complete(fn.complete());
         } catch (Throwable cause) {
             future.completeExceptionally(cause);
         }
