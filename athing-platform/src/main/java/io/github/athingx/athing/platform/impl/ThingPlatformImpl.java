@@ -43,12 +43,12 @@ public class ThingPlatformImpl implements ThingPlatform {
     }
 
     @Override
-    public void register(ThingMessageDecoder decoder) {
+    public void register(ThingMessageDecoder<?> decoder) {
         consumer.decoders().add(decoder);
     }
 
     @Override
-    public <T extends ThingTemplate> void register(Class<T> type, ThingTemplateFactory<T> factory, ThingMessageDecoder decoder) {
+    public <T extends ThingTemplate> void register(Class<T> type, ThingTemplateFactory<T> factory, ThingMessageDecoder<?> decoder) {
 
         // 注册&判重
         if (null != templateFactoryMap.putIfAbsent(type, Objects.requireNonNull(factory))) {

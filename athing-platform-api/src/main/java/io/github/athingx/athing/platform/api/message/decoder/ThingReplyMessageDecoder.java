@@ -4,7 +4,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.annotations.SerializedName;
 import io.github.athingx.athing.common.GsonFactory;
-import io.github.athingx.athing.platform.api.message.ThingMessage;
+import io.github.athingx.athing.platform.api.message.ThingReplyMessage;
 
 import java.util.Objects;
 
@@ -13,10 +13,10 @@ import java.util.Objects;
  *
  * @see <a href="https://help.aliyun.com/document_detail/73736.html#title-9p8-2jl-sv4">设备下行指令结果</a>
  */
-public abstract class ThingReplyMessageDecoder implements ThingMessageDecoder {
+public abstract class ThingReplyMessageDecoder implements ThingMessageDecoder<ThingReplyMessage> {
 
     @Override
-    public ThingMessage[] decode(String jmsMessageId, String jmsMessageTopic, String jmsMessageBody) throws DecodeException {
+    public ThingReplyMessage[] decode(String jmsMessageId, String jmsMessageTopic, String jmsMessageBody) throws DecodeException {
 
         // 检查是否设备应答返回消息
         if (!jmsMessageTopic.matches("^/[^/]+/[^/]+/thing/downlink/reply/message$")) {
@@ -45,33 +45,20 @@ public abstract class ThingReplyMessageDecoder implements ThingMessageDecoder {
      * @return 设备消息
      * @throws DecodeException 解码失败
      */
-    abstract protected ThingMessage[] decode(ReplyHeader header, JsonObject root) throws DecodeException;
+    abstract protected ThingReplyMessage[] decode(ReplyHeader header, JsonObject root) throws DecodeException;
 
     /**
      * 应答头
      */
-    protected static class ReplyHeader {
-
-        @SerializedName("productKey")
-        String productId;
-
-        @SerializedName("deviceName")
-        String thingId;
-
-        @SerializedName("topic")
-        String topic;
-
-        @SerializedName("gmtCreate")
-        long timestamp;
-
-        @SerializedName("requestId")
-        String token;
-
-        @SerializedName("code")
-        int code;
-
-        @SerializedName("message")
-        String message;
+    protected record ReplyHeader(
+            @SerializedName("productKey") String productId,
+            @SerializedName("deviceName") String thingId,
+            @SerializedName("topic") String topic,
+            @SerializedName("gmtCreate") long timestamp,
+            @SerializedName("requestId") String token,
+            @SerializedName("code") int code,
+            @SerializedName("message") String message
+    ) {
 
     }
 

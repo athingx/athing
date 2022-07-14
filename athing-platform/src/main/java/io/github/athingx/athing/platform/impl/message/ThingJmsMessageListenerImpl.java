@@ -14,10 +14,10 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 class ThingJmsMessageListenerImpl implements MessageListener {
 
-    private final Set<ThingMessageDecoder> decoders;
+    private final Set<ThingMessageDecoder<?>> decoders;
     private final ThingMessageListener listener;
 
-    ThingJmsMessageListenerImpl(final Set<ThingMessageDecoder> decoders,
+    ThingJmsMessageListenerImpl(final Set<ThingMessageDecoder<?>> decoders,
                                 final ThingMessageListener listener) {
         this.decoders = decoders;
         this.listener = listener;
@@ -26,7 +26,7 @@ class ThingJmsMessageListenerImpl implements MessageListener {
     private ThingMessage[] decode(String jmsMessageId, String jmsMessageTopic, String jmsMessageBody) throws DecodeException {
 
         // 尝试进行解码
-        for (final ThingMessageDecoder decoder : decoders) {
+        for (final ThingMessageDecoder<?> decoder : decoders) {
             try {
                 final ThingMessage[] messages = decoder.decode(jmsMessageId, jmsMessageTopic, jmsMessageBody);
                 if (null != messages && messages.length > 0) {

@@ -22,7 +22,7 @@ public interface ThingPlatform extends AutoCloseable {
      *
      * @param decoder 消息解码器
      */
-    void register(ThingMessageDecoder decoder);
+    void register(ThingMessageDecoder<?> decoder);
 
     /**
      * 注册设备模板
@@ -32,7 +32,7 @@ public interface ThingPlatform extends AutoCloseable {
      * @param decoder 消息解码器
      * @param <T>     模板类型
      */
-    <T extends ThingTemplate> void register(Class<T> type, ThingTemplateFactory<T> factory, ThingMessageDecoder decoder);
+    <T extends ThingTemplate> void register(Class<T> type, ThingTemplateFactory<T> factory, ThingMessageDecoder<?> decoder);
 
     /**
      * 注册设备模板

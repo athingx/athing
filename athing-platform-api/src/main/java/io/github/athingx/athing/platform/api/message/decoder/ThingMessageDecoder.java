@@ -5,7 +5,7 @@ import io.github.athingx.athing.platform.api.message.ThingMessage;
 /**
  * 设备消息解码器
  */
-public interface ThingMessageDecoder {
+public interface ThingMessageDecoder<T extends ThingMessage> {
 
     /**
      * 解码
@@ -16,6 +16,6 @@ public interface ThingMessageDecoder {
      * @return 设备消息
      * @throws DecodeException 解码异常
      */
-    ThingMessage[] decode(String jmsMessageId, String jmsMessageTopic, String jmsMessageBody) throws DecodeException;
+    T[] decode(String jmsMessageId, String jmsMessageTopic, String jmsMessageBody) throws DecodeException;
 
 }

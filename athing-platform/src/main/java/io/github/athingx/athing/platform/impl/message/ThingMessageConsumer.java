@@ -15,13 +15,13 @@ public class ThingMessageConsumer implements AutoCloseable {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final MessageConsumer jmsMessageConsumer;
-    private final Set<ThingMessageDecoder> decoders = new LinkedHashSet<>();
+    private final Set<ThingMessageDecoder<?>> decoders = new LinkedHashSet<>();
     private final String _string;
 
     public ThingMessageConsumer(MessageConsumer jmsMessageConsumer, ThingMessageListener listener) throws JMSException {
         this.jmsMessageConsumer = jmsMessageConsumer;
         this._string = "thing-message://consumer";
-        jmsMessageConsumer.setMessageListener(new ThingJmsMessageListenerImpl(decoders, listener){
+        jmsMessageConsumer.setMessageListener(new ThingJmsMessageListenerImpl(decoders, listener) {
 
             @Override
             public void onMessage(Message jmsMessage) {
@@ -43,7 +43,7 @@ public class ThingMessageConsumer implements AutoCloseable {
         });
     }
 
-    public Set<ThingMessageDecoder> decoders() {
+    public Set<ThingMessageDecoder<?>> decoders() {
         return decoders;
     }
 
