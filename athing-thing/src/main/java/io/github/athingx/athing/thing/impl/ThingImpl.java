@@ -44,6 +44,7 @@ public class ThingImpl implements Thing {
 
         // 关闭MQTT客户端
         try {
+            client.disconnect().waitForCompletion();
             client.close();
             logger.debug("{}/destroy/client/close success!", path);
         } catch (MqttException e) {
