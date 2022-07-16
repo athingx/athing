@@ -3,7 +3,7 @@ package io.github.athingx.athing.thing;
 import io.github.athingx.athing.thing.api.Thing;
 import io.github.athingx.athing.thing.api.ThingPath;
 import io.github.athingx.athing.thing.builder.ThingBuilder;
-import io.github.athingx.athing.thing.builder.aliyun.AliyunMqttClientFactory;
+import io.github.athingx.athing.thing.builder.mqtt.AliyunMqttClientFactory;
 import org.eclipse.paho.client.mqttv3.DisconnectedBufferOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.junit.Assert;
@@ -12,7 +12,7 @@ import org.junit.Test;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 
-import static io.github.athingx.athing.thing.builder.aliyun.AliyunMqttClientFactory.ConnectStrategy.limitsReTry;
+import static io.github.athingx.athing.thing.builder.mqtt.AliyunMqttClientFactory.ConnectStrategy.limitsReTry;
 
 /**
  * 设备连接测试用例

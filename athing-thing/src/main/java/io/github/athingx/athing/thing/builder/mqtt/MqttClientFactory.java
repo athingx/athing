@@ -1,4 +1,4 @@
-package io.github.athingx.athing.thing.builder;
+package io.github.athingx.athing.thing.builder.mqtt;
 
 import io.github.athingx.athing.thing.api.ThingPath;
 import org.eclipse.paho.client.mqttv3.IMqttAsyncClient;

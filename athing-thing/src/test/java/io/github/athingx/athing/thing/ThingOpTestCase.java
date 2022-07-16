@@ -5,7 +5,7 @@ import com.google.gson.reflect.TypeToken;
 import io.github.athingx.athing.thing.api.ThingPath;
 import io.github.athingx.athing.thing.api.op.OpReply;
 import io.github.athingx.athing.thing.builder.ThingBuilder;
-import io.github.athingx.athing.thing.builder.aliyun.AliyunMqttClientFactory;
+import io.github.athingx.athing.thing.builder.mqtt.AliyunMqttClientFactory;
 import io.github.athingx.athing.thing.util.MapData;
 import io.github.athingx.athing.thing.util.MapOpData;
 import org.junit.Assert;

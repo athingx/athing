@@ -1,6 +1,6 @@
 package io.github.athingx.athing.platform.api;
 
-import com.aliyuncs.IAcsClient;
+import com.aliyun.iot20180120.Client;
 
 /**
  * 设备模板工厂
@@ -17,7 +17,7 @@ public interface ThingTemplateFactory<T extends ThingTemplate> {
      * @param thingId   设备ID
      * @return 设备模板
      */
-    T make(IAcsClient client, String productId, String thingId);
+    T make(Client client, String productId, String thingId);
 
 
 }

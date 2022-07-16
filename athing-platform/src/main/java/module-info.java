@@ -1,13 +1,15 @@
 module athing.platform {
 
     exports io.github.athingx.athing.platform.builder;
+    exports io.github.athingx.athing.platform.builder.iot;
+    exports io.github.athingx.athing.platform.builder.jms;
 
     requires transitive athing.platform.api;
     requires org.slf4j;
-    requires java.naming;
     requires jakarta.jms.api;
+    requires qpid.jms.client;
 
-    requires aliyun.java.sdk.iot;
-    requires aliyun.java.sdk.core;
+    requires iot20180120;
+
 
 }

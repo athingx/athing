@@ -2,6 +2,7 @@ package io.github.athingx.athing.thing.builder;
 
 import io.github.athingx.athing.thing.api.Thing;
 import io.github.athingx.athing.thing.api.ThingPath;
+import io.github.athingx.athing.thing.builder.mqtt.MqttClientFactory;
 import io.github.athingx.athing.thing.impl.ThingImpl;
 import org.eclipse.paho.client.mqttv3.MqttException;
 

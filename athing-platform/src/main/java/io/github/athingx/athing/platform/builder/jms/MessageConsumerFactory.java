@@ -1,7 +1,7 @@
-package io.github.athingx.athing.platform.builder;
+package io.github.athingx.athing.platform.builder.jms;
 
-import javax.jms.JMSException;
-import javax.jms.MessageConsumer;
+import jakarta.jms.JMSException;
+import jakarta.jms.MessageConsumer;
 
 /**
  * JMS消息消费者工厂

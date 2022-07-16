@@ -1,7 +1,6 @@
-package io.github.athingx.athing.thing.builder.aliyun;
+package io.github.athingx.athing.thing.builder.mqtt;
 
 import io.github.athingx.athing.thing.api.ThingPath;
-import io.github.athingx.athing.thing.builder.MqttClientFactory;
 import org.eclipse.paho.client.mqttv3.*;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 import org.slf4j.Logger;
@@ -61,6 +60,7 @@ public class AliyunMqttClientFactory implements MqttClientFactory {
 
     @Override
     public IMqttAsyncClient make(ThingPath path) throws MqttException {
+        requireNonNull(remote, "remote is required!");
         requireNonNull(secret, "secret is required!");
         strategy = Objects.isNull(strategy) ? ConnectStrategy.alwaysReTry(maxReconnectDelayMs) : strategy;
         final Boot boot = new Boot(path);

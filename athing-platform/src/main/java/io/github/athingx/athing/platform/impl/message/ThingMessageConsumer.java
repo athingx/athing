@@ -2,12 +2,12 @@ package io.github.athingx.athing.platform.impl.message;
 
 import io.github.athingx.athing.platform.api.message.ThingMessageListener;
 import io.github.athingx.athing.platform.api.message.decoder.ThingMessageDecoder;
+import jakarta.jms.JMSException;
+import jakarta.jms.Message;
+import jakarta.jms.MessageConsumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.jms.JMSException;
-import javax.jms.Message;
-import javax.jms.MessageConsumer;
 import java.util.LinkedHashSet;
 import java.util.Set;
 

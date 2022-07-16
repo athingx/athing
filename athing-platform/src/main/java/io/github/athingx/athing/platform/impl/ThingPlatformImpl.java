@@ -1,6 +1,6 @@
 package io.github.athingx.athing.platform.impl;
 
-import com.aliyuncs.IAcsClient;
+import com.aliyun.iot20180120.Client;
 import io.github.athingx.athing.platform.api.ThingPlatform;
 import io.github.athingx.athing.platform.api.ThingTemplate;
 import io.github.athingx.athing.platform.api.ThingTemplateFactory;
@@ -16,7 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class ThingPlatformImpl implements ThingPlatform {
 
-    private final IAcsClient client;
+    private final Client client;
     private final ThingMessageConsumer consumer;
     private final Map<Class<?>, ThingTemplateFactory<?>> templateFactoryMap = new ConcurrentHashMap<>();
 
@@ -26,7 +26,7 @@ public class ThingPlatformImpl implements ThingPlatform {
      * @param client   设备平台客户端
      * @param consumer 设备消息消费者
      */
-    public ThingPlatformImpl(IAcsClient client, ThingMessageConsumer consumer) {
+    public ThingPlatformImpl(Client client, ThingMessageConsumer consumer) {
         this.client = client;
         this.consumer = consumer;
     }
@@ -62,7 +62,6 @@ public class ThingPlatformImpl implements ThingPlatform {
 
     @Override
     public void close() throws Exception {
-        client.shutdown();
         consumer.close();
     }
 

@@ -3,7 +3,7 @@ package io.github.athingx.athing.thing;
 import io.github.athingx.athing.thing.api.Thing;
 import io.github.athingx.athing.thing.api.ThingPath;
 import io.github.athingx.athing.thing.builder.ThingBuilder;
-import io.github.athingx.athing.thing.builder.aliyun.AliyunMqttClientFactory;
+import io.github.athingx.athing.thing.builder.mqtt.AliyunMqttClientFactory;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 

@@ -4,10 +4,10 @@ import io.github.athingx.athing.platform.api.message.ThingMessage;
 import io.github.athingx.athing.platform.api.message.ThingMessageListener;
 import io.github.athingx.athing.platform.api.message.decoder.DecodeException;
 import io.github.athingx.athing.platform.api.message.decoder.ThingMessageDecoder;
+import jakarta.jms.JMSException;
+import jakarta.jms.Message;
+import jakarta.jms.MessageListener;
 
-import javax.jms.JMSException;
-import javax.jms.Message;
-import javax.jms.MessageListener;
 import java.util.Set;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
