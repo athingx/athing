@@ -3,6 +3,7 @@ package io.github.athingx.athing.thing.builder;
 import io.github.athingx.athing.thing.api.Thing;
 import io.github.athingx.athing.thing.api.ThingPath;
 import io.github.athingx.athing.thing.impl.ThingImpl;
+import org.eclipse.paho.client.mqttv3.MqttException;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -36,7 +37,7 @@ public class ThingBuilder {
         return this;
     }
 
-    public Thing build() throws Exception {
+    public Thing build() throws MqttException {
         return new ThingImpl(
                 path,
                 mcFactory.make(path),

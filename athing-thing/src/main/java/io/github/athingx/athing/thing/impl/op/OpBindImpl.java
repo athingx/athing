@@ -52,7 +52,8 @@ abstract class OpBindImpl<T, V> implements OpBind<V> {
 
     @Override
     public OpBind<V> matchesAsync(BiFunction<String, ? super V, CompletableFuture<Boolean>> fn) {
-        this.matcher = (topic, data) -> matcher
+        final var matchFn = matcher;
+        this.matcher = (topic, data) -> matchFn
                 .apply(topic, data)
                 .thenCompose(test -> test
                         ? fn.apply(topic, data)

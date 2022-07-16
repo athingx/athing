@@ -43,15 +43,4 @@ public interface ThingFnMatcher<T> extends BiPredicate<String, T> {
         return (topic, data) -> fn.test(topic);
     }
 
-    /**
-     * 主题过滤（正则）
-     *
-     * @param regex 正则表达式
-     * @param <T>   数据类型
-     * @return 过滤函数
-     */
-    static <T> ThingFnMatcher<T> matchesTopicByRegex(String regex) {
-        return matchesTopic(topic -> topic.matches(regex));
-    }
-
 }

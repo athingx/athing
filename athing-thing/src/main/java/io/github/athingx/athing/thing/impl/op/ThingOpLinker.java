@@ -295,16 +295,17 @@ class ThingOpLinker {
 
                         @Override
                         public CompletableFuture<R> call(String topic, P data) {
-                            return tryCatchExecute(future ->
-                                    futureMap.put(data.token(), future
-                                            .orTimeout(opOption.getTimeoutMs(), MILLISECONDS)
-                                            .thenCombine(post(topic, data), (r, unused) -> r)
-                                            .whenComplete((r, ex) -> futureMap.remove(data.token(), future))
-                                            .whenComplete(whenCompleted(
-                                                    v -> logger.debug("{}/op/call/post success; topic={};token={};", path, topic, data.token()),
-                                                    ex -> logger.warn("{}/op/call/post failure; topic={};token={};", path, topic, data.token(), ex)
-                                            ))
-                                    ));
+                            return tryCatchExecute(future -> {
+                                future.toCompletableFuture()
+                                        .orTimeout(opOption.getTimeoutMs(), MILLISECONDS)
+                                        .thenCombine(post(topic, data), (r, unused) -> r)
+                                        .whenComplete((r, ex) -> futureMap.remove(data.token(), future))
+                                        .whenComplete(whenCompleted(
+                                                v -> logger.debug("{}/op/call/post success; topic={};token={};", path, topic, data.token()),
+                                                ex -> logger.warn("{}/op/call/post failure; topic={};token={};", path, topic, data.token(), ex)
+                                        ));
+                                futureMap.put(data.token(), future);
+                            });
                         }
 
                     }),
