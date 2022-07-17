@@ -1,7 +1,7 @@
 package io.github.athingx.athing.platform.builder;
 
 import io.github.athingx.athing.platform.api.ThingPlatform;
-import io.github.athingx.athing.platform.builder.client.ThingClientFactory;
+import io.github.athingx.athing.platform.builder.client.IAcsClientFactory;
 import io.github.athingx.athing.platform.builder.message.ThingMessageConsumerFactory;
 import io.github.athingx.athing.platform.impl.ThingPlatformImpl;
 
@@ -10,7 +10,7 @@ import io.github.athingx.athing.platform.impl.ThingPlatformImpl;
  */
 public class ThingPlatformBuilder {
 
-    private ThingClientFactory iotFactory = () -> null;
+    private IAcsClientFactory iotFactory = () -> null;
     private ThingMessageConsumerFactory tmcFactory = () -> null;
 
     /**
@@ -30,7 +30,7 @@ public class ThingPlatformBuilder {
      * @param tpcFactory 设备平台客户端工厂
      * @return this
      */
-    public ThingPlatformBuilder clientFactory(ThingClientFactory tpcFactory) {
+    public ThingPlatformBuilder clientFactory(IAcsClientFactory tpcFactory) {
         this.iotFactory = tpcFactory;
         return this;
     }

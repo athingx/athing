@@ -2,7 +2,7 @@ package io.github.athingx.athing.platform;
 
 import io.github.athingx.athing.platform.api.message.ThingMessage;
 import io.github.athingx.athing.platform.builder.ThingPlatformBuilder;
-import io.github.athingx.athing.platform.builder.client.AliyunThingClientFactory;
+import io.github.athingx.athing.platform.builder.client.AliyunIAcsClientFactory;
 import io.github.athingx.athing.platform.builder.message.AliyunThingMessageConsumerFactory;
 import io.github.athingx.athing.platform.builder.message.ThingMessageConsumer;
 import io.github.athingx.athing.platform.mock.MockJmsMessage;
@@ -21,7 +21,7 @@ public class ThingPlatformTestCase implements LoadingProperties {
     @Test
     public void platform$init$success() throws Exception {
         final var platform = new ThingPlatformBuilder()
-                .clientFactory(new AliyunThingClientFactory()
+                .clientFactory(new AliyunIAcsClientFactory()
                         .region("cn-shanghai")
                         .identity(PLATFORM_IDENTITY)
                         .secret(PLATFORM_SECRET)
@@ -44,7 +44,7 @@ public class ThingPlatformTestCase implements LoadingProperties {
         final Queue<ThingMessage> queue = new LinkedList<>();
         final var consumer = new MockMessageConsumer();
         final var platform = new ThingPlatformBuilder()
-                .clientFactory(new AliyunThingClientFactory()
+                .clientFactory(new AliyunIAcsClientFactory()
                         .region("cn-shanghai")
                         .identity(PLATFORM_IDENTITY)
                         .secret(PLATFORM_SECRET))
@@ -80,7 +80,7 @@ public class ThingPlatformTestCase implements LoadingProperties {
     public void platform$mock$exception() throws Exception {
 
         final var platform = new ThingPlatformBuilder()
-                .clientFactory(new AliyunThingClientFactory()
+                .clientFactory(new AliyunIAcsClientFactory()
                         .region("cn-shanghai")
                         .identity(PLATFORM_IDENTITY)
                         .secret(PLATFORM_SECRET))

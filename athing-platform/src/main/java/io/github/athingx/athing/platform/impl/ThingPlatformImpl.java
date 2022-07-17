@@ -1,9 +1,9 @@
 package io.github.athingx.athing.platform.impl;
 
+import com.aliyuncs.v5.IAcsClient;
 import io.github.athingx.athing.platform.api.ThingPlatform;
 import io.github.athingx.athing.platform.api.ThingTemplate;
 import io.github.athingx.athing.platform.api.ThingTemplateFactory;
-import io.github.athingx.athing.platform.api.client.ThingClient;
 import io.github.athingx.athing.platform.api.message.decoder.ThingMessageDecoder;
 import io.github.athingx.athing.platform.builder.message.ThingMessageConsumer;
 
@@ -18,7 +18,7 @@ import static io.github.athingx.athing.platform.impl.util.IOUtils.closeQuietly;
  */
 public class ThingPlatformImpl implements ThingPlatform {
 
-    private final ThingClient client;
+    private final IAcsClient client;
     private final ThingMessageConsumer consumer;
     private final Map<Class<?>, ThingTemplateFactory<?>> templateFactoryMap = new ConcurrentHashMap<>();
 
@@ -28,7 +28,7 @@ public class ThingPlatformImpl implements ThingPlatform {
      * @param client   设备平台客户端
      * @param consumer 设备消息消费者
      */
-    public ThingPlatformImpl(ThingClient client, ThingMessageConsumer consumer) {
+    public ThingPlatformImpl(IAcsClient client, ThingMessageConsumer consumer) {
         this.client = client;
         this.consumer = consumer;
     }
@@ -81,6 +81,7 @@ public class ThingPlatformImpl implements ThingPlatform {
     @Override
     public void close() {
         closeQuietly(consumer);
+        client.shutdown();
     }
 
 }

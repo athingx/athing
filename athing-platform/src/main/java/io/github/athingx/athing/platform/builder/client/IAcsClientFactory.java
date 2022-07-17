@@ -1,11 +1,11 @@
 package io.github.athingx.athing.platform.builder.client;
 
-import io.github.athingx.athing.platform.api.client.ThingClient;
+import com.aliyuncs.v5.IAcsClient;
 
 /**
  * 设备客户端工厂
  */
-public interface ThingClientFactory {
+public interface IAcsClientFactory {
 
     /**
      * 生产设备客户端
@@ -13,6 +13,6 @@ public interface ThingClientFactory {
      * @return 设备客户端
      * @throws Exception 生产失败
      */
-    ThingClient make() throws Exception;
+    IAcsClient make() throws Exception;
 
 }

@@ -18,24 +18,19 @@
         </dependency>
         <dependency>
             <groupId>com.aliyun</groupId>
-            <artifactId>iot20180120</artifactId>
-            <version>3.0.7</version>
+            <artifactId>aliyun-java-sdk-iot-v5</artifactId>
+            <version>7.25.0</version>
         </dependency>
-<!--        <dependency>-->
-<!--            <groupId>com.aliyun</groupId>-->
-<!--            <artifactId>aliyun-java-sdk-core</artifactId>-->
-<!--            <version>4.6.0</version>-->
-<!--            <exclusions>-->
-<!--                <exclusion>-->
-<!--                    <groupId>org.jacoco</groupId>-->
-<!--                    <artifactId>org.jacoco.agent</artifactId>-->
-<!--                </exclusion>-->
-<!--            </exclusions>-->
-<!--        </dependency>-->
-<!--        <dependency>-->
-<!--            <groupId>com.aliyun</groupId>-->
-<!--            <artifactId>aliyun-java-sdk-iot</artifactId>-->
-<!--            <version>7.39.0</version>-->
-<!--        </dependency>-->
+        <dependency>
+            <groupId>com.aliyun</groupId>
+            <artifactId>aliyun-java-sdk-core-v5</artifactId>
+            <version>5.0.2</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.jacoco</groupId>
+                    <artifactId>org.jacoco.agent</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
     </dependencies>
 </project>

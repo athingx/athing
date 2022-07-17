@@ -11,8 +11,8 @@ module athing.platform {
     requires jakarta.jms.api;
     requires qpid.jms.client;
     requires org.slf4j;
-    requires iot20180120;
-    requires tea.openapi;
+    requires aliyun.java.sdk.core.v5;
+    requires aliyun.java.sdk.iot.v5;
 
 
 }
