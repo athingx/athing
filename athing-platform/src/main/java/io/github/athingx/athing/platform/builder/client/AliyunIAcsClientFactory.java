@@ -2,11 +2,10 @@ package io.github.athingx.athing.platform.builder.client;
 
 import com.aliyuncs.v5.DefaultAcsClient;
 import com.aliyuncs.v5.IAcsClient;
-import com.aliyuncs.v5.http.HttpClientConfig;
 import com.aliyuncs.v5.profile.DefaultProfile;
 import com.aliyuncs.v5.profile.IClientProfile;
 
-import java.util.Objects;
+import java.util.function.Function;
 
 import static java.util.Objects.requireNonNull;
 
@@ -18,7 +17,7 @@ public class AliyunIAcsClientFactory implements IAcsClientFactory {
     private String identity;
     private String secret;
     private String region = "cn-shanghai";
-    private HttpClientConfig config = new HttpClientConfig();
+    private Function<IClientProfile, IClientProfile> profileFn = Function.identity();
 
     /**
      * 账号
@@ -56,11 +55,11 @@ public class AliyunIAcsClientFactory implements IAcsClientFactory {
     /**
      * 配置
      *
-     * @param config 配置
+     * @param profileFn 配置函数
      * @return this
      */
-    public AliyunIAcsClientFactory config(HttpClientConfig config) {
-        this.config = config;
+    public AliyunIAcsClientFactory profile(Function<IClientProfile, IClientProfile> profileFn) {
+        this.profileFn = profileFn;
         return this;
     }
 
@@ -73,11 +72,7 @@ public class AliyunIAcsClientFactory implements IAcsClientFactory {
                 requireNonNull(secret, "secret is required!")
         );
 
-        if (Objects.nonNull(config)) {
-            profile.setHttpClientConfig(config);
-        }
-
-        return new DefaultAcsClient(profile);
+        return new DefaultAcsClient(profileFn.apply(profile));
     }
 
 }
