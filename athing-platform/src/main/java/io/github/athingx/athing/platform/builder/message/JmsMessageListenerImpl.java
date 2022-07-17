@@ -1,4 +1,4 @@
-package io.github.athingx.athing.platform.impl.message;
+package io.github.athingx.athing.platform.builder.message;
 
 import io.github.athingx.athing.platform.api.message.ThingMessage;
 import io.github.athingx.athing.platform.api.message.ThingMessageListener;
@@ -12,13 +12,16 @@ import java.util.Set;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-class ThingJmsMessageListenerImpl implements MessageListener {
+/**
+ * JMS消息监听器实现
+ */
+class JmsMessageListenerImpl implements MessageListener {
 
     private final Set<ThingMessageDecoder<?>> decoders;
     private final ThingMessageListener listener;
 
-    ThingJmsMessageListenerImpl(final Set<ThingMessageDecoder<?>> decoders,
-                                final ThingMessageListener listener) {
+    JmsMessageListenerImpl(final Set<ThingMessageDecoder<?>> decoders,
+                           final ThingMessageListener listener) {
         this.decoders = decoders;
         this.listener = listener;
     }

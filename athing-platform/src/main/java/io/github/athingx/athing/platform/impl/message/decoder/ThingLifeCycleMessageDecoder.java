@@ -5,7 +5,6 @@ import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
 import io.github.athingx.athing.common.GsonFactory;
 import io.github.athingx.athing.platform.api.message.ThingLifeCycleMessage;
-import io.github.athingx.athing.platform.api.message.ThingMessage;
 import io.github.athingx.athing.platform.api.message.decoder.ThingMessageDecoder;
 
 import java.util.Date;
@@ -15,19 +14,19 @@ import java.util.Date;
  *
  * @see <a href="https://help.aliyun.com/document_detail/73736.html#title-0im-t30-d4l">设备生命周期变更</a>
  */
-public class ThingLifeCycleMessageDecoder implements ThingMessageDecoder {
+public class ThingLifeCycleMessageDecoder implements ThingMessageDecoder<ThingLifeCycleMessage> {
 
     private final Gson gson = GsonFactory.getGson();
 
     @Override
-    public ThingMessage[] decode(String jmsMessageId, String jmsMessageTopic, String jmsMessageBody) {
+    public ThingLifeCycleMessage[] decode(String jmsMessageId, String jmsMessageTopic, String jmsMessageBody) {
 
         if (!jmsMessageTopic.matches("^/[^/]+/[^/]+/thing/lifecycle")) {
             return null;
         }
 
         final Data data = gson.fromJson(jmsMessageBody, Data.class);
-        return new ThingMessage[]{
+        return new ThingLifeCycleMessage[]{
                 new ThingLifeCycleMessage(
                         data.productId,
                         data.thingId,

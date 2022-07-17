@@ -8,7 +8,6 @@ public class ThingMessage {
     private final String productId;
     private final String thingId;
     private final long timestamp;
-    private final String _string;
 
     /**
      * 设备消息
@@ -21,7 +20,6 @@ public class ThingMessage {
         this.productId = productId;
         this.thingId = thingId;
         this.timestamp = timestamp;
-        this._string = "thing-message://%s/%s".formatted(productId, thingId);
     }
 
     /**
@@ -49,11 +47,6 @@ public class ThingMessage {
      */
     public long getTimestamp() {
         return timestamp;
-    }
-
-    @Override
-    public String toString() {
-        return _string;
     }
 
 }

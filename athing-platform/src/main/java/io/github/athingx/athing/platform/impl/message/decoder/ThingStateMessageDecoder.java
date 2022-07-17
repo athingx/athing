@@ -3,7 +3,6 @@ package io.github.athingx.athing.platform.impl.message.decoder;
 import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
 import io.github.athingx.athing.common.GsonFactory;
-import io.github.athingx.athing.platform.api.message.ThingMessage;
 import io.github.athingx.athing.platform.api.message.ThingStateMessage;
 import io.github.athingx.athing.platform.api.message.decoder.DecodeException;
 import io.github.athingx.athing.platform.api.message.decoder.ThingMessageDecoder;
@@ -17,12 +16,12 @@ import java.util.TimeZone;
  *
  * @see <a href="https://help.aliyun.com/document_detail/73736.html#title-2ll-4j3-1wx">设备上下线状态</a>
  */
-public class ThingStateMessageDecoder implements ThingMessageDecoder {
+public class ThingStateMessageDecoder implements ThingMessageDecoder<ThingStateMessage> {
 
     private final Gson gson = GsonFactory.getGson();
 
     @Override
-    public ThingMessage[] decode(String jmsMessageId, String jmsMessageTopic, String jmsMessageBody) throws DecodeException {
+    public ThingStateMessage[] decode(String jmsMessageId, String jmsMessageTopic, String jmsMessageBody) throws DecodeException {
 
         if (!jmsMessageTopic.matches("/as/mqtt/status/[^/]+/[^/]+")) {
             return null;
@@ -35,7 +34,7 @@ public class ThingStateMessageDecoder implements ThingMessageDecoder {
         try {
             final long utcOccurTimestamp = utcDateFormat.parse(data.utcTime).getTime();
             final long utcLastTimestamp = utcDateFormat.parse(data.utcLastTime).getTime();
-            return new ThingMessage[]{
+            return new ThingStateMessage[]{
                     new ThingStateMessage(
                             data.productId,
                             data.thingId,
