@@ -3,7 +3,8 @@ module athing.platform {
     exports io.github.athingx.athing.platform.builder;
     exports io.github.athingx.athing.platform.builder.client;
     exports io.github.athingx.athing.platform.builder.message;
-    opens io.github.athingx.athing.platform.impl.message.decoder to com.google.gson;
+    exports io.github.athingx.athing.platform.message;
+    exports io.github.athingx.athing.platform.impl.message;
 
     requires transitive athing.platform.api;
     requires transitive java.naming;

@@ -1,4 +1,4 @@
-package io.github.athingx.athing.platform.builder.message;
+package io.github.athingx.athing.platform.impl.message;
 
 import io.github.athingx.athing.platform.api.message.ThingMessage;
 import io.github.athingx.athing.platform.api.message.ThingMessageListener;

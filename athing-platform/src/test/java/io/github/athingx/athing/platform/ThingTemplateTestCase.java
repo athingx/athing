@@ -43,7 +43,7 @@ public class ThingTemplateTestCase implements LoadingProperties {
     @Test
     public void platform$template$success() throws Exception {
         final var platform = new ThingPlatformBuilder()
-                .clientFactory(new AliyunIAcsClientFactory()
+                .client(new AliyunIAcsClientFactory()
                         .region("cn-shanghai")
                         .identity(PLATFORM_IDENTITY)
                         .secret(PLATFORM_SECRET)

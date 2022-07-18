@@ -5,7 +5,7 @@ import io.github.athingx.athing.platform.api.ThingPlatform;
 import io.github.athingx.athing.platform.api.ThingTemplate;
 import io.github.athingx.athing.platform.api.ThingTemplateFactory;
 import io.github.athingx.athing.platform.api.message.decoder.ThingMessageDecoder;
-import io.github.athingx.athing.platform.builder.message.ThingMessageConsumer;
+import io.github.athingx.athing.platform.message.ThingMessageConsumer;
 
 import java.util.Map;
 import java.util.Objects;
@@ -59,7 +59,7 @@ public class ThingPlatformImpl implements ThingPlatform {
     @Override
     public void register(ThingMessageDecoder<?> decoder) {
         checkSupportThingMessage();
-        consumer.appendDecoder(decoder);
+        consumer.decoders(decoders -> decoders.add(decoder));
     }
 
     @Override

@@ -1,9 +1,10 @@
-package io.github.athingx.athing.platform.builder.message;
+package io.github.athingx.athing.platform.impl.message;
 
 import io.github.athingx.athing.platform.api.message.ThingMessageListener;
+import io.github.athingx.athing.platform.api.message.decoder.ThingLifeCycleMessageDecoder;
 import io.github.athingx.athing.platform.api.message.decoder.ThingMessageDecoder;
-import io.github.athingx.athing.platform.impl.message.decoder.ThingLifeCycleMessageDecoder;
-import io.github.athingx.athing.platform.impl.message.decoder.ThingStateMessageDecoder;
+import io.github.athingx.athing.platform.api.message.decoder.ThingStateMessageDecoder;
+import io.github.athingx.athing.platform.message.ThingMessageConsumer;
 import jakarta.jms.JMSException;
 import jakarta.jms.Message;
 import jakarta.jms.MessageConsumer;
@@ -11,13 +12,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.function.Consumer;
+
+import static java.util.Collections.unmodifiableCollection;
 
 /**
  * 设备消息消费者
  */
-public class ThingMessageConsumer implements AutoCloseable {
+public class ThingMessageConsumerImpl implements ThingMessageConsumer {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -45,7 +50,7 @@ public class ThingMessageConsumer implements AutoCloseable {
      * @param listener 设备消息监听器
      * @throws JMSException 构建失败
      */
-    public ThingMessageConsumer(String name, MessageConsumer consumer, ThingMessageListener listener) throws JMSException {
+    public ThingMessageConsumerImpl(String name, MessageConsumer consumer, ThingMessageListener listener) throws JMSException {
         this._string = name;
         this.consumer = consumer;
         setupMessageListener(consumer, listener);
@@ -95,28 +100,20 @@ public class ThingMessageConsumer implements AutoCloseable {
         return _string;
     }
 
-    /**
-     * 追加设备消息解码器
-     *
-     * @param decoder 解码器
-     */
-    public void appendDecoder(ThingMessageDecoder<?> decoder) {
-        decoders.add(decoder);
-    }
-
-    /**
-     * 移除设备消息解码器
-     *
-     * @param decoder 解码器
-     */
-    public void removeDecoder(ThingMessageDecoder<?> decoder) {
-        decoders.remove(decoder);
+    @Override
+    public void close() throws Exception {
+        consumer.close();
+        logger.debug("{} closed!", this);
     }
 
     @Override
-    public void close() throws JMSException {
-        consumer.close();
-        logger.debug("{} closed!", this);
+    public void decoders(Consumer<Set<ThingMessageDecoder<?>>> setupFn) {
+        setupFn.accept(decoders);
+    }
+
+    @Override
+    public Collection<ThingMessageDecoder<?>> decoders() {
+        return unmodifiableCollection(decoders);
     }
 
 }

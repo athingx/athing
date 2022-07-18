@@ -1,4 +1,4 @@
-package io.github.athingx.athing.platform.impl.message.decoder;
+package io.github.athingx.athing.platform.api.message.decoder;
 
 import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;

@@ -10,7 +10,7 @@ import io.github.athingx.athing.platform.impl.ThingPlatformImpl;
  */
 public class ThingPlatformBuilder {
 
-    private IAcsClientFactory iotFactory = () -> null;
+    private IAcsClientFactory iacFactory = () -> null;
     private ThingMessageConsumerFactory tmcFactory = () -> null;
 
     /**
@@ -19,7 +19,7 @@ public class ThingPlatformBuilder {
      * @param tmcFactory 设备消息消费工厂
      * @return this
      */
-    public ThingPlatformBuilder consumerFactory(ThingMessageConsumerFactory tmcFactory) {
+    public ThingPlatformBuilder consumer(ThingMessageConsumerFactory tmcFactory) {
         this.tmcFactory = tmcFactory;
         return this;
     }
@@ -30,8 +30,8 @@ public class ThingPlatformBuilder {
      * @param tpcFactory 设备平台客户端工厂
      * @return this
      */
-    public ThingPlatformBuilder clientFactory(IAcsClientFactory tpcFactory) {
-        this.iotFactory = tpcFactory;
+    public ThingPlatformBuilder client(IAcsClientFactory tpcFactory) {
+        this.iacFactory = tpcFactory;
         return this;
     }
 
@@ -43,7 +43,7 @@ public class ThingPlatformBuilder {
      */
     public ThingPlatform build() throws Exception {
         return new ThingPlatformImpl(
-                iotFactory.make(),
+                iacFactory.make(),
                 tmcFactory.make()
         );
     }

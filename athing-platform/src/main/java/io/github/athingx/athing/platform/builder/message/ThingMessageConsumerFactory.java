@@ -1,5 +1,6 @@
 package io.github.athingx.athing.platform.builder.message;
 
+import io.github.athingx.athing.platform.message.ThingMessageConsumer;
 import jakarta.jms.JMSException;
 
 /**

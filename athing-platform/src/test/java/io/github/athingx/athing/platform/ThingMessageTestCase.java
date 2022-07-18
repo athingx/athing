@@ -3,7 +3,7 @@ package io.github.athingx.athing.platform;
 import io.github.athingx.athing.platform.api.message.ThingLifeCycleMessage;
 import io.github.athingx.athing.platform.api.message.ThingMessage;
 import io.github.athingx.athing.platform.api.message.ThingStateMessage;
-import io.github.athingx.athing.platform.builder.message.ThingMessageConsumer;
+import io.github.athingx.athing.platform.impl.message.ThingMessageConsumerImpl;
 import io.github.athingx.athing.platform.mock.MockJmsMessage;
 import io.github.athingx.athing.platform.mock.MockMessageConsumer;
 import jakarta.jms.JMSException;
@@ -21,7 +21,7 @@ public class ThingMessageTestCase implements LoadingProperties {
 
         final Queue<ThingMessage> queue = new LinkedList<>();
         final MockMessageConsumer consumer = new MockMessageConsumer();
-        new ThingMessageConsumer("test", consumer, queue::offer);
+        new ThingMessageConsumerImpl("test", consumer, queue::offer);
 
         consumer.getMessageListener().onMessage(MockJmsMessage.message(
                 UUID.randomUUID().toString(),
@@ -52,7 +52,7 @@ public class ThingMessageTestCase implements LoadingProperties {
 
         final Queue<ThingMessage> queue = new LinkedList<>();
         final MockMessageConsumer consumer = new MockMessageConsumer();
-        new ThingMessageConsumer("test", consumer, queue::offer);
+        new ThingMessageConsumerImpl("test", consumer, queue::offer);
 
         consumer.getMessageListener().onMessage(MockJmsMessage.message(
                 UUID.randomUUID().toString(),

@@ -3,8 +3,9 @@ package io.github.athingx.athing.platform;
 import io.github.athingx.athing.platform.api.message.ThingMessage;
 import io.github.athingx.athing.platform.builder.ThingPlatformBuilder;
 import io.github.athingx.athing.platform.builder.client.AliyunIAcsClientFactory;
+import io.github.athingx.athing.platform.builder.message.AliyunJmsConnectionFactory;
 import io.github.athingx.athing.platform.builder.message.AliyunThingMessageConsumerFactory;
-import io.github.athingx.athing.platform.builder.message.ThingMessageConsumer;
+import io.github.athingx.athing.platform.impl.message.ThingMessageConsumerImpl;
 import io.github.athingx.athing.platform.mock.MockJmsMessage;
 import io.github.athingx.athing.platform.mock.MockMessageConsumer;
 import io.github.athingx.athing.platform.mock.MockThingMessage;
@@ -21,16 +22,19 @@ public class ThingPlatformTestCase implements LoadingProperties {
     @Test
     public void platform$init$success() throws Exception {
         final var platform = new ThingPlatformBuilder()
-                .clientFactory(new AliyunIAcsClientFactory()
+                .client(new AliyunIAcsClientFactory()
                         .region("cn-shanghai")
                         .identity(PLATFORM_IDENTITY)
                         .secret(PLATFORM_SECRET)
                 )
-                .consumerFactory(new AliyunThingMessageConsumerFactory()
-                        .group(PLATFORM_JMS_GROUP)
-                        .remote(PLATFORM_REMOTE)
-                        .identity(PLATFORM_IDENTITY)
-                        .secret(PLATFORM_SECRET)
+                .consumer(new AliyunThingMessageConsumerFactory()
+                        .queue(PLATFORM_JMS_GROUP)
+                        .connection(new AliyunJmsConnectionFactory()
+                                .queue(PLATFORM_JMS_GROUP)
+                                .remote(PLATFORM_REMOTE)
+                                .identity(PLATFORM_IDENTITY)
+                                .secret(PLATFORM_SECRET)
+                        )
                         .listener(message -> {
 
                         })
@@ -44,11 +48,11 @@ public class ThingPlatformTestCase implements LoadingProperties {
         final Queue<ThingMessage> queue = new LinkedList<>();
         final var consumer = new MockMessageConsumer();
         final var platform = new ThingPlatformBuilder()
-                .clientFactory(new AliyunIAcsClientFactory()
+                .client(new AliyunIAcsClientFactory()
                         .region("cn-shanghai")
                         .identity(PLATFORM_IDENTITY)
                         .secret(PLATFORM_SECRET))
-                .consumerFactory(() -> new ThingMessageConsumer("test", consumer, queue::offer))
+                .consumer(() -> new ThingMessageConsumerImpl("test", consumer, queue::offer))
                 .build();
 
         final var mockThingMessage = new MockThingMessage("", "", 0L);
@@ -80,11 +84,11 @@ public class ThingPlatformTestCase implements LoadingProperties {
     public void platform$mock$exception() throws Exception {
 
         final var platform = new ThingPlatformBuilder()
-                .clientFactory(new AliyunIAcsClientFactory()
+                .client(new AliyunIAcsClientFactory()
                         .region("cn-shanghai")
                         .identity(PLATFORM_IDENTITY)
                         .secret(PLATFORM_SECRET))
-                .consumerFactory(() -> new ThingMessageConsumer("test", new MockMessageConsumer(), message -> {
+                .consumer(() -> new ThingMessageConsumerImpl("test", new MockMessageConsumer(), message -> {
 
                 }))
                 .build();
