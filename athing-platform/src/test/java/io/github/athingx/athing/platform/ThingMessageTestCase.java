@@ -76,6 +76,7 @@ public class ThingMessageTestCase implements LoadingProperties {
         Assert.assertNotNull(message);
         Assert.assertEquals(PRODUCT_ID, message.getProductId());
         Assert.assertEquals(THING_ID, message.getThingId());
+        Assert.assertEquals(ThingStateMessage.State.ONLINE, message.getState());
         Assert.assertEquals("192.0.2.1", message.getLastOnlineIp());
         Assert.assertTrue(message.getTimestamp() > 0);
         Assert.assertTrue(message.getLastOnlineTimestamp() > 0);

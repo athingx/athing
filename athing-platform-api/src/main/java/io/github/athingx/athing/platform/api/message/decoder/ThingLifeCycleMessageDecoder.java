@@ -5,7 +5,6 @@ import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
 import io.github.athingx.athing.common.GsonFactory;
 import io.github.athingx.athing.platform.api.message.ThingLifeCycleMessage;
-import io.github.athingx.athing.platform.api.message.decoder.ThingMessageDecoder;
 
 import java.util.Date;
 
@@ -42,17 +41,23 @@ public class ThingLifeCycleMessageDecoder implements ThingMessageDecoder<ThingLi
     private static class Data {
 
         @SerializedName("productKey")
-        String productId;
+        final String productId;
 
         @SerializedName("deviceName")
-        String thingId;
+        final String thingId;
 
         @SerializedName("messageCreateTime")
-        Date timestamp;
+        final Date timestamp;
 
         @SerializedName("action")
-        String action;
+        final String action;
 
+        private Data(String productId, String thingId, Date timestamp, String action) {
+            this.productId = productId;
+            this.thingId = thingId;
+            this.timestamp = timestamp;
+            this.action = action;
+        }
     }
 
 }

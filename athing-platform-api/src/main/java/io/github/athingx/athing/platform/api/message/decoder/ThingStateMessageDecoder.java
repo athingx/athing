@@ -4,8 +4,6 @@ import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
 import io.github.athingx.athing.common.GsonFactory;
 import io.github.athingx.athing.platform.api.message.ThingStateMessage;
-import io.github.athingx.athing.platform.api.message.decoder.DecodeException;
-import io.github.athingx.athing.platform.api.message.decoder.ThingMessageDecoder;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -60,28 +58,39 @@ public class ThingStateMessageDecoder implements ThingMessageDecoder<ThingStateM
     private static class Data {
 
         @SerializedName("status")
-        String status;
+        final String status;
 
         @SerializedName("productKey")
-        String productId;
+        final String productId;
 
         @SerializedName("deviceName")
-        String thingId;
+        final String thingId;
 
         @SerializedName("time")
-        String time;
+        final String time;
 
         @SerializedName("utcTime")
-        String utcTime;
+        final String utcTime;
 
         @SerializedName("lastTime")
-        String lastTime;
+        final String lastTime;
 
         @SerializedName("utcLastTime")
-        String utcLastTime;
+        final String utcLastTime;
 
         @SerializedName("clientIp")
-        String clientIp;
+        final String clientIp;
+
+        private Data(String status, String productId, String thingId, String time, String utcTime, String lastTime, String utcLastTime, String clientIp) {
+            this.status = status;
+            this.productId = productId;
+            this.thingId = thingId;
+            this.time = time;
+            this.utcTime = utcTime;
+            this.lastTime = lastTime;
+            this.utcLastTime = utcLastTime;
+            this.clientIp = clientIp;
+        }
 
     }
 

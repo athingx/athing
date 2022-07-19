@@ -53,25 +53,35 @@ public abstract class ThingReplyMessageDecoder implements ThingMessageDecoder<Th
     protected static class ReplyHeader {
 
         @SerializedName("productKey")
-        protected String productId;
+        public final String productId;
 
         @SerializedName("deviceName")
-        protected String thingId;
+        public final String thingId;
 
         @SerializedName("topic")
-        protected String topic;
+        public final String topic;
 
         @SerializedName("gmtCreate")
-        protected long timestamp;
+        public final long timestamp;
 
         @SerializedName("requestId")
-        protected String token;
+        public final String token;
 
         @SerializedName("code")
-        protected int code;
+        public final int code;
 
         @SerializedName("message")
-        protected String message;
+        public final String message;
+
+        private ReplyHeader(String productId, String thingId, String topic, long timestamp, String token, int code, String message) {
+            this.productId = productId;
+            this.thingId = thingId;
+            this.topic = topic;
+            this.timestamp = timestamp;
+            this.token = token;
+            this.code = code;
+            this.message = message;
+        }
 
     }
 
