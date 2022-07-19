@@ -87,9 +87,7 @@ public class ThingOpTestCase implements LoadingProperties {
         final var binder = thing.op().bind("/sys/%s/thing/config/get_reply".formatted(thing.path().toURN()))
                 .matches(matchesTopic(topic -> topic.equals("/sys/%s/thing/config/get_reply".formatted(thing.path().toURN()))))
                 .map(mappingJsonFromBytes(UTF_8))
-                .map(mappingOpReplyFromJson(new TypeToken<OpReply<Data>>() {
-
-                }))
+                .map(mappingOpReplyFromJson(Data.class))
                 .bind((topic, reply) -> {
                     while (true) {
                         if(queue.offer(reply)) {
