@@ -3,27 +3,25 @@ package io.github.athingx.athing.platform;
 import io.github.athingx.athing.platform.api.message.ThingLifeCycleMessage;
 import io.github.athingx.athing.platform.api.message.ThingMessage;
 import io.github.athingx.athing.platform.api.message.ThingStateMessage;
-import io.github.athingx.athing.platform.impl.message.ThingMessageConsumerImpl;
-import io.github.athingx.athing.platform.mock.MockJmsMessage;
-import io.github.athingx.athing.platform.mock.MockMessageConsumer;
-import jakarta.jms.JMSException;
+import io.github.athingx.athing.platform.api.message.decoder.DecodeException;
+import io.github.athingx.athing.platform.api.message.decoder.ThingLifeCycleMessageDecoder;
+import io.github.athingx.athing.platform.api.message.decoder.ThingStateMessageDecoder;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 public class ThingMessageTestCase implements LoadingProperties {
 
     @Test
-    public void thing$message$decode$lifecycle() throws JMSException {
+    public void thing$message$decode$lifecycle() {
 
         final Queue<ThingMessage> queue = new LinkedList<>();
-        final MockMessageConsumer consumer = new MockMessageConsumer();
-        new ThingMessageConsumerImpl("test", consumer, queue::offer);
 
-        consumer.getMessageListener().onMessage(MockJmsMessage.message(
+        Stream.of(new ThingLifeCycleMessageDecoder().decode(
                 UUID.randomUUID().toString(),
                 "/%s/%s/thing/lifecycle".formatted(PRODUCT_ID, THING_ID),
                 """
@@ -36,7 +34,7 @@ public class ThingMessageTestCase implements LoadingProperties {
                             "messageCreateTime": 1510292739881
                         }
                         """.formatted(PRODUCT_ID, THING_ID, SECRET)
-        ));
+        )).forEach(queue::offer);
 
         final ThingLifeCycleMessage message = (ThingLifeCycleMessage) queue.poll();
         Assert.assertNotNull(message);
@@ -48,13 +46,11 @@ public class ThingMessageTestCase implements LoadingProperties {
     }
 
     @Test
-    public void thing$message$decode$state() throws JMSException {
+    public void thing$message$decode$state() throws DecodeException {
 
         final Queue<ThingMessage> queue = new LinkedList<>();
-        final MockMessageConsumer consumer = new MockMessageConsumer();
-        new ThingMessageConsumerImpl("test", consumer, queue::offer);
 
-        consumer.getMessageListener().onMessage(MockJmsMessage.message(
+        Stream.of(new ThingStateMessageDecoder().decode(
                 UUID.randomUUID().toString(),
                 "/as/mqtt/status/%s/%s".formatted(PRODUCT_ID, THING_ID),
                 """
@@ -70,7 +66,7 @@ public class ThingMessageTestCase implements LoadingProperties {
                              "clientIp":"192.0.2.1"
                          }
                         """.formatted(PRODUCT_ID, THING_ID)
-        ));
+        )).forEach(queue::offer);
 
         final ThingStateMessage message = (ThingStateMessage) queue.poll();
         Assert.assertNotNull(message);

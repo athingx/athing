@@ -4,7 +4,6 @@ module athing.platform {
     exports io.github.athingx.athing.platform.builder.client;
     exports io.github.athingx.athing.platform.builder.message;
     exports io.github.athingx.athing.platform.message;
-    exports io.github.athingx.athing.platform.impl.message;
 
     requires transitive athing.platform.api;
     requires transitive java.naming;
