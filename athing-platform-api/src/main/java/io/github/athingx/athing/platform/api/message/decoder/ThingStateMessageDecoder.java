@@ -55,42 +55,16 @@ public class ThingStateMessageDecoder implements ThingMessageDecoder<ThingStateM
     /**
      * 数据
      */
-    private static class Data {
-
-        @SerializedName("status")
-        final String status;
-
-        @SerializedName("productKey")
-        final String productId;
-
-        @SerializedName("deviceName")
-        final String thingId;
-
-        @SerializedName("time")
-        final String time;
-
-        @SerializedName("utcTime")
-        final String utcTime;
-
-        @SerializedName("lastTime")
-        final String lastTime;
-
-        @SerializedName("utcLastTime")
-        final String utcLastTime;
-
-        @SerializedName("clientIp")
-        final String clientIp;
-
-        private Data(String status, String productId, String thingId, String time, String utcTime, String lastTime, String utcLastTime, String clientIp) {
-            this.status = status;
-            this.productId = productId;
-            this.thingId = thingId;
-            this.time = time;
-            this.utcTime = utcTime;
-            this.lastTime = lastTime;
-            this.utcLastTime = utcLastTime;
-            this.clientIp = clientIp;
-        }
+     private record Data(
+            @SerializedName("status") String status,
+            @SerializedName("productKey") String productId,
+            @SerializedName("deviceName") String thingId,
+            @SerializedName("time") String time,
+            @SerializedName("utcTime") String utcTime,
+            @SerializedName("lastTime") String lastTime,
+            @SerializedName("utcLastTime") String utcLastTime,
+            @SerializedName("clientIp") String clientIp
+    ) {
 
     }
 

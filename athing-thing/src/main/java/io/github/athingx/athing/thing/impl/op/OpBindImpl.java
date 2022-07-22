@@ -90,7 +90,13 @@ abstract class OpBindImpl<T, V> implements OpBind<V> {
      * @return TRUE: 非跳过异常 ; FALSE: 是跳过异常
      */
     boolean isNotSkipEx(Throwable ex) {
-        return ex != SKIP_EX;
+        if (null == ex) {
+            return true;
+        }
+        if (SKIP_EX == ex) {
+            return false;
+        }
+        return isNotSkipEx(ex.getCause());
     }
 
     /**

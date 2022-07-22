@@ -65,4 +65,18 @@ public class CompletableFutureUtils {
         };
     }
 
+    private static <T> Consumer<T> emptyFn() {
+        return t -> {
+
+        };
+    }
+
+    public static <T> BiConsumer<T, Throwable> whenExceptionally(Consumer<Throwable> failureFn) {
+        return whenCompleted(emptyFn(), failureFn);
+    }
+
+    public static <T> BiConsumer<T, Throwable> whenSuccessfully(Consumer<T> successFn) {
+        return whenCompleted(successFn, emptyFn());
+    }
+
 }

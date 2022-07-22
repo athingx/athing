@@ -6,6 +6,5 @@ open module athing.platform.api {
 
     requires transitive athing.common;
     requires aliyun.java.sdk.core.v5;
-    requires aliyun.java.sdk.iot.v5;
 
 }

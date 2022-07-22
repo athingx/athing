@@ -85,7 +85,7 @@ public class ThingMessageConsumerImpl implements ThingMessageConsumer {
                     jmsMessage.acknowledge();
                     logger.debug("{}/jms/{}/commit", _string, jmsMessageId);
 
-                } catch (Exception cause) {
+                } catch (Throwable cause) {
                     logger.warn("{}/jms/{}/rollback", _string, jmsMessageId, cause);
                     throw new RuntimeException(cause);
                 }

@@ -38,26 +38,13 @@ public class ThingLifeCycleMessageDecoder implements ThingMessageDecoder<ThingLi
     /**
      * 数据
      */
-    private static class Data {
+    private record Data(
+            @SerializedName("productKey") String productId,
+            @SerializedName("deviceName") String thingId,
+            @SerializedName("messageCreateTime") Date timestamp,
+            @SerializedName("action") String action
+    ) {
 
-        @SerializedName("productKey")
-        final String productId;
-
-        @SerializedName("deviceName")
-        final String thingId;
-
-        @SerializedName("messageCreateTime")
-        final Date timestamp;
-
-        @SerializedName("action")
-        final String action;
-
-        private Data(String productId, String thingId, Date timestamp, String action) {
-            this.productId = productId;
-            this.thingId = thingId;
-            this.timestamp = timestamp;
-            this.action = action;
-        }
     }
 
 }

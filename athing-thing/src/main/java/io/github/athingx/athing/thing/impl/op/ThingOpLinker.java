@@ -20,8 +20,7 @@ import java.util.function.BiFunction;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-import static io.github.athingx.athing.thing.api.util.CompletableFutureUtils.tryCatchExecute;
-import static io.github.athingx.athing.thing.api.util.CompletableFutureUtils.whenCompleted;
+import static io.github.athingx.athing.thing.api.util.CompletableFutureUtils.*;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -296,15 +295,15 @@ class ThingOpLinker {
                         @Override
                         public CompletableFuture<R> call(String topic, P data) {
                             return tryCatchExecute(future -> {
+                                futureMap.put(data.token(), future);
                                 future.toCompletableFuture()
                                         .orTimeout(opOption.getTimeoutMs(), MILLISECONDS)
                                         .thenCombine(post(topic, data), (r, unused) -> r)
-                                        .whenComplete((r, ex) -> futureMap.remove(data.token(), future))
+                                        .whenComplete(whenExceptionally(ex -> futureMap.remove(data.token(), future)))
                                         .whenComplete(whenCompleted(
                                                 v -> logger.debug("{}/op/call/post success; topic={};token={};", path, topic, data.token()),
                                                 ex -> logger.warn("{}/op/call/post failure; topic={};token={};", path, topic, data.token(), ex)
                                         ));
-                                futureMap.put(data.token(), future);
                             });
                         }
 
@@ -312,17 +311,17 @@ class ThingOpLinker {
                     (topic, message) -> executor.execute(() -> mapper()
                             .apply(topic, message.getPayload())
                             .thenApply(v -> fn.apply(topic, v))
-                            .thenAccept(data -> {
+                            .whenComplete(whenSuccessfully(data -> {
                                 final CompletableFuture<R> future = futureMap.remove(data.token());
                                 if (null == future) {
                                     logger.warn("{}/op/call/reply received; but none token match, maybe timeout! topic={};message-id={};token={};", path, topic, message.getId(), data.token());
                                 } else if (!future.complete(data)) {
                                     logger.warn("{}/op/call/reply received; but assign failure, maybe expired. topic={};message-id={};token={};", path, topic, message.getId(), data.token());
                                 }
-                            })
+                            }))
                             .whenComplete(whenCompleted(
                                     (v, ex) -> isNotSkipEx(ex),
-                                    v -> logger.debug("{}/op/call/reply success; topic={};message-id={};", path, topic, message.getId()),
+                                    v -> logger.debug("{}/op/call/reply success; topic={};message-id={};token={};", path, topic, message.getId(), v.token()),
                                     ex -> logger.warn("{}/op/call/reply failure; topic={};message-id={};", path, topic, message.getId(), ex)
                             )))
             ));
