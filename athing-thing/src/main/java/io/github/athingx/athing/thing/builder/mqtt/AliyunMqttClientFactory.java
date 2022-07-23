@@ -53,7 +53,7 @@ public class AliyunMqttClientFactory implements MqttClientFactory {
         return this;
     }
 
-    public AliyunMqttClientFactory connecting(ConnectStrategy strategy) {
+    public AliyunMqttClientFactory strategy(ConnectStrategy strategy) {
         this.strategy = strategy;
         return this;
     }

@@ -26,7 +26,7 @@ public interface ThingFnMapOpReply<T, R> extends ThingFnMap<T, R> {
      * @return 映射函数
      */
     static <V> ThingFnMapOpReply<String, OpReply<V>> mappingOpReplyFromJson(TypeToken<OpReply<V>> type) {
-        return (topic, json) -> ThingFnMapJson.<OpReply<V>>mappingJsonToType(type.getType()).mapping(topic, json);
+        return (topic, json) -> GsonFactory.getGson().fromJson(json,type.getType());
     }
 
     /**

@@ -40,6 +40,11 @@ public class ThingImpl implements Thing {
     }
 
     @Override
+    public ExecutorService executor() {
+        return executor;
+    }
+
+    @Override
     public void destroy() {
 
         // 关闭MQTT客户端

@@ -45,7 +45,7 @@ public class ThingConnectTestCase implements LoadingProperties {
                 .client(new AliyunMqttClientFactory()
                         .secret(SECRET)
                         .remote(REMOTE)
-                        .connecting((path, options, client) -> {
+                        .strategy((path, options, client) -> {
                             client.setBufferOpts(new DisconnectedBufferOptions() {{
                                 setBufferEnabled(true);
                                 setPersistBuffer(false);
@@ -80,7 +80,7 @@ public class ThingConnectTestCase implements LoadingProperties {
                 .client(new AliyunMqttClientFactory()
                         .secret(SECRET)
                         .remote("tcp://imposable.com:0")
-                        .connecting(limitsReTry(3, 1000))
+                        .strategy(limitsReTry(3, 1000))
                 )
                 .build();
         Assert.assertNotNull(thing);

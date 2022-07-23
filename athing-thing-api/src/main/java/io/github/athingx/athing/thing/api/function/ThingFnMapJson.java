@@ -33,7 +33,7 @@ public interface ThingFnMapJson<T, R> extends ThingFnMap<T, R> {
      * @param <V>  对象类型
      * @return 映射函数
      */
-    static <V> ThingFnMapJson<String, V> mappingJsonToType(Type type) {
+    static <V> ThingFnMapJson<String, V> mappingJsonToType(Class<V> type) {
         return (topic, json) -> GsonFactory.getGson().fromJson(json, type);
     }
 
