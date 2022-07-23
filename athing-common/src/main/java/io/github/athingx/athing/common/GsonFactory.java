@@ -120,8 +120,9 @@ public class GsonFactory {
                 final var anSerializedName = field.getDeclaredAnnotation(SerializedName.class);
                 names.add(anSerializedName.value());
                 names.addAll(Arrays.asList(anSerializedName.alternate()));
+            } else {
+                names.add(parameter.getName());
             }
-            names.add(parameter.getName());
             return names;
         }
 
