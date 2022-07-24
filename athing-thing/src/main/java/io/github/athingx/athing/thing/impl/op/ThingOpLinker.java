@@ -3,7 +3,7 @@ package io.github.athingx.athing.thing.impl.op;
 import io.github.athingx.athing.common.GsonFactory;
 import io.github.athingx.athing.thing.api.ThingPath;
 import io.github.athingx.athing.thing.api.op.*;
-import io.github.athingx.athing.thing.api.util.CompletableFutureUtils;
+import io.github.athingx.athing.thing.api.function.CompletableFutureFn;
 import io.github.athingx.athing.thing.impl.util.TokenSequencer;
 import org.eclipse.paho.client.mqttv3.*;
 import org.slf4j.Logger;
@@ -20,7 +20,7 @@ import java.util.function.BiFunction;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-import static io.github.athingx.athing.thing.api.util.CompletableFutureUtils.*;
+import static io.github.athingx.athing.thing.api.function.CompletableFutureFn.*;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -130,12 +130,12 @@ class ThingOpLinker {
                 }
 
                 // MQTT批量订阅
-                return CompletableFutureUtils.<OpBinder>tryCatchExecute(future -> client.subscribe(expressArray, qosArray, new Object(),
+                return CompletableFutureFn.<OpBinder>tryCatchExecute(future -> client.subscribe(expressArray, qosArray, new Object(),
                                 new IMqttActionListener() {
                                     @Override
                                     public void onSuccess(IMqttToken token) {
                                         Stream.of(callbackArray).forEach(callback -> callback.onSuccess(token));
-                                        future.complete(() -> CompletableFutureUtils.<Void>tryCatchExecute(unbindF -> client.unsubscribe(
+                                        future.complete(() -> CompletableFutureFn.<Void>tryCatchExecute(unbindF -> client.unsubscribe(
                                                         expressArray,
                                                         new Object(),
                                                         new MqttFutureCallback<>(unbindF)
@@ -248,7 +248,7 @@ class ThingOpLinker {
 
             final var binder = new OpBinder() {
 
-                private final CompletableFuture<Void> unbindF = CompletableFutureUtils.<Void>tryCatchExecute(unbindF -> client.unsubscribe(
+                private final CompletableFuture<Void> unbindF = CompletableFutureFn.<Void>tryCatchExecute(unbindF -> client.unsubscribe(
                                 express,
                                 new Object(),
                                 new MqttFutureCallback<>(unbindF)
@@ -265,7 +265,7 @@ class ThingOpLinker {
 
             };
 
-            return CompletableFutureUtils.<OpBinder>tryCatchExecute(bindF -> subscriber.subscribe(express, 1, new Object(),
+            return CompletableFutureFn.<OpBinder>tryCatchExecute(bindF -> subscriber.subscribe(express, 1, new Object(),
                             new MqttFutureCallback<>(bindF, () -> binder),
                             (topic, message) -> executor.execute(() -> mapper()
                                     .apply(topic, message.getPayload())
@@ -287,7 +287,7 @@ class ThingOpLinker {
             final Map<String, CompletableFuture<R>> futureMap = new ConcurrentHashMap<>();
             final var caller = new OpCaller<P, R>() {
 
-                private final CompletableFuture<Void> unbindF = CompletableFutureUtils.<Void>tryCatchExecute(unbindF -> client.unsubscribe(
+                private final CompletableFuture<Void> unbindF = CompletableFutureFn.<Void>tryCatchExecute(unbindF -> client.unsubscribe(
                                 express,
                                 new Object(),
                                 new MqttFutureCallback<>(unbindF)

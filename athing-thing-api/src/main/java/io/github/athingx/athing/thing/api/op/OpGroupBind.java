@@ -14,6 +14,10 @@ public interface OpGroupBind {
      */
     OpBind<byte[]> bind(String express);
 
+    default <T extends OpBinder> CompletableFuture<T> binding(OpBinding<T> binding) {
+        return binding.binding(this);
+    }
+
     /**
      * 提交操作组绑定
      *

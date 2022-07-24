@@ -15,10 +15,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import static io.github.athingx.athing.thing.api.function.ThingFnMap.identity;
-import static io.github.athingx.athing.thing.api.function.ThingFnMapJson.mappingJsonFromBytes;
-import static io.github.athingx.athing.thing.api.function.ThingFnMapOpReply.mappingOpReplyFromJson;
-import static io.github.athingx.athing.thing.api.function.ThingFnMatcher.matchesTopic;
+import static io.github.athingx.athing.thing.api.function.ThingFn.*;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
@@ -38,9 +35,9 @@ public class ThingOpTestCase implements LoadingProperties {
 
         final var caller = thing.op()
                 .bind("/sys/%s/thing/config/get_reply".formatted(thing.path().toURN()))
-                .matches(matchesTopic(topic -> topic.equals("/sys/%s/thing/config/get_reply".formatted(thing.path().toURN()))))
-                .map(mappingJsonFromBytes(UTF_8))
-                .map(mappingOpReplyFromJson(new TypeToken<OpReply<Data>>() {
+                .matches(matchingTopic(topic -> topic.equals("/sys/%s/thing/config/get_reply".formatted(thing.path().toURN()))))
+                .map(mappingJsonFromByte(UTF_8))
+                .map(mappingJsonToOpReply(new TypeToken<OpReply<Data>>() {
 
                 }))
                 .call(identity())
@@ -85,9 +82,9 @@ public class ThingOpTestCase implements LoadingProperties {
 
         final BlockingQueue<OpReply<Data>> queue = new LinkedBlockingQueue<>();
         final var binder = thing.op().bind("/sys/%s/thing/config/get_reply".formatted(thing.path().toURN()))
-                .matches(matchesTopic(topic -> topic.equals("/sys/%s/thing/config/get_reply".formatted(thing.path().toURN()))))
-                .map(mappingJsonFromBytes(UTF_8))
-                .map(mappingOpReplyFromJson(Data.class))
+                .matches(matchingTopic(topic -> topic.equals("/sys/%s/thing/config/get_reply".formatted(thing.path().toURN()))))
+                .map(mappingJsonFromByte(UTF_8))
+                .map(mappingJsonToOpReply(Data.class))
                 .bind((topic, reply) -> {
                     while (true) {
                         if(queue.offer(reply)) {
@@ -140,9 +137,9 @@ public class ThingOpTestCase implements LoadingProperties {
 
         final var callerF = group
                 .bind("/sys/%s/thing/config/get_reply".formatted(thing.path().toURN()))
-                .matches(matchesTopic(topic -> topic.equals("/sys/%s/thing/config/get_reply".formatted(thing.path().toURN()))))
-                .map(mappingJsonFromBytes(UTF_8))
-                .map(mappingOpReplyFromJson(new TypeToken<OpReply<Data>>() {
+                .matches(matchingTopic(topic -> topic.equals("/sys/%s/thing/config/get_reply".formatted(thing.path().toURN()))))
+                .map(mappingJsonFromByte(UTF_8))
+                .map(mappingJsonToOpReply(new TypeToken<OpReply<Data>>() {
 
                 }))
                 .call(identity());
@@ -192,9 +189,9 @@ public class ThingOpTestCase implements LoadingProperties {
 
         final var group = thing.op().group();
         group.bind("/sys/%s/thing/config/get_reply".formatted(thing.path().toURN()))
-                .matches(matchesTopic(topic -> topic.equals("/sys/%s/thing/config/get_reply".formatted(thing.path().toURN()))))
-                .map(mappingJsonFromBytes(UTF_8))
-                .map(mappingOpReplyFromJson(new TypeToken<OpReply<Data>>() {
+                .matches(matchingTopic(topic -> topic.equals("/sys/%s/thing/config/get_reply".formatted(thing.path().toURN()))))
+                .map(mappingJsonFromByte(UTF_8))
+                .map(mappingJsonToOpReply(new TypeToken<OpReply<Data>>() {
 
                 }))
                 .bind((topic, reply) -> {

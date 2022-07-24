@@ -34,7 +34,7 @@ public class OpReply<T> implements OpData {
      * @param desc  应答消息
      * @param data  应答数据
      */
-    private OpReply(String token, int code, String desc, T data) {
+    public OpReply(String token, int code, String desc, T data) {
         this.token = token;
         this.code = code;
         this.desc = desc;

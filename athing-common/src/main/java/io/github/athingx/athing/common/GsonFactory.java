@@ -185,6 +185,7 @@ public class GsonFactory {
 
             // Alink协议：{@link Long}和{@code long}采用{@code text}型的数字表示
             .setLongSerializationPolicy(LongSerializationPolicy.STRING)
+
             // .setPrettyPrinting()
 
             .create();
