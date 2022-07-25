@@ -62,6 +62,17 @@ public interface ThingFn {
     }
 
     /**
+     * 映射：{@code json->T<V>}
+     *
+     * @param tToken {@link TypeToken}为Gson解决{@code T<V>}序列化问题
+     * @param <T>    应答数据类型
+     * @return 映射函数
+     */
+    static <T> BiFunction<String, String, T> mappingJsonToType(TypeToken<T> tToken) {
+        return (s, json) -> GsonFactory.getGson().fromJson(json, tToken.getType());
+    }
+
+    /**
      * 映射：{@code json->}{@link OpReply}
      *
      * @param type Gson泛型映射
