@@ -38,5 +38,4 @@ public interface ThingOp {
      */
     OpGroupBind group();
 
-
 }

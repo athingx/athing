@@ -75,19 +75,6 @@ public interface ThingFn {
     /**
      * 映射：{@code json->}{@link OpReply}
      *
-     * @param type Gson泛型映射
-     * @param <T>  应答数据类型
-     * @return 映射函数
-     */
-    static <T> BiFunction<String, String, OpReply<T>> mappingJsonToOpReply(TypeToken<OpReply<T>> type) {
-        return (topic, json) -> GsonFactory.getGson().fromJson(json, type.getType());
-    }
-
-    /**
-     * 映射：{@code json->}{@link OpReply}
-     * <p/>
-     * 与{@link #mappingJsonToOpReply(TypeToken)}区别是，编写更简便，但性能略差
-     *
      * @param type 应答数据类型
      * @param <T>  应答数据类型
      * @return 映射函数

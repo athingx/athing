@@ -4,60 +4,23 @@ import com.google.gson.annotations.SerializedName;
 
 /**
  * 操作应答
- *
+ * @param token 操作令牌
+ * @param code  应答编码
+ * @param desc  应答消息
+ * @param data  应答数据
  * @param <T> 数据类型
  */
-public class OpReply<T> implements OpData {
+public record OpReply<T>(
+        @SerializedName("id") String token,
+        @SerializedName("code") int code,
+        @SerializedName("message") String desc,
+        @SerializedName("data") T data
+) implements OpData {
 
     /**
      * 成功应答：200
      */
     private static final int CODE_OK = 200;
-
-    @SerializedName("id")
-    private final String token;
-
-    @SerializedName("code")
-    private final int code;
-
-    @SerializedName("message")
-    private final String desc;
-
-    @SerializedName("data")
-    private final T data;
-
-    /**
-     * 操作应答
-     *
-     * @param token 操作令牌
-     * @param code  应答编码
-     * @param desc  应答消息
-     * @param data  应答数据
-     */
-    public OpReply(String token, int code, String desc, T data) {
-        this.token = token;
-        this.code = code;
-        this.desc = desc;
-        this.data = data;
-    }
-
-    @Override
-    public String token() {
-        return token;
-    }
-
-    public int code() {
-        return code;
-    }
-
-    public String desc() {
-        return desc;
-    }
-
-    public T data() {
-        return data;
-    }
-
 
     /**
      * 是否应答成功

@@ -2,6 +2,7 @@ package io.github.athingx.athing.thing;
 
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
+import io.github.athingx.athing.common.GsonFactory;
 import io.github.athingx.athing.thing.api.ThingPath;
 import io.github.athingx.athing.thing.api.op.OpReply;
 import io.github.athingx.athing.thing.builder.ThingBuilder;
@@ -14,6 +15,7 @@ import org.junit.Test;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.function.BiFunction;
 
 import static io.github.athingx.athing.thing.api.function.ThingFn.*;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -37,9 +39,7 @@ public class ThingOpTestCase implements LoadingProperties {
                 .bind("/sys/%s/thing/config/get_reply".formatted(thing.path().toURN()))
                 .matches(matchingTopic(topic -> topic.equals("/sys/%s/thing/config/get_reply".formatted(thing.path().toURN()))))
                 .map(mappingJsonFromByte(UTF_8))
-                .map(mappingJsonToOpReply(new TypeToken<OpReply<Data>>() {
-
-                }))
+                .map(mappingJsonToOpReply(Data.class))
                 .call(identity())
                 .get();
 
@@ -139,9 +139,7 @@ public class ThingOpTestCase implements LoadingProperties {
                 .bind("/sys/%s/thing/config/get_reply".formatted(thing.path().toURN()))
                 .matches(matchingTopic(topic -> topic.equals("/sys/%s/thing/config/get_reply".formatted(thing.path().toURN()))))
                 .map(mappingJsonFromByte(UTF_8))
-                .map(mappingJsonToOpReply(new TypeToken<OpReply<Data>>() {
-
-                }))
+                .map(mappingJsonToOpReply(Data.class))
                 .call(identity());
 
         final var binder = group.commit().get();
@@ -191,9 +189,7 @@ public class ThingOpTestCase implements LoadingProperties {
         group.bind("/sys/%s/thing/config/get_reply".formatted(thing.path().toURN()))
                 .matches(matchingTopic(topic -> topic.equals("/sys/%s/thing/config/get_reply".formatted(thing.path().toURN()))))
                 .map(mappingJsonFromByte(UTF_8))
-                .map(mappingJsonToOpReply(new TypeToken<OpReply<Data>>() {
-
-                }))
+                .map(mappingJsonToOpReply(Data.class))
                 .bind((topic, reply) -> {
                     while (true) {
                         if(queue.offer(reply)) {
