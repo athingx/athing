@@ -248,19 +248,17 @@ class ThingOpLinker {
 
             final var binder = new OpBinder() {
 
-                private final CompletableFuture<Void> unbindF = CompletableFutureFn.<Void>tryCatchExecute(unbindF -> client.unsubscribe(
-                                express,
-                                new Object(),
-                                new MqttFutureCallback<>(unbindF)
-                        ))
-                        .whenComplete(whenCompleted(
-                                v -> logger.debug("{}/op/bind/unbind success; express={};", path, express),
-                                ex -> logger.warn("{}/op/bind/unbind failure; express={};", path, express, ex)
-                        ));
-
                 @Override
                 public CompletableFuture<Void> unbind() {
-                    return unbindF;
+                    return CompletableFutureFn.<Void>tryCatchExecute(unbindF -> client.unsubscribe(
+                                    express,
+                                    new Object(),
+                                    new MqttFutureCallback<>(unbindF)
+                            ))
+                            .whenComplete(whenCompleted(
+                                    v -> logger.debug("{}/op/bind/unbind success; express={};", path, express),
+                                    ex -> logger.warn("{}/op/bind/unbind failure; express={};", path, express, ex)
+                            ));
                 }
 
             };
@@ -287,19 +285,17 @@ class ThingOpLinker {
             final Map<String, CompletableFuture<R>> futureMap = new ConcurrentHashMap<>();
             final var caller = new OpCaller<P, R>() {
 
-                private final CompletableFuture<Void> unbindF = CompletableFutureFn.<Void>tryCatchExecute(unbindF -> client.unsubscribe(
-                                express,
-                                new Object(),
-                                new MqttFutureCallback<>(unbindF)
-                        ))
-                        .whenComplete(whenCompleted(
-                                v -> logger.debug("{}/op/call/unbind success; express={};", path, express),
-                                ex -> logger.warn("{}/op/call/unbind failure; express={};", path, express, ex)
-                        ));
-
                 @Override
                 public CompletableFuture<Void> unbind() {
-                    return unbindF;
+                    return CompletableFutureFn.<Void>tryCatchExecute(unbindF -> client.unsubscribe(
+                                    express,
+                                    new Object(),
+                                    new MqttFutureCallback<>(unbindF)
+                            ))
+                            .whenComplete(whenCompleted(
+                                    v -> logger.debug("{}/op/call/unbind success; express={};", path, express),
+                                    ex -> logger.warn("{}/op/call/unbind failure; express={};", path, express, ex)
+                            ));
                 }
 
                 @Override
