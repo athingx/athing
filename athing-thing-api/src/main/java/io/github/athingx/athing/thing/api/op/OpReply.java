@@ -89,5 +89,4 @@ public record OpReply<T>(
         return new OpReply<>(token, code, desc, data);
     }
 
-
 }

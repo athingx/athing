@@ -1,16 +1,16 @@
 package io.github.athingx.athing.common;
 
 import com.google.gson.*;
-import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
+import marcono1234.gson.recordadapter.RecordComponentNamingStrategy;
+import marcono1234.gson.recordadapter.RecordTypeAdapterFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
-import java.lang.reflect.Parameter;
-import java.lang.reflect.Type;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Date;
 
 import static com.google.gson.FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES;
 
@@ -109,69 +109,15 @@ public class GsonFactory {
 
     /**
      * {@link Record}无法被gson反序列化，核心原因在{@link Field#set(Object, Object)}注释中有解释。
-     * 虽然写得复杂了点，但...还是可以用，哈哈哈
+     * <p>
+     * 核心功能由<a href="https://github.com/Marcono1234/gson-record-type-adapter-factory">gson-record-type-adapter-factory</a>提供
+     * </p>
      */
-    private static final JsonDeserializer<Record> recordJsonDeserializer = new JsonDeserializer<>() {
-
-        private Set<String> parseNames(Class<?> clazz, Parameter parameter) throws NoSuchFieldException {
-            final Set<String> names = new LinkedHashSet<>();
-            final Field field = clazz.getDeclaredField(parameter.getName());
-            if (field.isAnnotationPresent(SerializedName.class)) {
-                final var anSerializedName = field.getDeclaredAnnotation(SerializedName.class);
-                names.add(anSerializedName.value());
-                names.addAll(Arrays.asList(anSerializedName.alternate()));
-            } else {
-                names.add(parameter.getName());
-            }
-            return names;
-        }
-
-        private JsonElement getJsonElement(JsonObject json, Class<?> clazz, Parameter parameter) throws NoSuchFieldException {
-            for (final var name : parseNames(clazz, parameter)) {
-                if (json.has(name)) {
-                    return json.get(name);
-                }
-            }
-            return null;
-        }
-
-        @Override
-        public Record deserialize(JsonElement element, Type type, JsonDeserializationContext context) throws JsonParseException {
-            final var json = element.getAsJsonObject();
-            try {
-                if (type instanceof Class<?> clazz) {
-                    for (final var constructor : clazz.getDeclaredConstructors()) {
-                        final var count = constructor.getParameterCount();
-                        final var parameters = constructor.getParameters();
-                        final var arguments = new Object[count];
-                        for (int index = 0; index < count; index++) {
-                            final var parameter = parameters[index];
-                            final var parameterElement = getJsonElement(json, clazz, parameter);
-                            if (Objects.nonNull(parameterElement)) {
-                                arguments[index] = context.deserialize(
-                                        getJsonElement(json, clazz, parameter),
-                                        parameter.getType()
-                                );
-                            } else {
-                                arguments[index] = null;
-                            }
-                        }
-                        final var access = constructor.canAccess(null);
-                        try {
-                            constructor.setAccessible(true);
-                            return (Record) constructor.newInstance(arguments);
-                        } finally {
-                            constructor.setAccessible(access);
-                        }
-                    }
-                }
-            } catch (Throwable cause) {
-                throw new JsonParseException(cause);
-            }
-            return null;
-        }
-
-    };
+    private static final TypeAdapterFactory recordTypeAdapterFactory = RecordTypeAdapterFactory.builder()
+            .allowMissingComponentValues()
+            .allowJsonNullForPrimitiveComponents()
+            .withComponentNamingStrategy(RecordComponentNamingStrategy.LOWER_CASE_WITH_UNDERSCORES)
+            .create();
 
     private static final Gson gson = new GsonBuilder()
             .setFieldNamingPolicy(LOWER_CASE_WITH_UNDERSCORES)
@@ -180,7 +126,7 @@ public class GsonFactory {
             .registerTypeAdapter(boolean.class, booleanTypeAdapterForAliyun)
             .registerTypeAdapter(Void.class, voidTypeAdapter)
             .registerTypeAdapterFactory(enumTypeAdapterFactory)
-            .registerTypeHierarchyAdapter(Record.class, recordJsonDeserializer)
+            .registerTypeAdapterFactory(recordTypeAdapterFactory)
             .serializeSpecialFloatingPointValues()
 
             // Alink协议：{@link Long}和{@code long}采用{@code text}型的数字表示

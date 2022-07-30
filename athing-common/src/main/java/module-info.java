@@ -8,5 +8,6 @@ module athing.common {
 
     exports io.github.athingx.athing.common;
     requires transitive com.google.gson;
+    requires marcono1234.gson.recordadapter;
 
 }

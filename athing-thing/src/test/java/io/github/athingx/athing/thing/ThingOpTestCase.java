@@ -15,7 +15,6 @@ import org.junit.Test;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.function.BiFunction;
 
 import static io.github.athingx.athing.thing.api.function.ThingFn.*;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -39,7 +38,9 @@ public class ThingOpTestCase implements LoadingProperties {
                 .bind("/sys/%s/thing/config/get_reply".formatted(thing.path().toURN()))
                 .matches(matchingTopic(topic -> topic.equals("/sys/%s/thing/config/get_reply".formatted(thing.path().toURN()))))
                 .map(mappingJsonFromByte(UTF_8))
-                .map(mappingJsonToOpReply(Data.class))
+                .map(mappingJsonToType(new TypeToken<OpReply<Data>>() {
+
+                }))
                 .call(identity())
                 .get();
 
@@ -87,7 +88,7 @@ public class ThingOpTestCase implements LoadingProperties {
                 .map(mappingJsonToOpReply(Data.class))
                 .bind((topic, reply) -> {
                     while (true) {
-                        if(queue.offer(reply)) {
+                        if (queue.offer(reply)) {
                             break;
                         }
                     }
@@ -192,7 +193,7 @@ public class ThingOpTestCase implements LoadingProperties {
                 .map(mappingJsonToOpReply(Data.class))
                 .bind((topic, reply) -> {
                     while (true) {
-                        if(queue.offer(reply)) {
+                        if (queue.offer(reply)) {
                             break;
                         }
                     }
@@ -227,22 +228,15 @@ public class ThingOpTestCase implements LoadingProperties {
         thing.destroy();
     }
 
-
     // 数据格式
-    static final class Data {
-
-        @SerializedName("configId")
-        String id;
-        @SerializedName("configSize")
-        int size;
-        @SerializedName("sign")
-        String sign;
-        @SerializedName("signMethod")
-        String method;
-        @SerializedName("url")
-        String url;
-        @SerializedName("getType")
-        String type;
+    record Data(
+            @SerializedName("configId") String id,
+            @SerializedName("configSize") int size,
+            @SerializedName("sign") String sign,
+            @SerializedName("signMethod") String method,
+            @SerializedName("url") String url,
+            @SerializedName("getType") String type
+    ) {
 
     }
 }
