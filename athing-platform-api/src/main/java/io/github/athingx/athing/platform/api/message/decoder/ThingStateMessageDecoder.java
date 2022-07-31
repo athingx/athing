@@ -2,7 +2,7 @@ package io.github.athingx.athing.platform.api.message.decoder;
 
 import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
-import io.github.athingx.athing.common.GsonFactory;
+import io.github.athingx.athing.common.gson.GsonFactory;
 import io.github.athingx.athing.platform.api.message.ThingStateMessage;
 
 import java.text.ParseException;

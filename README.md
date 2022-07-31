@@ -59,7 +59,7 @@ Just a Thing
 #### 构建客户端
 
 ```java
-final var thing=new ThingBuilder(new ThingPath(PRODUCT_ID,THING_ID))
+final var thing = new ThingBuilder(new ThingPath(PRODUCT_ID,THING_ID))
         .client(new AliyunMqttClientFactory()
             .secret(SECRET)
             .remote(REMOTE))

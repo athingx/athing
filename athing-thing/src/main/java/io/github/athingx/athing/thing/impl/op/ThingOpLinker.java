@@ -1,6 +1,6 @@
 package io.github.athingx.athing.thing.impl.op;
 
-import io.github.athingx.athing.common.GsonFactory;
+import io.github.athingx.athing.common.gson.GsonFactory;
 import io.github.athingx.athing.thing.api.ThingPath;
 import io.github.athingx.athing.thing.api.function.CompletableFutureFn;
 import io.github.athingx.athing.thing.api.op.*;

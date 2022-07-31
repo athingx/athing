@@ -36,15 +36,16 @@ public class ThingPlatformTestCase implements LoadingProperties {
     @Test(expected = IllegalArgumentException.class)
     public void platform$mock$exception() throws Exception {
 
-        final var platform = new ThingPlatformBuilder()
+        try (var platform = new ThingPlatformBuilder()
                 .client(new AliyunIAcsClientFactory()
                         .region("cn-shanghai")
                         .identity(PLATFORM_IDENTITY)
                         .secret(PLATFORM_SECRET))
-                .build();
+                .build()) {
 
-        platform.register(MockThingTemplate.class, (client, productId, thingId) -> null);
-        platform.register(MockThingTemplate.class, (client, productId, thingId) -> null);
+            platform.register(MockThingTemplate.class, (client, productId, thingId) -> null);
+            platform.register(MockThingTemplate.class, (client, productId, thingId) -> null);
+        }
 
     }
 

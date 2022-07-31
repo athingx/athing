@@ -1,11 +1,11 @@
-package io.github.athingx.athing.common;
+package io.github.athingx.athing.common.gson;
 
 import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
-import marcono1234.gson.recordadapter.RecordComponentNamingStrategy;
-import marcono1234.gson.recordadapter.RecordTypeAdapterFactory;
+import io.github.athingx.athing.common.gson.record.RecordComponentNamingStrategy;
+import io.github.athingx.athing.common.gson.record.RecordTypeAdapterFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -109,9 +109,6 @@ public class GsonFactory {
 
     /**
      * {@link Record}无法被gson反序列化，核心原因在{@link Field#set(Object, Object)}注释中有解释。
-     * <p>
-     * 核心功能由<a href="https://github.com/Marcono1234/gson-record-type-adapter-factory">gson-record-type-adapter-factory</a>提供
-     * </p>
      */
     private static final TypeAdapterFactory recordTypeAdapterFactory = RecordTypeAdapterFactory.builder()
             .allowMissingComponentValues()

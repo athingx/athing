@@ -3,7 +3,7 @@ package io.github.athingx.athing.platform.api.message.decoder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.annotations.SerializedName;
-import io.github.athingx.athing.common.GsonFactory;
+import io.github.athingx.athing.common.gson.GsonFactory;
 import io.github.athingx.athing.platform.api.message.ThingReplyMessage;
 
 import java.util.Objects;
