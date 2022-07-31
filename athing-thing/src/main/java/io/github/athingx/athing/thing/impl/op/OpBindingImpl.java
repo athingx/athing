@@ -1,6 +1,6 @@
 package io.github.athingx.athing.thing.impl.op;
 
-import io.github.athingx.athing.thing.api.op.OpBind;
+import io.github.athingx.athing.thing.api.op.OpBinding;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiFunction;
@@ -14,7 +14,7 @@ import static java.util.concurrent.CompletableFuture.failedFuture;
  * @param <T> 绑定源头类型
  * @param <V> 绑定目标类型
  */
-abstract class OpBindImpl<T, V> implements OpBind<V> {
+abstract class OpBindingImpl<T, V> implements OpBinding<V> {
 
     /**
      * {@link #mapper()}的短路逻辑：逻辑假
@@ -46,12 +46,12 @@ abstract class OpBindImpl<T, V> implements OpBind<V> {
      *
      * @param mapper 映射函数
      */
-    public OpBindImpl(BiFunction<String, ? super T, CompletableFuture<V>> mapper) {
+    public OpBindingImpl(BiFunction<String, ? super T, CompletableFuture<V>> mapper) {
         this.mapper = mapper;
     }
 
     @Override
-    public OpBind<V> matchesAsync(BiFunction<String, ? super V, CompletableFuture<Boolean>> fn) {
+    public OpBinding<V> matchesAsync(BiFunction<String, ? super V, CompletableFuture<Boolean>> fn) {
         final var matchFn = matcher;
         this.matcher = (topic, data) -> matchFn
                 .apply(topic, data)
@@ -63,7 +63,7 @@ abstract class OpBindImpl<T, V> implements OpBind<V> {
     }
 
     @Override
-    public <R> OpBind<R> mapAsync(BiFunction<String, ? super V, CompletableFuture<R>> fn) {
+    public <R> OpBinding<R> mapAsync(BiFunction<String, ? super V, CompletableFuture<R>> fn) {
         return newOpBind((topic, before) -> mapper
                 .apply(topic, before)
                 .thenCompose(data -> matcher
@@ -81,7 +81,7 @@ abstract class OpBindImpl<T, V> implements OpBind<V> {
      * @param <R>    绑定目标类型
      * @return 操作绑定实现
      */
-    abstract <R> OpBindImpl<T, R> newOpBind(BiFunction<String, ? super T, CompletableFuture<R>> mapper);
+    abstract <R> OpBindingImpl<T, R> newOpBind(BiFunction<String, ? super T, CompletableFuture<R>> mapper);
 
     /**
      * 判断异常是否为非跳过控制异常

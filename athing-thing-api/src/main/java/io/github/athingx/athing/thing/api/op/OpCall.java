@@ -8,7 +8,7 @@ import java.util.concurrent.CompletableFuture;
  * @param <T> 请求数据类型
  * @param <R> 应答数据类型
  */
-public interface OpCaller<T extends OpData, R extends OpData> extends OpBinder {
+public interface OpCall<T extends OpData, R extends OpData> extends OpBind {
 
     /**
      * 呼叫
@@ -17,6 +17,6 @@ public interface OpCaller<T extends OpData, R extends OpData> extends OpBinder {
      * @param data  请求数据
      * @return 应答结果
      */
-    CompletableFuture<R> call(String topic, T data);
+    CompletableFuture<R> calling(String topic, T data);
 
 }

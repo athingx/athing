@@ -2,7 +2,6 @@ package io.github.athingx.athing.thing;
 
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
-import io.github.athingx.athing.common.GsonFactory;
 import io.github.athingx.athing.thing.api.ThingPath;
 import io.github.athingx.athing.thing.api.op.OpReply;
 import io.github.athingx.athing.thing.builder.ThingBuilder;
@@ -35,7 +34,7 @@ public class ThingOpTestCase implements LoadingProperties {
                 .build();
 
         final var caller = thing.op()
-                .bind("/sys/%s/thing/config/get_reply".formatted(thing.path().toURN()))
+                .binding("/sys/%s/thing/config/get_reply".formatted(thing.path().toURN()))
                 .matches(matchingTopic(topic -> topic.equals("/sys/%s/thing/config/get_reply".formatted(thing.path().toURN()))))
                 .map(mappingJsonFromByte(UTF_8))
                 .map(mappingJsonToType(new TypeToken<OpReply<Data>>() {
@@ -45,7 +44,7 @@ public class ThingOpTestCase implements LoadingProperties {
                 .get();
 
         final String token = thing.op().genToken();
-        final OpReply<Data> reply = caller.call("/sys/%s/thing/config/get".formatted(thing.path().toURN()),
+        final OpReply<Data> reply = caller.calling("/sys/%s/thing/config/get".formatted(thing.path().toURN()),
                         new MapOpData(token, new MapData()
                                 .putProperty("id", token)
                                 .putProperty("version", "1.0")
@@ -82,7 +81,7 @@ public class ThingOpTestCase implements LoadingProperties {
                 .build();
 
         final BlockingQueue<OpReply<Data>> queue = new LinkedBlockingQueue<>();
-        final var binder = thing.op().bind("/sys/%s/thing/config/get_reply".formatted(thing.path().toURN()))
+        final var binder = thing.op().binding("/sys/%s/thing/config/get_reply".formatted(thing.path().toURN()))
                 .matches(matchingTopic(topic -> topic.equals("/sys/%s/thing/config/get_reply".formatted(thing.path().toURN()))))
                 .map(mappingJsonFromByte(UTF_8))
                 .map(mappingJsonToOpReply(Data.class))
@@ -134,10 +133,10 @@ public class ThingOpTestCase implements LoadingProperties {
                 )
                 .build();
 
-        final var group = thing.op().group();
+        final var group = thing.op().binding();
 
         final var callerF = group
-                .bind("/sys/%s/thing/config/get_reply".formatted(thing.path().toURN()))
+                .binding("/sys/%s/thing/config/get_reply".formatted(thing.path().toURN()))
                 .matches(matchingTopic(topic -> topic.equals("/sys/%s/thing/config/get_reply".formatted(thing.path().toURN()))))
                 .map(mappingJsonFromByte(UTF_8))
                 .map(mappingJsonToOpReply(Data.class))
@@ -147,7 +146,7 @@ public class ThingOpTestCase implements LoadingProperties {
         final var caller = callerF.get();
 
         final String token = thing.op().genToken();
-        final OpReply<Data> reply = caller.call("/sys/%s/thing/config/get".formatted(thing.path().toURN()),
+        final OpReply<Data> reply = caller.calling("/sys/%s/thing/config/get".formatted(thing.path().toURN()),
                         new MapOpData(token, new MapData()
                                 .putProperty("id", token)
                                 .putProperty("version", "1.0")
@@ -186,8 +185,8 @@ public class ThingOpTestCase implements LoadingProperties {
 
         final BlockingQueue<OpReply<Data>> queue = new LinkedBlockingQueue<>();
 
-        final var group = thing.op().group();
-        group.bind("/sys/%s/thing/config/get_reply".formatted(thing.path().toURN()))
+        final var group = thing.op().binding();
+        group.binding("/sys/%s/thing/config/get_reply".formatted(thing.path().toURN()))
                 .matches(matchingTopic(topic -> topic.equals("/sys/%s/thing/config/get_reply".formatted(thing.path().toURN()))))
                 .map(mappingJsonFromByte(UTF_8))
                 .map(mappingJsonToOpReply(Data.class))

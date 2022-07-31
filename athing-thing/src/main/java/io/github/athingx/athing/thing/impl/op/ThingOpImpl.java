@@ -1,9 +1,9 @@
 package io.github.athingx.athing.thing.impl.op;
 
 import io.github.athingx.athing.thing.api.ThingPath;
-import io.github.athingx.athing.thing.api.op.OpBind;
+import io.github.athingx.athing.thing.api.op.OpBinding;
 import io.github.athingx.athing.thing.api.op.OpData;
-import io.github.athingx.athing.thing.api.op.OpGroupBind;
+import io.github.athingx.athing.thing.api.op.OpGroupBinding;
 import io.github.athingx.athing.thing.api.op.ThingOp;
 import org.eclipse.paho.client.mqttv3.IMqttAsyncClient;
 
@@ -29,13 +29,13 @@ public class ThingOpImpl implements ThingOp {
     }
 
     @Override
-    public OpBind<byte[]> bind(String express) {
-        return linker.bind(express);
+    public OpBinding<byte[]> binding(String express) {
+        return linker.binding(express);
     }
 
     @Override
-    public OpGroupBind group() {
-        return linker.group();
+    public OpGroupBinding binding() {
+        return linker.binding();
     }
 
 
