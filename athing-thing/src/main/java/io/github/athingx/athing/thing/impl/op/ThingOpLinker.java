@@ -114,11 +114,11 @@ class ThingOpLinker {
                 }
 
                 // 参数准备
-                final int size = items.size();
-                final String[] expressArray = new String[size];
-                final int[] qosArray = new int[size];
-                final IMqttActionListener[] callbackArray = new IMqttActionListener[size];
-                final IMqttMessageListener[] listenerArray = new IMqttMessageListener[size];
+                final var size = items.size();
+                final var expressArray = new String[size];
+                final var qosArray = new int[size];
+                final var callbackArray = new IMqttActionListener[size];
+                final var listenerArray = new IMqttMessageListener[size];
 
                 // 填充参数
                 for (int index = 0; index < size; index++) {
