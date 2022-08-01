@@ -65,7 +65,7 @@ public class ThingOpTestCase implements LoadingProperties {
         Assert.assertNotNull(reply.data().method);
         Assert.assertNotNull(reply.data().url);
         Assert.assertNotNull(reply.data().type);
-        caller.unbind();
+        caller.unbind().get();
         thing.destroy();
     }
 
@@ -118,7 +118,7 @@ public class ThingOpTestCase implements LoadingProperties {
         Assert.assertNotNull(reply.data().url);
         Assert.assertNotNull(reply.data().type);
 
-        binder.unbind();
+        binder.unbind().get();
         thing.destroy();
     }
 
@@ -167,7 +167,7 @@ public class ThingOpTestCase implements LoadingProperties {
         Assert.assertNotNull(reply.data().method);
         Assert.assertNotNull(reply.data().url);
         Assert.assertNotNull(reply.data().type);
-        binder.unbind();
+        binder.unbind().get();
         thing.destroy();
     }
 
@@ -223,7 +223,7 @@ public class ThingOpTestCase implements LoadingProperties {
         Assert.assertNotNull(reply.data().url);
         Assert.assertNotNull(reply.data().type);
 
-        binder.unbind();
+        binder.unbind().get();
         thing.destroy();
     }
 

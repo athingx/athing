@@ -53,24 +53,22 @@ abstract class OpBindingImpl<T, V> implements OpBinding<V> {
     @Override
     public OpBinding<V> matchesAsync(BiFunction<String, ? super V, CompletableFuture<Boolean>> fn) {
         final var matchFn = matcher;
-        this.matcher = (topic, data) -> matchFn
+        this.matcher = (topic, data)
+                -> matchFn
                 .apply(topic, data)
-                .thenCompose(test -> test
-                        ? fn.apply(topic, data)
-                        : FALSE_CF
-                );
+                .thenCompose(test -> test ? fn.apply(topic, data) : FALSE_CF);
         return this;
     }
 
     @Override
     public <R> OpBinding<R> mapAsync(BiFunction<String, ? super V, CompletableFuture<R>> fn) {
-        return newOpBind((topic, before) -> mapper
+        return newOpBind((topic, before)
+                -> mapper
                 .apply(topic, before)
-                .thenCompose(data -> matcher
+                .thenCompose(data
+                        -> matcher
                         .apply(topic, data)
-                        .thenCompose(test -> test
-                                ? fn.apply(topic, data)
-                                : failedFuture(SKIP_EX)
+                        .thenCompose(test -> test ? fn.apply(topic, data) : failedFuture(SKIP_EX)
                         )));
     }
 

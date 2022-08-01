@@ -11,13 +11,11 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
-import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import static io.github.athingx.athing.thing.api.function.CompletableFutureFn.*;
@@ -65,12 +63,7 @@ class ThingOpLinker {
         final MqttMessage message = new MqttMessage();
         message.setQos(1);
         message.setPayload(json.getBytes(UTF_8));
-        return tryCatchExecute(future -> client.publish(
-                topic,
-                message,
-                new Object(),
-                new MqttFutureCallback<>(future))
-        );
+        return tryCatchExecute(future -> client.publish(topic, message, new Object(), new MqttFutureCallback<>(future)));
     }
 
     /**
@@ -129,21 +122,22 @@ class ThingOpLinker {
                     listenerArray[index] = item.listener();
                 }
 
+                final OpBind bind = ()
+                        -> CompletableFutureFn
+                        .<Void>tryCatchExecute(unbindF -> client.unsubscribe(expressArray, new Object(), new MqttFutureCallback<>(unbindF)))
+                        .whenComplete(whenCompleted(
+                                v -> logger.debug("{}/op/group/unbind success; express={};", path, String.join(",", expressArray)),
+                                ex -> logger.warn("{}/op/group/unbind failure; express={};", path, String.join(",", expressArray), ex)
+                        ));
+
                 // MQTT批量订阅
-                return CompletableFutureFn.<OpBind>tryCatchExecute(future -> client.subscribe(expressArray, qosArray, new Object(),
+                return CompletableFutureFn
+                        .<OpBind>tryCatchExecute(future -> client.subscribe(expressArray, qosArray, new Object(),
                                 new IMqttActionListener() {
                                     @Override
                                     public void onSuccess(IMqttToken token) {
                                         Stream.of(callbackArray).forEach(callback -> callback.onSuccess(token));
-                                        future.complete(() -> CompletableFutureFn.<Void>tryCatchExecute(unbindF -> client.unsubscribe(
-                                                        expressArray,
-                                                        new Object(),
-                                                        new MqttFutureCallback<>(unbindF)
-                                                ))
-                                                .whenComplete(whenCompleted(
-                                                        v -> logger.debug("{}/op/group/unbind success; express={};", path, String.join(",", expressArray)),
-                                                        ex -> logger.warn("{}/op/group/unbind failure; express={};", path, String.join(",", expressArray), ex)
-                                                )));
+                                        future.complete(bind);
                                     }
 
                                     @Override
@@ -171,20 +165,20 @@ class ThingOpLinker {
     private static class MqttFutureCallback<T> implements IMqttActionListener {
 
         private final CompletableFuture<T> future;
-        private final Supplier<T> supplier;
+        private final T target;
 
-        MqttFutureCallback(CompletableFuture<T> future, Supplier<T> supplier) {
+        MqttFutureCallback(CompletableFuture<T> future, T target) {
             this.future = future;
-            this.supplier = supplier;
+            this.target = target;
         }
 
         MqttFutureCallback(CompletableFuture<T> future) {
-            this(future, () -> null);
+            this(future, null);
         }
 
         @Override
         public void onSuccess(IMqttToken asyncActionToken) {
-            future.complete(supplier.get());
+            future.complete(target);
         }
 
         @Override
@@ -246,34 +240,27 @@ class ThingOpLinker {
         @Override
         public CompletableFuture<OpBind> bind(BiConsumer<String, ? super V> fn) {
 
-            final var binder = new OpBind() {
+            final OpBind bind = ()
+                    -> CompletableFutureFn
+                    .<Void>tryCatchExecute(unbindF -> client.unsubscribe(express, new Object(), new MqttFutureCallback<>(unbindF)))
+                    .whenComplete(whenCompleted(
+                            v -> logger.debug("{}/op/bind/unbind success; express={};", path, express),
+                            ex -> logger.warn("{}/op/bind/unbind failure; express={};", path, express, ex)
+                    ));
 
-                @Override
-                public CompletableFuture<Void> unbind() {
-                    return CompletableFutureFn.<Void>tryCatchExecute(unbindF -> client.unsubscribe(
-                                    express,
-                                    new Object(),
-                                    new MqttFutureCallback<>(unbindF)
-                            ))
-                            .whenComplete(whenCompleted(
-                                    v -> logger.debug("{}/op/bind/unbind success; express={};", path, express),
-                                    ex -> logger.warn("{}/op/bind/unbind failure; express={};", path, express, ex)
-                            ));
-                }
+            final IMqttMessageListener listener = (topic, message)
+                    -> executor.execute(()
+                    -> mapper()
+                    .apply(topic, message.getPayload())
+                    .thenAccept(data -> fn.accept(topic, data))
+                    .whenComplete(whenCompleted(
+                            (v, ex) -> isNotSkipEx(ex),
+                            v -> logger.debug("{}/op/bind/listener success; topic={};message-id={};", path, topic, message.getId()),
+                            ex -> logger.warn("{}/op/bind/listener failure; topic={};message-id={};", path, topic, message.getId(), ex)
+                    )));
 
-            };
-
-            return CompletableFutureFn.<OpBind>tryCatchExecute(bindF -> subscriber.subscribe(express, 1, new Object(),
-                            new MqttFutureCallback<>(bindF, () -> binder),
-                            (topic, message) -> executor.execute(() -> mapper()
-                                    .apply(topic, message.getPayload())
-                                    .thenAccept(data -> fn.accept(topic, data))
-                                    .whenComplete(whenCompleted(
-                                            (v, ex) -> isNotSkipEx(ex),
-                                            v -> logger.debug("{}/op/bind/listener success; topic={};message-id={};", path, topic, message.getId()),
-                                            ex -> logger.warn("{}/op/bind/listener failure; topic={};message-id={};", path, topic, message.getId(), ex)
-                                    )))
-                    ))
+            return CompletableFutureFn
+                    .<OpBind>tryCatchExecute(bindF -> subscriber.subscribe(express, 1, new Object(), new MqttFutureCallback<>(bindF, bind), listener))
                     .whenComplete(whenCompleted(
                             v -> logger.debug("{}/op/bind/bind success; express={};", path, express),
                             ex -> logger.warn("{}/op/bind/bind failure; express={};", path, express, ex)
@@ -282,16 +269,13 @@ class ThingOpLinker {
 
         @Override
         public <P extends OpData, R extends OpData> CompletableFuture<OpCall<P, R>> call(Option opOption, BiFunction<String, ? super V, ? extends R> fn) {
-            final Map<String, CompletableFuture<R>> futureMap = new ConcurrentHashMap<>();
+            final var futureMap = new ConcurrentHashMap<String, CompletableFuture<R>>();
             final var caller = new OpCall<P, R>() {
 
                 @Override
                 public CompletableFuture<Void> unbind() {
-                    return CompletableFutureFn.<Void>tryCatchExecute(unbindF -> client.unsubscribe(
-                                    express,
-                                    new Object(),
-                                    new MqttFutureCallback<>(unbindF)
-                            ))
+                    return CompletableFutureFn
+                            .<Void>tryCatchExecute(unbindF -> client.unsubscribe(express, new Object(), new MqttFutureCallback<>(unbindF)))
                             .whenComplete(whenCompleted(
                                     v -> logger.debug("{}/op/call/unbind success; express={};", path, express),
                                     ex -> logger.warn("{}/op/call/unbind failure; express={};", path, express, ex)
@@ -314,25 +298,32 @@ class ThingOpLinker {
                 }
 
             };
-            return tryCatchExecute(bindF -> subscriber.subscribe(express, 1, new Object(),
-                    new MqttFutureCallback<>(bindF, () -> caller),
-                    (topic, message) -> executor.execute(() -> mapper()
-                            .apply(topic, message.getPayload())
-                            .thenApply(v -> fn.apply(topic, v))
-                            .whenComplete(whenSuccessfully(data -> {
-                                final var future = futureMap.remove(data.token());
-                                if (null == future) {
-                                    logger.warn("{}/op/call/reply received; but none token match, maybe timeout! topic={};message-id={};token={};", path, topic, message.getId(), data.token());
-                                } else if (!future.complete(data)) {
-                                    logger.warn("{}/op/call/reply received; but assign failure, maybe expired. topic={};message-id={};token={};", path, topic, message.getId(), data.token());
-                                }
-                            }))
-                            .whenComplete(whenCompleted(
-                                    (v, ex) -> isNotSkipEx(ex),
-                                    v -> logger.debug("{}/op/call/reply success; topic={};message-id={};token={};", path, topic, message.getId(), v.token()),
-                                    ex -> logger.warn("{}/op/call/reply failure; topic={};message-id={};", path, topic, message.getId(), ex)
-                            )))
-            ));
+
+            final IMqttMessageListener listener = (topic, message)
+                    -> executor.execute(()
+                    -> mapper()
+                    .apply(topic, message.getPayload())
+                    .thenApply(v -> fn.apply(topic, v))
+                    .whenComplete(whenSuccessfully(data -> {
+                        final var future = futureMap.remove(data.token());
+                        if (null == future) {
+                            logger.warn("{}/op/call/reply received; but none token match, maybe timeout! topic={};message-id={};token={};", path, topic, message.getId(), data.token());
+                        } else if (!future.complete(data)) {
+                            logger.warn("{}/op/call/reply received; but assign failure, maybe expired. topic={};message-id={};token={};", path, topic, message.getId(), data.token());
+                        }
+                    }))
+                    .whenComplete(whenCompleted(
+                            (v, ex) -> isNotSkipEx(ex),
+                            v -> logger.debug("{}/op/call/reply success; topic={};message-id={};token={};", path, topic, message.getId(), v.token()),
+                            ex -> logger.warn("{}/op/call/reply failure; topic={};message-id={};", path, topic, message.getId(), ex)
+                    )));
+
+            return CompletableFutureFn
+                    .<OpCall<P, R>>tryCatchExecute(bindF -> subscriber.subscribe(express, 1, new Object(), new MqttFutureCallback<>(bindF, caller), listener))
+                    .whenComplete(whenCompleted(
+                            v -> logger.debug("{}/op/call/bind success; express={};", path, express),
+                            ex -> logger.warn("{}/op/call/bind failure; express={};", path, express, ex)
+                    ));
         }
 
     }

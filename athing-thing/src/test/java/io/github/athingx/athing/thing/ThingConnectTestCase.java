@@ -69,7 +69,7 @@ public class ThingConnectTestCase implements LoadingProperties {
 
         });
         latch.countDown();
-        future.get().unbind();
+        future.get().unbind().get();
         thing.destroy();
     }
 
