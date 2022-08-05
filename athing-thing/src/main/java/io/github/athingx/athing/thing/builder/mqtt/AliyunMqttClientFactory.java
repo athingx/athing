@@ -23,8 +23,8 @@ public class AliyunMqttClientFactory implements MqttClientFactory {
     private static final Logger logger = LoggerFactory.getLogger(AliyunMqttClientFactory.class);
     private String remote;
     private String secret;
-    private long connectTimeoutMs = 30L * 1000;
-    private long keepAliveIntervalMs = 60L * 1000;
+    private long connectTimeoutMs = 60L * 1000;
+    private long keepAliveIntervalMs = 30L * 1000;
     private long maxReconnectDelayMs = 30L * 1000;
     private ConnectStrategy strategy;
 
@@ -68,7 +68,7 @@ public class AliyunMqttClientFactory implements MqttClientFactory {
             setUserName(boot.getUsername());
             setPassword(boot.getPassword(secret));
             setCleanSession(true);
-            setAutomaticReconnect(false);
+            setAutomaticReconnect(true);
             setConnectionTimeout((int) (connectTimeoutMs / 1000));
             setKeepAliveInterval((int) (keepAliveIntervalMs / 1000));
             setMaxReconnectDelay((int) (maxReconnectDelayMs / 1000));
@@ -77,6 +77,7 @@ public class AliyunMqttClientFactory implements MqttClientFactory {
 
         // 根据连接策略进行连接
         strategy.connect(path, options, client);
+
         return client;
     }
 
@@ -160,11 +161,7 @@ public class AliyunMqttClientFactory implements MqttClientFactory {
                 int reTryTimes = 0;
                 while (true) {
                     try {
-                        final IMqttToken token = client.connect(options);
-                        token.waitForCompletion();
-                        if (Objects.nonNull(token.getException())) {
-                            throw token.getException();
-                        }
+                        client.connect(options).waitForCompletion();
                         logger.debug("{}/mqtt/client connect success!", path);
                         break;
                     } catch (Exception cause) {
@@ -212,11 +209,7 @@ public class AliyunMqttClientFactory implements MqttClientFactory {
                 final Condition waiting = lock.newCondition();
                 while (true) {
                     try {
-                        final IMqttToken token = client.connect(options);
-                        token.waitForCompletion();
-                        if (Objects.nonNull(token.getException())) {
-                            throw token.getException();
-                        }
+                        client.connect(options).waitForCompletion();
                         logger.debug("{}/mqtt/client connect success!", path);
                         break;
                     } catch (Exception cause) {
