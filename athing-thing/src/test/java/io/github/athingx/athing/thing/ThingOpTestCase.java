@@ -3,6 +3,7 @@ package io.github.athingx.athing.thing;
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
 import io.github.athingx.athing.thing.api.ThingPath;
+import io.github.athingx.athing.thing.api.op.OpBinding;
 import io.github.athingx.athing.thing.api.op.OpReply;
 import io.github.athingx.athing.thing.builder.ThingBuilder;
 import io.github.athingx.athing.thing.builder.mqtt.AliyunMqttClientFactory;
@@ -40,7 +41,7 @@ public class ThingOpTestCase implements LoadingProperties {
                 .map(mappingJsonToType(new TypeToken<OpReply<Data>>() {
 
                 }))
-                .call(identity())
+                .call(new OpBinding.Option().setTimeoutMs(240 * 1000L), identity())
                 .get();
 
         final String token = thing.op().genToken();

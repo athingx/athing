@@ -79,7 +79,7 @@ public class ThingPlatformImpl implements ThingPlatform {
     }
 
     @Override
-    public void close() {
+    public void destroy() {
         closeQuietly(consumer);
         client.shutdown();
     }

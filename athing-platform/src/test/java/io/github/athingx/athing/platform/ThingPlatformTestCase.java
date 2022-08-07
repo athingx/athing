@@ -30,21 +30,25 @@ public class ThingPlatformTestCase implements LoadingProperties {
                         })
                 )
                 .build();
-        platform.close();
+        platform.destroy();
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void platform$mock$exception() throws Exception {
 
-        try (var platform = new ThingPlatformBuilder()
+        final var platform = new ThingPlatformBuilder()
                 .client(new AliyunIAcsClientFactory()
                         .region("cn-shanghai")
                         .identity(PLATFORM_IDENTITY)
                         .secret(PLATFORM_SECRET))
-                .build()) {
+                .build();
+
+        try {
 
             platform.register(MockThingTemplate.class, (client, productId, thingId) -> null);
             platform.register(MockThingTemplate.class, (client, productId, thingId) -> null);
+        } finally {
+            platform.destroy();
         }
 
     }

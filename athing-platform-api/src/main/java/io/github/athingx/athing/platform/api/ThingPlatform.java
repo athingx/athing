@@ -5,7 +5,7 @@ import io.github.athingx.athing.platform.api.message.decoder.ThingMessageDecoder
 /**
  * 设备平台
  */
-public interface ThingPlatform extends AutoCloseable {
+public interface ThingPlatform {
 
     /**
      * 生成设备模版
@@ -42,5 +42,10 @@ public interface ThingPlatform extends AutoCloseable {
      * @param <T>     模板类型
      */
     <T extends ThingTemplate> void register(Class<T> type, ThingTemplateFactory<T> factory, ThingMessageDecoder<?> decoder);
+
+    /**
+     * 销毁设备平台
+     */
+    void destroy();
 
 }

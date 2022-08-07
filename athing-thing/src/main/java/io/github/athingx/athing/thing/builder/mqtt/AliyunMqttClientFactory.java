@@ -67,7 +67,7 @@ public class AliyunMqttClientFactory implements MqttClientFactory {
         final MqttConnectOptions options = new MqttConnectOptions() {{
             setUserName(boot.getUsername());
             setPassword(boot.getPassword(secret));
-            setCleanSession(true);
+            setCleanSession(false);
             setAutomaticReconnect(true);
             setConnectionTimeout((int) (connectTimeoutMs / 1000));
             setKeepAliveInterval((int) (keepAliveIntervalMs / 1000));

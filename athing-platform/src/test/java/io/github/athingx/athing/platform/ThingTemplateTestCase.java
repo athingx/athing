@@ -57,7 +57,7 @@ public class ThingTemplateTestCase implements LoadingProperties {
         Assert.assertTrue(response.getSuccess());
         Assert.assertNotNull(response.getData());
 
-        platform.close();
+        platform.destroy();
     }
 
 }
