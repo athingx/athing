@@ -51,6 +51,16 @@ public interface ThingFn {
     }
 
     /**
+     * 映射：{@code byte[]->json}
+     *
+     * @param charset 字符串编码
+     * @return 映射函数
+     */
+    static BiFunction<String, byte[], String> mappingByteToJson(Charset charset) {
+        return mappingJsonFromByte(charset);
+    }
+
+    /**
      * 映射：{@code json->}{@link OpReply}
      *
      * @param type 应答数据类型

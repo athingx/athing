@@ -14,8 +14,8 @@ public interface OpGroupBinding {
      */
     OpBinding<byte[]> binding(String express);
 
-    default <T extends OpBind> CompletableFuture<T> bindFor(OpGroupBindFor<T> bindFor) {
-        return bindFor.bindFor(this);
+    default <T extends OpBind> CompletableFuture<T> bindFor(OpGroupBinder<T> binder) {
+        return binder.bindFor(this);
     }
 
     /**

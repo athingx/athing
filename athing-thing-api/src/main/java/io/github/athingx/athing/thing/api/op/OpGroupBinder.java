@@ -7,7 +7,7 @@ import java.util.concurrent.CompletableFuture;
  *
  * @param <T> 操作绑定类型
  */
-public interface OpGroupBindFor<T extends OpBind> {
+public interface OpGroupBinder<T extends OpBind> {
 
     /**
      * 绑定

@@ -78,6 +78,28 @@ public class AliyunMqttClientFactory implements MqttClientFactory {
         // 根据连接策略进行连接
         strategy.connect(path, options, client);
 
+        client.setCallback(new MqttCallbackExtended() {
+            @Override
+            public void connectComplete(boolean reconnect, String serverURI) {
+                System.out.println("connectComplete");
+            }
+
+            @Override
+            public void connectionLost(Throwable cause) {
+                System.out.println("connectionLost");
+            }
+
+            @Override
+            public void messageArrived(String topic, MqttMessage message) throws Exception {
+                System.out.println("messageArrived");
+            }
+
+            @Override
+            public void deliveryComplete(IMqttDeliveryToken token) {
+                System.out.println("deliveryComplete");
+            }
+        });
+
         return client;
     }
 
