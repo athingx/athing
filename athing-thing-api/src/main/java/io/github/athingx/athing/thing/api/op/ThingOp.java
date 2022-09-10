@@ -21,7 +21,7 @@ public interface ThingOp {
      * @param data  数据
      * @return 投递应答
      */
-    CompletableFuture<Void> data(String topic, OpData data);
+    CompletableFuture<Void> post(String topic, OpData data);
 
     /**
      * 操作绑定
@@ -32,10 +32,10 @@ public interface ThingOp {
     OpBinding<byte[]> binding(String express);
 
     /**
-     * 操作组绑定
+     * 批量绑定
      *
-     * @return 操作组绑定
+     * @return 批量绑定操作
      */
-    OpGroupBinding binding();
+    OpBatchBinding binding();
 
 }

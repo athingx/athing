@@ -4,11 +4,12 @@ import com.google.gson.annotations.SerializedName;
 
 /**
  * 操作应答
+ *
  * @param token 操作令牌
  * @param code  应答编码
  * @param desc  应答消息
  * @param data  应答数据
- * @param <T> 数据类型
+ * @param <T>   数据类型
  */
 public record OpReply<T>(
         @SerializedName("id") String token,

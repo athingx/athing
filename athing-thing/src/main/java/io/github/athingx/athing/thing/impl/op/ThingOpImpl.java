@@ -3,7 +3,7 @@ package io.github.athingx.athing.thing.impl.op;
 import io.github.athingx.athing.thing.api.ThingPath;
 import io.github.athingx.athing.thing.api.op.OpBinding;
 import io.github.athingx.athing.thing.api.op.OpData;
-import io.github.athingx.athing.thing.api.op.OpGroupBinding;
+import io.github.athingx.athing.thing.api.op.OpBatchBinding;
 import io.github.athingx.athing.thing.api.op.ThingOp;
 import org.eclipse.paho.client.mqttv3.IMqttAsyncClient;
 
@@ -24,8 +24,8 @@ public class ThingOpImpl implements ThingOp {
     }
 
     @Override
-    public CompletableFuture<Void> data(String topic, OpData data) {
-        return linker.data(topic, data);
+    public CompletableFuture<Void> post(String topic, OpData data) {
+        return linker.post(topic, data);
     }
 
     @Override
@@ -34,7 +34,7 @@ public class ThingOpImpl implements ThingOp {
     }
 
     @Override
-    public OpGroupBinding binding() {
+    public OpBatchBinding binding() {
         return linker.binding();
     }
 

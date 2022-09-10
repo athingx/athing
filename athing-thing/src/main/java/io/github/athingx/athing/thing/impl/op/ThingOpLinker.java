@@ -48,17 +48,17 @@ class ThingOpLinker {
     }
 
     /**
-     * @see ThingOp#data(String, OpData)
+     * @see ThingOp#post(String, OpData)
      */
-    CompletableFuture<Void> data(String topic, OpData data) {
-        return post(topic, data)
+    CompletableFuture<Void> post(String topic, OpData data) {
+        return _post(topic, data)
                 .whenComplete(whenCompleted(
                         v -> logger.debug("{}/op/data/post success; topic={};token={};", path, topic, data.token()),
                         ex -> logger.warn("{}/op/data/post failure; topic={};token={};", path, topic, data.token(), ex)
                 ));
     }
 
-    private CompletableFuture<Void> post(String topic, OpData data) {
+    private CompletableFuture<Void> _post(String topic, OpData data) {
         final String json = GsonFactory.getGson().toJson(data);
         final MqttMessage message = new MqttMessage();
         message.setQos(1);
@@ -76,11 +76,11 @@ class ThingOpLinker {
     /**
      * @see ThingOp#binding()
      */
-    OpGroupBinding binding() {
+    OpBatchBinding binding() {
 
         // 订阅项集合
         final List<Subscriber.Item> items = new ArrayList<>();
-        return new OpGroupBinding() {
+        return new OpBatchBinding() {
 
             /*
              * 绑定时，构造一个订阅代理，在代理中将所有bind(express)的订阅记录到订阅项集合中，
@@ -288,7 +288,7 @@ class ThingOpLinker {
                         futureMap.put(data.token(), future);
                         future.toCompletableFuture()
                                 .orTimeout(opOption.getTimeoutMs(), MILLISECONDS)
-                                .thenCombine(post(topic, data), (r, unused) -> r)
+                                .thenCombine(_post(topic, data), (r, unused) -> r)
                                 .whenComplete(whenExceptionally(ex -> futureMap.remove(data.token(), future)))
                                 .whenComplete(whenCompleted(
                                         v -> logger.debug("{}/op/call/post success; topic={};token={};", path, topic, data.token()),
@@ -324,6 +324,11 @@ class ThingOpLinker {
                             v -> logger.debug("{}/op/call/bind success; express={};", path, express),
                             ex -> logger.warn("{}/op/call/bind failure; express={};", path, express, ex)
                     ));
+        }
+
+        @Override
+        public <P extends OpData, R extends OpData> CompletableFuture<OpCall<P, R>> call(BiFunction<String, ? super V, ? extends R> fn) {
+            return call(new Option(), fn);
         }
 
     }

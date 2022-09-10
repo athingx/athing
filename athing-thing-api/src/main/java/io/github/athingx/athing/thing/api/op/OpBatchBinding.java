@@ -3,23 +3,19 @@ package io.github.athingx.athing.thing.api.op;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * 操作组绑定
+ * 操作批量绑定
  */
-public interface OpGroupBinding {
+public interface OpBatchBinding {
 
     /**
-     * 绑定
-     *
+     * 绑定，必须等待{@link #commit()}提交后，绑定才能算完成
      * @see ThingOp#binding(String)
+     *
      */
     OpBinding<byte[]> binding(String express);
 
-    default <T extends OpBind> CompletableFuture<T> bindFor(OpGroupBinder<T> binder) {
-        return binder.bindFor(this);
-    }
-
     /**
-     * 提交操作组绑定
+     * 批量提交绑定
      *
      * @return 操作绑定
      */

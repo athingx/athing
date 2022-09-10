@@ -5,8 +5,6 @@ import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
 
-import static java.util.concurrent.CompletableFuture.completedFuture;
-
 /**
  * 操作绑定
  *
@@ -28,9 +26,7 @@ public interface OpBinding<V> {
      * @param fn 过滤函数
      * @return 操作绑定
      */
-    default OpBinding<V> matches(BiPredicate<String, ? super V> fn) {
-        return matchesAsync((topic, data) -> completedFuture(fn.test(topic, data)));
-    }
+    OpBinding<V> matches(BiPredicate<String, ? super V> fn);
 
     /**
      * 映射数据为其他类型（异步）
@@ -49,9 +45,7 @@ public interface OpBinding<V> {
      * @param <R> 映射结果类型
      * @return 操作绑定
      */
-    default <R> OpBinding<R> map(BiFunction<String, ? super V, ? extends R> fn) {
-        return mapAsync((topic, data) -> completedFuture(fn.apply(topic, data)));
-    }
+    <R> OpBinding<R> map(BiFunction<String, ? super V, ? extends R> fn);
 
     /**
      * 绑定消费操作
@@ -80,9 +74,7 @@ public interface OpBinding<V> {
      * @param <R> 应答数据类型
      * @return 操作绑定
      */
-    default <P extends OpData, R extends OpData> CompletableFuture<OpCall<P, R>> call(BiFunction<String, ? super V, ? extends R> fn) {
-        return call(new Option(), fn);
-    }
+    <P extends OpData, R extends OpData> CompletableFuture<OpCall<P, R>> call(BiFunction<String, ? super V, ? extends R> fn);
 
     /**
      * 操作选项
@@ -94,10 +86,21 @@ public interface OpBinding<V> {
          */
         private long timeoutMs = 1000 * 30L;
 
+        /**
+         * 获取超时时间
+         *
+         * @return 超时时间
+         */
         public long getTimeoutMs() {
             return timeoutMs;
         }
 
+        /**
+         * 设置超时时间
+         *
+         * @param timeoutMs 超时时间
+         * @return this
+         */
         public Option setTimeoutMs(long timeoutMs) {
             this.timeoutMs = timeoutMs;
             return this;

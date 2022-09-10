@@ -4,6 +4,7 @@ import io.github.athingx.athing.thing.api.op.OpBinding;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiFunction;
+import java.util.function.BiPredicate;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.concurrent.CompletableFuture.failedFuture;
@@ -61,6 +62,11 @@ abstract class OpBindingImpl<T, V> implements OpBinding<V> {
     }
 
     @Override
+    public OpBinding<V> matches(BiPredicate<String, ? super V> fn) {
+        return matchesAsync((topic, data) -> completedFuture(fn.test(topic, data)));
+    }
+
+    @Override
     public <R> OpBinding<R> mapAsync(BiFunction<String, ? super V, CompletableFuture<R>> fn) {
         return newOpBind((topic, before)
                 -> mapper
@@ -70,6 +76,11 @@ abstract class OpBindingImpl<T, V> implements OpBinding<V> {
                         .apply(topic, data)
                         .thenCompose(test -> test ? fn.apply(topic, data) : failedFuture(SKIP_EX)
                         )));
+    }
+
+    @Override
+    public <R> OpBinding<R> map(BiFunction<String, ? super V, ? extends R> fn) {
+        return mapAsync((topic, data) -> completedFuture(fn.apply(topic, data)));
     }
 
     /**

@@ -96,7 +96,7 @@ public class ThingOpTestCase implements LoadingProperties {
                 .get();
 
         final String token = thing.op().genToken();
-        thing.op().data("/sys/%s/thing/config/get".formatted(thing.path().toURN()),
+        thing.op().post("/sys/%s/thing/config/get".formatted(thing.path().toURN()),
                         new MapOpData(token, new MapData()
                                 .putProperty("id", token)
                                 .putProperty("version", "1.0")
@@ -201,7 +201,7 @@ public class ThingOpTestCase implements LoadingProperties {
         final var binder = group.commit().get();
 
         final String token = thing.op().genToken();
-        thing.op().data("/sys/%s/thing/config/get".formatted(thing.path().toURN()),
+        thing.op().post("/sys/%s/thing/config/get".formatted(thing.path().toURN()),
                         new MapOpData(token, new MapData()
                                 .putProperty("id", token)
                                 .putProperty("version", "1.0")
