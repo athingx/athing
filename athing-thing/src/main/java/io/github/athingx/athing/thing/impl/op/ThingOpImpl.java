@@ -1,9 +1,9 @@
 package io.github.athingx.athing.thing.impl.op;
 
 import io.github.athingx.athing.thing.api.ThingPath;
+import io.github.athingx.athing.thing.api.op.OpBatchBinding;
 import io.github.athingx.athing.thing.api.op.OpBinding;
 import io.github.athingx.athing.thing.api.op.OpData;
-import io.github.athingx.athing.thing.api.op.OpBatchBinding;
 import io.github.athingx.athing.thing.api.op.ThingOp;
 import org.eclipse.paho.client.mqttv3.IMqttAsyncClient;
 

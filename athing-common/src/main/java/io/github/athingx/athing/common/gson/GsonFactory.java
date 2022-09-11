@@ -126,7 +126,7 @@ public class GsonFactory {
             .registerTypeAdapterFactory(recordTypeAdapterFactory)
             .serializeSpecialFloatingPointValues()
 
-            // Alink协议：{@link Long}和{@code long}采用{@code text}型的数字表示
+            // Long/long use text
             .setLongSerializationPolicy(LongSerializationPolicy.STRING)
 
             // .setPrettyPrinting()

@@ -1,7 +1,10 @@
 package io.github.athingx.athing.thing.builder.mqtt;
 
 import io.github.athingx.athing.thing.api.ThingPath;
-import org.eclipse.paho.client.mqttv3.*;
+import org.eclipse.paho.client.mqttv3.IMqttAsyncClient;
+import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
+import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
+import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

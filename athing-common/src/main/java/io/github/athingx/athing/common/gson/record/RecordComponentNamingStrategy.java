@@ -197,7 +197,6 @@ public interface RecordComponentNamingStrategy {
             case LOWER_CASE_WITH_DASHES -> LOWER_CASE_WITH_DASHES;
             case LOWER_CASE_WITH_DOTS -> LOWER_CASE_WITH_DOTS;
             // In case Gson ever adds new policies
-            //noinspection UnnecessaryDefault
             default -> throw new IllegalArgumentException("Unsupported field naming policy " + policy);
         };
     }

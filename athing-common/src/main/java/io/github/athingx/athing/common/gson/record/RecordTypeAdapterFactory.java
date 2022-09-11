@@ -399,7 +399,7 @@ public class RecordTypeAdapterFactory implements TypeAdapterFactory {
         JsonAdapter jsonAdapterAnnotation = getComponentField(component).getAnnotation(JsonAdapter.class);
         if (jsonAdapterAnnotation == null) {
             TypeAdapter<?> adapter = gson.getAdapter(componentTypeToken);
-            // Only create runtime type type adapter if no JsonAdapter annotation exists, matching behavior
+            // Only create runtime type adapter if no JsonAdapter annotation exists, matching behavior
             // of Gson's ReflectiveTypeAdapterFactory
             if (serializeRuntimeComponentTypes && needsRuntimeTypeTypeAdapter(componentType)) {
                 return new RuntimeTypeTypeAdapter<>(gson, adapter);

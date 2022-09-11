@@ -102,7 +102,7 @@ public class CompletableFutureFn {
     /**
      * 用于{@link CompletableFuture#whenComplete(BiConsumer)}
      *
-     * @param predicate 过滤函数，被过滤后将不会执行“成功”或“失败”函数
+     * @param predicate 过滤函数
      * @param successFn 成功函数
      * @param failureFn 失败函数
      * @param <T>       future数据类型

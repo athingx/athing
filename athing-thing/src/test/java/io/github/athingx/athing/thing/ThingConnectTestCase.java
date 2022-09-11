@@ -34,6 +34,7 @@ public class ThingConnectTestCase implements LoadingProperties {
         Assert.assertEquals("%s/%s".formatted(PRODUCT_ID, THING_ID), thing.path().toURN());
         Assert.assertEquals("thing://%s/%s".formatted(PRODUCT_ID, THING_ID), thing.path().toURI().toString());
         Assert.assertEquals("thing://%s/%s".formatted(PRODUCT_ID, THING_ID), thing.path().toString());
+        Assert.assertNotNull(thing.executor());
         thing.destroy();
     }
 
