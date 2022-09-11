@@ -5,7 +5,7 @@ import java.util.concurrent.CompletableFuture;
 /**
  * 设备操作
  */
-public interface ThingOp {
+public interface ThingOp extends OpBindable {
 
     /**
      * 生成操作令牌
@@ -22,14 +22,6 @@ public interface ThingOp {
      * @return 投递应答
      */
     CompletableFuture<Void> post(String topic, OpData data);
-
-    /**
-     * 操作绑定
-     *
-     * @param express 绑定主题表达式
-     * @return 函数绑定
-     */
-    OpBinding<byte[]> binding(String express);
 
     /**
      * 批量绑定
