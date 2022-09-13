@@ -10,7 +10,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -59,7 +61,21 @@ class ThingOpLinker {
     }
 
     private CompletableFuture<Void> _post(String topic, OpData data) {
-        final String json = GsonFactory.getGson().toJson(data);
+
+        // 修复alink协议的BUG：当回传的类型为OpReply时，器中的data如果为null，必须以{}的形式回传
+        final OpData _fix_data;
+        if (data instanceof OpReply<?> reply && Objects.isNull(reply.data())) {
+            _fix_data = new OpReply<>(
+                    reply.token(),
+                    reply.code(),
+                    reply.desc(),
+                    new HashMap<>()
+            );
+        } else {
+            _fix_data = data;
+        }
+
+        final String json = GsonFactory.getGson().toJson(_fix_data);
         final MqttMessage message = new MqttMessage();
         message.setQos(1);
         message.setPayload(json.getBytes(UTF_8));
