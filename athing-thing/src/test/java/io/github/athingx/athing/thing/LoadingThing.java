@@ -16,8 +16,8 @@ public abstract class LoadingThing implements LoadingProperties {
     @BeforeClass
     public static void onBeforeClass() throws Exception {
         thing = new ThingBuilder(new ThingPath(PRODUCT_ID, THING_ID))
-                .executor(path -> Executors.newFixedThreadPool(20))
-                .client(new AliyunMqttClientFactory()
+                .executorFactory(path -> Executors.newFixedThreadPool(20))
+                .clientFactory(new AliyunMqttClientFactory()
                         .secret(SECRET)
                         .remote(REMOTE)
                 )

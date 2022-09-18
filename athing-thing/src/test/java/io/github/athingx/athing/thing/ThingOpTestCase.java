@@ -27,8 +27,8 @@ public class ThingOpTestCase implements LoadingProperties {
     @Test
     public void test$thing$op_call$success() throws Exception {
         final var thing = new ThingBuilder(new ThingPath(PRODUCT_ID, THING_ID))
-                .executor(path -> Executors.newFixedThreadPool(20))
-                .client(new AliyunMqttClientFactory()
+                .executorFactory(path -> Executors.newFixedThreadPool(20))
+                .clientFactory(new AliyunMqttClientFactory()
                         .secret(SECRET)
                         .remote(REMOTE)
                 )
@@ -74,8 +74,8 @@ public class ThingOpTestCase implements LoadingProperties {
     public void test$thing$op_bind$success() throws Exception {
 
         final var thing = new ThingBuilder(new ThingPath(PRODUCT_ID, THING_ID))
-                .executor(path -> Executors.newFixedThreadPool(20))
-                .client(new AliyunMqttClientFactory()
+                .executorFactory(path -> Executors.newFixedThreadPool(20))
+                .clientFactory(new AliyunMqttClientFactory()
                         .secret(SECRET)
                         .remote(REMOTE)
                 )
@@ -127,8 +127,8 @@ public class ThingOpTestCase implements LoadingProperties {
     @Test
     public void test$thing$op_group_call$success() throws Exception {
         final var thing = new ThingBuilder(new ThingPath(PRODUCT_ID, THING_ID))
-                .executor(path -> Executors.newFixedThreadPool(20))
-                .client(new AliyunMqttClientFactory()
+                .executorFactory(path -> Executors.newFixedThreadPool(20))
+                .clientFactory(new AliyunMqttClientFactory()
                         .secret(SECRET)
                         .remote(REMOTE)
                 )
@@ -176,8 +176,8 @@ public class ThingOpTestCase implements LoadingProperties {
     public void test$thing$op_group_bind$success() throws Exception {
 
         final var thing = new ThingBuilder(new ThingPath(PRODUCT_ID, THING_ID))
-                .executor(path -> Executors.newFixedThreadPool(20))
-                .client(new AliyunMqttClientFactory()
+                .executorFactory(path -> Executors.newFixedThreadPool(20))
+                .clientFactory(new AliyunMqttClientFactory()
                         .secret(SECRET)
                         .remote(REMOTE)
                 )

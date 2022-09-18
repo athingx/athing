@@ -22,8 +22,8 @@ public class ThingConnectTestCase implements LoadingProperties {
     @Test
     public void test$thing$connect$success() throws Exception {
         final Thing thing = new ThingBuilder(new ThingPath(PRODUCT_ID, THING_ID))
-                .executor(path -> Executors.newFixedThreadPool(20))
-                .client(new AliyunMqttClientFactory()
+                .executorFactory(path -> Executors.newFixedThreadPool(20))
+                .clientFactory(new AliyunMqttClientFactory()
                         .secret(SECRET)
                         .remote(REMOTE)
                 )
@@ -42,8 +42,8 @@ public class ThingConnectTestCase implements LoadingProperties {
     public void test$thing$connect_after_bind$success() throws Exception {
         final CountDownLatch latch = new CountDownLatch(1);
         final Thing thing = new ThingBuilder(new ThingPath(PRODUCT_ID, THING_ID))
-                .executor(path -> Executors.newFixedThreadPool(20))
-                .client(new AliyunMqttClientFactory()
+                .executorFactory(path -> Executors.newFixedThreadPool(20))
+                .clientFactory(new AliyunMqttClientFactory()
                         .secret(SECRET)
                         .remote(REMOTE)
                         .strategy((path, options, client) -> {
@@ -77,8 +77,8 @@ public class ThingConnectTestCase implements LoadingProperties {
     @Test(expected = MqttException.class)
     public void test$thing$connect$limits_retry() throws Exception {
         final Thing thing = new ThingBuilder(new ThingPath(PRODUCT_ID, THING_ID))
-                .executor(path -> Executors.newFixedThreadPool(20))
-                .client(new AliyunMqttClientFactory()
+                .executorFactory(path -> Executors.newFixedThreadPool(20))
+                .clientFactory(new AliyunMqttClientFactory()
                         .secret(SECRET)
                         .remote("tcp://imposable.com:0")
                         .strategy(limitsReTry(3, 1000))

@@ -4,7 +4,9 @@ import io.github.athingx.athing.thing.api.Thing;
 import io.github.athingx.athing.thing.api.ThingPath;
 import io.github.athingx.athing.thing.builder.mqtt.MqttClientFactory;
 import io.github.athingx.athing.thing.impl.ThingImpl;
+import org.eclipse.paho.client.mqttv3.IMqttAsyncClient;
 
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static java.util.concurrent.Executors.newFixedThreadPool;
@@ -38,9 +40,19 @@ public class ThingBuilder {
      * @param mcFactory MQTT客户端工厂
      * @return this
      */
-    public ThingBuilder client(MqttClientFactory mcFactory) {
+    public ThingBuilder clientFactory(MqttClientFactory mcFactory) {
         this.mcFactory = mcFactory;
         return this;
+    }
+
+    /**
+     * MQTT客户端
+     *
+     * @param client MQTT客户端
+     * @return this
+     */
+    public ThingBuilder client(IMqttAsyncClient client) {
+        return clientFactory(path -> client);
     }
 
     /**
@@ -49,9 +61,19 @@ public class ThingBuilder {
      * @param esFactory 线程池工厂
      * @return this
      */
-    public ThingBuilder executor(ExecutorServiceFactory esFactory) {
+    public ThingBuilder executorFactory(ExecutorServiceFactory esFactory) {
         this.esFactory = esFactory;
         return this;
+    }
+
+    /**
+     * 线程池
+     *
+     * @param executor 线程池
+     * @return this
+     */
+    public ThingBuilder executor(ExecutorService executor) {
+        return executorFactory(path -> executor);
     }
 
     /**
