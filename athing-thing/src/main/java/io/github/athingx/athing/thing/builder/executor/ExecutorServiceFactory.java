@@ -1,4 +1,4 @@
-package io.github.athingx.athing.thing.builder;
+package io.github.athingx.athing.thing.builder.executor;
 
 import io.github.athingx.athing.thing.api.ThingPath;
 

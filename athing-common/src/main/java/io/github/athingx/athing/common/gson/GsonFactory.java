@@ -4,8 +4,8 @@ import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
-import io.github.athingx.athing.common.gson.record.RecordComponentNamingStrategy;
-import io.github.athingx.athing.common.gson.record.RecordTypeAdapterFactory;
+import marcono1234.gson.recordadapter.RecordComponentNamingStrategy;
+import marcono1234.gson.recordadapter.RecordTypeAdapterFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
