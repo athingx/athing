@@ -42,9 +42,10 @@ Just a Thing
 ```java
 // 创建设备客户端
 final var thing = new ThingBuilder(new ThingPath(PRODUCT_ID,THING_ID))
-        .client(new AliyunMqttClientFactory()
+        .clientFactory(new AliyunMqttClientFactory()
             .secret(SECRET)
-            .remote(REMOTE))
+            .remote(REMOTE)
+        )
         .build();
 ```
 
@@ -62,7 +63,7 @@ final var thing = new ThingBuilder(new ThingPath(PRODUCT_ID,THING_ID))
 ```java
 // 创建设备服务端
 final var platform = new ThingPlatformBuilder()
-        .client(new AliyunIAcsClientFactory()
+        .clientFactory(new AliyunIAcsClientFactory()
             .region("cn-shanghai")
             .identity(PLATFORM_IDENTITY)
             .secret(PLATFORM_SECRET)

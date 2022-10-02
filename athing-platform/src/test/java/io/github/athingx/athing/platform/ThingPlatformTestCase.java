@@ -12,12 +12,12 @@ public class ThingPlatformTestCase implements LoadingProperties {
     @Test
     public void platform$init$success() throws Exception {
         final var platform = new ThingPlatformBuilder()
-                .client(new AliyunIAcsClientFactory()
+                .clientFactory(new AliyunIAcsClientFactory()
                         .region("cn-shanghai")
                         .identity(PLATFORM_IDENTITY)
                         .secret(PLATFORM_SECRET)
                 )
-                .consumer(new AliyunThingMessageConsumerFactory()
+                .consumerFactory(new AliyunThingMessageConsumerFactory()
                         .queue(PLATFORM_JMS_GROUP)
                         .connection(new AliyunJmsConnectionFactory()
                                 .queue(PLATFORM_JMS_GROUP)
@@ -37,7 +37,7 @@ public class ThingPlatformTestCase implements LoadingProperties {
     public void platform$mock$exception() throws Exception {
 
         final var platform = new ThingPlatformBuilder()
-                .client(new AliyunIAcsClientFactory()
+                .clientFactory(new AliyunIAcsClientFactory()
                         .region("cn-shanghai")
                         .identity(PLATFORM_IDENTITY)
                         .secret(PLATFORM_SECRET))
