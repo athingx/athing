@@ -1,9 +1,11 @@
 package io.github.athingx.athing.platform.api.message;
 
+import io.github.athingx.athing.common.ThingCodes;
+
 /**
  * 设备应答消息
  */
-public class ThingReplyMessage extends ThingMessage {
+public class ThingReplyMessage extends ThingMessage implements ThingCodes {
 
     private final String token;
     private final int code;
@@ -36,6 +38,15 @@ public class ThingReplyMessage extends ThingMessage {
      */
     public String getToken() {
         return token;
+    }
+
+    /**
+     * 判断应答结果是否成功
+     *
+     * @return TRUE | FALSE
+     */
+    public boolean isOK() {
+        return getCode() == OK;
     }
 
     /**

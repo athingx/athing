@@ -1,6 +1,7 @@
 package io.github.athingx.athing.thing.api.op;
 
 import com.google.gson.annotations.SerializedName;
+import io.github.athingx.athing.common.ThingCodes;
 
 /**
  * 操作应答
@@ -16,12 +17,7 @@ public record OpReply<T>(
         @SerializedName("code") int code,
         @SerializedName("message") String desc,
         @SerializedName("data") T data
-) implements OpData {
-
-    /**
-     * 成功应答：200
-     */
-    private static final int CODE_OK = 200;
+) implements OpData, ThingCodes {
 
     /**
      * 是否应答成功
@@ -29,7 +25,7 @@ public record OpReply<T>(
      * @return TRUE | FALSE
      */
     public boolean isOk() {
-        return code == CODE_OK;
+        return code == OK;
     }
 
     /**
@@ -41,7 +37,7 @@ public record OpReply<T>(
      * @return 操作应答
      */
     public static <T> OpReply<T> success(String token, T data) {
-        return new OpReply<>(token, CODE_OK, "success", data);
+        return new OpReply<>(token, OK, "success", data);
     }
 
     /**
@@ -52,7 +48,7 @@ public record OpReply<T>(
      * @return 操作应答
      */
     public static OpReply<Void> success(String token, String desc) {
-        return new OpReply<>(token, CODE_OK, desc, null);
+        return new OpReply<>(token, OK, desc, null);
     }
 
     /**
