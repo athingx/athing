@@ -16,6 +16,8 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import static io.github.athingx.athing.thing.api.function.CompletableFutureFn.thenComposeOpReply;
+import static io.github.athingx.athing.thing.api.function.CompletableFutureFn.whenSuccessfully;
 import static io.github.athingx.athing.thing.api.function.ThingFn.*;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -45,7 +47,7 @@ public class ThingOpTestCase implements LoadingProperties {
                 .get();
 
         final String token = thing.op().genToken();
-        final OpReply<Data> reply = caller.calling("/sys/%s/thing/config/get".formatted(thing.path().toURN()),
+        final var data = caller.calling("/sys/%s/thing/config/get".formatted(thing.path().toURN()),
                         new MapOpData(token, new MapData()
                                 .putProperty("id", token)
                                 .putProperty("version", "1.0")
@@ -55,17 +57,18 @@ public class ThingOpTestCase implements LoadingProperties {
                                         .putProperty("getType", "file")
                                 )
                         ))
+                .whenComplete(whenSuccessfully(reply -> Assert.assertTrue(reply.isOk())))
+                .whenComplete(whenSuccessfully(reply -> Assert.assertEquals(token, reply.token())))
+                .whenComplete(whenSuccessfully(reply -> Assert.assertNotNull(reply.data())))
+                .thenCompose(thenComposeOpReply())
                 .get();
 
-        Assert.assertEquals(token, reply.token());
-        Assert.assertTrue(reply.isOk());
-        Assert.assertNotNull(reply.data());
-        Assert.assertNotNull(reply.data().id);
-        Assert.assertTrue(reply.data().size > 0);
-        Assert.assertNotNull(reply.data().sign);
-        Assert.assertNotNull(reply.data().method);
-        Assert.assertNotNull(reply.data().url);
-        Assert.assertNotNull(reply.data().type);
+        Assert.assertNotNull(data.id);
+        Assert.assertTrue(data.size > 0);
+        Assert.assertNotNull(data.sign);
+        Assert.assertNotNull(data.method);
+        Assert.assertNotNull(data.url);
+        Assert.assertNotNull(data.type);
         caller.unbind().get();
         thing.destroy();
     }
