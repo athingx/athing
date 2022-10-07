@@ -20,7 +20,7 @@
         <dependency>
             <groupId>com.github.Marcono1234</groupId>
             <artifactId>gson-record-type-adapter-factory</artifactId>
-            <version>v0.2.0</version>
+            <version>v0.3.0</version>
             <exclusions>
                 <exclusion>
                     <groupId>com.google.code.gson</groupId>
