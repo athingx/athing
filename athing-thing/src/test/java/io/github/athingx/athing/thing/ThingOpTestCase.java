@@ -3,12 +3,12 @@ package io.github.athingx.athing.thing;
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
 import io.github.athingx.athing.thing.api.ThingPath;
+import io.github.athingx.athing.thing.api.domain.OpMap;
 import io.github.athingx.athing.thing.api.domain.OpReply;
 import io.github.athingx.athing.thing.api.op.OpBind;
 import io.github.athingx.athing.thing.api.op.OpPost;
 import io.github.athingx.athing.thing.builder.ThingBuilder;
 import io.github.athingx.athing.thing.builder.mqtt.AliyunMqttClientFactory;
-import io.github.athingx.athing.thing.api.domain.OpMap;
 import org.junit.Assert;
 import org.junit.Test;
 

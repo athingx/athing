@@ -1,7 +1,5 @@
 package io.github.athingx.athing.thing.impl.util;
 
-import java.util.Map;
-
 public class StringUtils {
 
     /**
@@ -15,10 +13,6 @@ public class StringUtils {
         for (byte b : bArray)
             sb.append(String.format("%02X", b));
         return sb.toString();
-    }
-
-    public static String format(String pattern, Object object) {
-        return pattern;
     }
 
 }

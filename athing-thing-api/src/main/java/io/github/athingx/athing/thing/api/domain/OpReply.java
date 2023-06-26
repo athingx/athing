@@ -4,8 +4,6 @@ import com.google.gson.annotations.SerializedName;
 import io.github.athingx.athing.common.ThingCodes;
 import io.github.athingx.athing.thing.api.op.OpData;
 
-import java.util.Objects;
-
 /**
  * 操作应答
  *
