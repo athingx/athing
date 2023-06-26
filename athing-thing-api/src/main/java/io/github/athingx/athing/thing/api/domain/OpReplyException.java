@@ -1,4 +1,4 @@
-package io.github.athingx.athing.thing.api.op;
+package io.github.athingx.athing.thing.api.domain;
 
 /**
  * 应答异常

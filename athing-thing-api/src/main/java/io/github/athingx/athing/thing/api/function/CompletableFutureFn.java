@@ -1,7 +1,7 @@
 package io.github.athingx.athing.thing.api.function;
 
-import io.github.athingx.athing.thing.api.op.OpReply;
-import io.github.athingx.athing.thing.api.op.OpReplyException;
+import io.github.athingx.athing.thing.api.domain.OpReply;
+import io.github.athingx.athing.thing.api.domain.OpReplyException;
 
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
@@ -15,76 +15,6 @@ import java.util.function.Function;
  * {@link CompletableFuture}函数集合
  */
 public class CompletableFutureFn {
-
-    /**
-     * 可执行
-     *
-     * @param <T> future数据类型
-     */
-    @FunctionalInterface
-    public interface Executable<T> {
-
-        /**
-         * 执行
-         *
-         * @param future future
-         * @throws Throwable 执行失败
-         */
-        void execute(CompletableFuture<T> future) throws Throwable;
-
-    }
-
-    /**
-     * 执行，如执行抛出异常，将会让目标future直接失败
-     *
-     * @param fn  执行函数
-     * @param <T> future数据类型
-     * @return future
-     */
-    public static <T> CompletableFuture<T> tryCatchExecute(Executable<T> fn) {
-        final CompletableFuture<T> future = new CompletableFuture<>();
-        try {
-            fn.execute(future);
-        } catch (Throwable cause) {
-            future.completeExceptionally(cause);
-        }
-        return future;
-    }
-
-    /**
-     * 可完成
-     *
-     * @param <T> future数据类型
-     */
-    @FunctionalInterface
-    public interface Completable<T> {
-
-        /**
-         * 完成
-         *
-         * @return 完成数据
-         * @throws Throwable 完成失败
-         */
-        T complete() throws Throwable;
-
-    }
-
-    /**
-     * 完成，如执完成出异常，将会让目标future直接失败
-     *
-     * @param fn  完成函数
-     * @param <T> future数据类型
-     * @return future
-     */
-    public static <T> CompletableFuture<T> tryCatchComplete(Completable<T> fn) {
-        final CompletableFuture<T> future = new CompletableFuture<>();
-        try {
-            future.complete(fn.complete());
-        } catch (Throwable cause) {
-            future.completeExceptionally(cause);
-        }
-        return future;
-    }
 
     /**
      * 用于{@link CompletableFuture#whenComplete(BiConsumer)}
@@ -165,21 +95,13 @@ public class CompletableFutureFn {
      * @return function for {@link CompletableFuture#thenCompose(Function)}
      */
     public static <T> Function<OpReply<T>, CompletionStage<T>> thenComposeOpReply() {
-        return reply -> tryCatchComplete(() -> {
-
-            // 如果应答返回错误的编码，则抛出应答异常
-            if (!reply.isOk()) {
-                throw new OpReplyException(
-                        reply.token(),
-                        reply.code(),
-                        reply.desc()
-                );
-            }
-
-            // 应答返回成功结果，返回应答数据结果
-            return reply.data();
-
-        });
+        return reply -> reply.isOk()
+                ? CompletableFuture.completedFuture(reply.data())
+                : CompletableFuture.failedFuture(new OpReplyException(
+                reply.token(),
+                reply.code(),
+                reply.desc()
+        ));
     }
 
 }

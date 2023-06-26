@@ -5,11 +5,11 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
 import io.github.athingx.athing.common.gson.GsonFactory;
-import io.github.athingx.athing.thing.api.op.OpReply;
+import io.github.athingx.athing.thing.api.domain.OpReply;
 
 import java.nio.charset.Charset;
-import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 import static java.util.Optional.ofNullable;
@@ -18,16 +18,6 @@ import static java.util.Optional.ofNullable;
  * 设备函数集合
  */
 public interface ThingFn {
-
-    /**
-     * 自映射（{@code R -> R}）
-     *
-     * @param <R> 数据类型
-     * @return 映射函数
-     */
-    static <R> BiFunction<String, R, R> identity() {
-        return (topic, data) -> data;
-    }
 
     /**
      * 匹配：消息主题
@@ -46,18 +36,8 @@ public interface ThingFn {
      * @param charset 字符串编码
      * @return 映射函数
      */
-    static BiFunction<String, byte[], String> mappingJsonFromByte(Charset charset) {
-        return (s, bytes) -> new String(bytes, charset);
-    }
-
-    /**
-     * 映射：{@code byte[]->json}
-     *
-     * @param charset 字符串编码
-     * @return 映射函数
-     */
-    static BiFunction<String, byte[], String> mappingByteToJson(Charset charset) {
-        return mappingJsonFromByte(charset);
+    static Function<byte[], String> mappingByteToJson(Charset charset) {
+        return bytes -> new String(bytes, charset);
     }
 
     /**
@@ -67,8 +47,8 @@ public interface ThingFn {
      * @param <T>  应答数据类型
      * @return 映射函数
      */
-    static <T> BiFunction<String, String, T> mappingJsonToType(Class<T> type) {
-        return (s, json) -> GsonFactory.getGson().fromJson(json, type);
+    static <T> Function<String, T> mappingJsonToType(Class<T> type) {
+        return json -> GsonFactory.getGson().fromJson(json, type);
     }
 
     /**
@@ -78,8 +58,8 @@ public interface ThingFn {
      * @param <T>    应答数据类型
      * @return 映射函数
      */
-    static <T> BiFunction<String, String, T> mappingJsonToType(TypeToken<T> tToken) {
-        return (s, json) -> GsonFactory.getGson().fromJson(json, tToken.getType());
+    static <T> Function<String, T> mappingJsonToType(TypeToken<T> tToken) {
+        return json -> GsonFactory.getGson().fromJson(json, tToken.getType());
     }
 
     /**
@@ -89,8 +69,8 @@ public interface ThingFn {
      * @param <T>  应答数据类型
      * @return 映射函数
      */
-    static <T> BiFunction<String, String, OpReply<T>> mappingJsonToOpReply(Class<T> type) {
-        return (s, json) -> {
+    static <T> Function<String, OpReply<T>> mappingJsonToOpReply(Class<T> type) {
+        return json -> {
             final JsonObject root = JsonParser.parseString(json).getAsJsonObject();
             return OpReply.reply(
                     ofNullable(root.get("id"))
