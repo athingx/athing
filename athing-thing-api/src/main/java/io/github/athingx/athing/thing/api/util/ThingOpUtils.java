@@ -1,11 +1,11 @@
-package io.github.athingx.athing.thing.api.function;
+package io.github.athingx.athing.thing.api.util;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
 import io.github.athingx.athing.common.gson.GsonFactory;
-import io.github.athingx.athing.thing.api.domain.OpReply;
+import io.github.athingx.athing.thing.api.op.OpReply;
 
 import java.nio.charset.Charset;
 import java.util.function.BiPredicate;
@@ -17,7 +17,7 @@ import static java.util.Optional.ofNullable;
 /**
  * 设备函数集合
  */
-public interface ThingFn {
+public interface ThingOpUtils {
 
     /**
      * 匹配：消息主题

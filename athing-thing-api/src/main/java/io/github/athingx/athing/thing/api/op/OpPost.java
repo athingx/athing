@@ -10,7 +10,21 @@ import java.util.function.BiFunction;
 public class OpPost<V extends OpData> {
 
     private final String pattern;
+    private final int qos;
     private final BiFunction<String, ? super V, String> formatter;
+
+    /**
+     * 操作投递
+     *
+     * @param pattern   主题表达式
+     * @param qos       qos
+     * @param formatter 主题格式化器
+     */
+    public OpPost(String pattern, int qos, BiFunction<String, ? super V, String> formatter) {
+        this.pattern = pattern;
+        this.qos = qos;
+        this.formatter = formatter;
+    }
 
     /**
      * 操作投递
@@ -19,8 +33,7 @@ public class OpPost<V extends OpData> {
      * @param formatter 主题格式化器
      */
     public OpPost(String pattern, BiFunction<String, ? super V, String> formatter) {
-        this.pattern = pattern;
-        this.formatter = formatter;
+        this(pattern, 1, formatter);
     }
 
     /**
@@ -54,6 +67,15 @@ public class OpPost<V extends OpData> {
      */
     public static <V extends OpData> OpPost<V> topic(String pattern, BiFunction<String, ? super V, String> formatter) {
         return new OpPost<>(pattern, formatter);
+    }
+
+    /**
+     * 获取QOS
+     *
+     * @return QOS
+     */
+    public int qos() {
+        return qos;
     }
 
 }

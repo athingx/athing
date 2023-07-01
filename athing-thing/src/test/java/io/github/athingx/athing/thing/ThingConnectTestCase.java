@@ -2,8 +2,10 @@ package io.github.athingx.athing.thing;
 
 import io.github.athingx.athing.thing.api.Thing;
 import io.github.athingx.athing.thing.api.ThingPath;
+import io.github.athingx.athing.thing.api.op.OpBind;
 import io.github.athingx.athing.thing.builder.ThingBuilder;
 import io.github.athingx.athing.thing.builder.mqtt.AliyunMqttClientFactory;
+import io.github.athingx.athing.thing.builder.mqtt.MqttConnectStrategy;
 import org.eclipse.paho.client.mqttv3.DisconnectedBufferOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.junit.Assert;
@@ -12,7 +14,7 @@ import org.junit.Test;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 
-import static io.github.athingx.athing.thing.builder.mqtt.AliyunMqttClientFactory.ConnectStrategy.limitsReTry;
+import static io.github.athingx.athing.thing.builder.mqtt.MqttConnectStrategy.limitsReTry;
 
 /**
  * 设备连接测试用例
@@ -54,8 +56,8 @@ public class ThingConnectTestCase implements LoadingProperties {
                             new Thread(() -> {
                                 try {
                                     latch.await();
-                                    AliyunMqttClientFactory.ConnectStrategy
-                                            .alwaysReTry(options.getMaxReconnectDelay())
+                                    MqttConnectStrategy
+                                            .alwaysReTry()
                                             .connect(path, options, client);
                                 } catch (Exception e) {
                                     throw new RuntimeException(e);
@@ -66,7 +68,7 @@ public class ThingConnectTestCase implements LoadingProperties {
                 )
                 .build();
         Assert.assertNotNull(thing);
-        var future = thing.op().bind("/hello", (s, bytes) -> {
+        var future = thing.op().bind(OpBind.newBuilder("/hello").build(), (s, bytes) -> {
 
         });
         latch.countDown();
@@ -81,7 +83,7 @@ public class ThingConnectTestCase implements LoadingProperties {
                 .clientFactory(new AliyunMqttClientFactory()
                         .secret(SECRET)
                         .remote("tcp://imposable.com:0")
-                        .strategy(limitsReTry(3, 1000))
+                        .strategy(limitsReTry(3))
                 )
                 .build();
         Assert.assertNotNull(thing);

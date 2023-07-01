@@ -1,8 +1,7 @@
-package io.github.athingx.athing.thing.api.domain;
+package io.github.athingx.athing.thing.api.op;
 
 import com.google.gson.annotations.SerializedName;
 import io.github.athingx.athing.common.ThingCodes;
-import io.github.athingx.athing.thing.api.op.OpData;
 
 /**
  * 操作应答

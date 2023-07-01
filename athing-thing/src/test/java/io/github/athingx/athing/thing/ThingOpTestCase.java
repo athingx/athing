@@ -3,22 +3,23 @@ package io.github.athingx.athing.thing;
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
 import io.github.athingx.athing.thing.api.ThingPath;
-import io.github.athingx.athing.thing.api.domain.OpMap;
-import io.github.athingx.athing.thing.api.domain.OpReply;
+import io.github.athingx.athing.thing.api.op.OpDataObject;
+import io.github.athingx.athing.thing.api.op.OpReply;
 import io.github.athingx.athing.thing.api.op.OpBind;
 import io.github.athingx.athing.thing.api.op.OpPost;
 import io.github.athingx.athing.thing.builder.ThingBuilder;
 import io.github.athingx.athing.thing.builder.mqtt.AliyunMqttClientFactory;
+import io.github.athingx.athing.thing.builder.mqtt.MqttConnectStrategy;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.*;
 
-import static io.github.athingx.athing.thing.api.function.CompletableFutureFn.thenComposeOpReply;
-import static io.github.athingx.athing.thing.api.function.CompletableFutureFn.whenSuccessfully;
-import static io.github.athingx.athing.thing.api.function.ThingFn.*;
+import static io.github.athingx.athing.thing.api.util.CompletableFutureUtils.thenComposeOpReply;
+import static io.github.athingx.athing.thing.api.util.CompletableFutureUtils.whenSuccessfully;
+import static io.github.athingx.athing.thing.api.util.ThingOpUtils.*;
+import static io.github.athingx.athing.thing.builder.mqtt.MqttConnectStrategy.alwaysReTry;
+import static io.github.athingx.athing.thing.builder.mqtt.MqttConnectStrategy.async;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
@@ -28,11 +29,11 @@ public class ThingOpTestCase implements LoadingProperties {
 
     @Test
     public void test$thing$op_call$success() throws Exception {
-        final var thing = new ThingBuilder(new ThingPath(PRODUCT_ID, THING_ID))
-                .executorFactory(path -> Executors.newFixedThreadPool(20))
+        final var thing = new ThingBuilder(PRODUCT_ID, THING_ID)
                 .clientFactory(new AliyunMqttClientFactory()
                         .secret(SECRET)
                         .remote(REMOTE)
+                        .strategy(alwaysReTry())
                 )
                 .build();
 
@@ -48,13 +49,11 @@ public class ThingOpTestCase implements LoadingProperties {
                 .get();
 
         final var token = thing.op().genToken();
-
-
-        final var data = thingCall.call(new OpMap(token)
+        final var data = thingCall.call(new OpDataObject(token)
                         .putProperty("id", token)
                         .putProperty("version", "1.0")
                         .putProperty("method", "thing.config.get")
-                        .putProperty("params", new OpMap(token)
+                        .putProperty("params", new OpDataObject(token)
                                 .putProperty("configScope", "product")
                                 .putProperty("getType", "file")
                         )
@@ -71,6 +70,8 @@ public class ThingOpTestCase implements LoadingProperties {
         Assert.assertNotNull(data.method);
         Assert.assertNotNull(data.url);
         Assert.assertNotNull(data.type);
+
+        // 销毁
         thingCall.unbind().get();
         thing.destroy();
     }
@@ -104,12 +105,12 @@ public class ThingOpTestCase implements LoadingProperties {
                 .get();
 
         final String token = thing.op().genToken();
-        thing.op().post("/sys/%s/thing/config/get".formatted(thing.path().toURN()),
-                        new OpMap(token)
+        thing.op().post(OpPost.topic("/sys/%s/thing/config/get".formatted(thing.path().toURN())),
+                        new OpDataObject(token)
                                 .putProperty("id", token)
                                 .putProperty("version", "1.0")
                                 .putProperty("method", "thing.config.get")
-                                .putProperty("params", new OpMap(token)
+                                .putProperty("params", new OpDataObject(token)
                                         .putProperty("configScope", "product")
                                         .putProperty("getType", "file")
                                 )
@@ -142,4 +143,16 @@ public class ThingOpTestCase implements LoadingProperties {
     ) {
 
     }
+
+
+    @Test
+    public void test() throws Exception {
+
+        final var future = new CompletableFuture<String>()
+                .whenComplete((v, ex) -> System.out.println("ret1=" + v));
+        future.complete("hello");
+        future.whenComplete((v, ex) -> System.out.println("ret2=" + v));
+
+    }
+
 }

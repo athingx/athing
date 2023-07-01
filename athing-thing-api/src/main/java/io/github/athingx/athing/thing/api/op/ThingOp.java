@@ -16,7 +16,7 @@ public interface ThingOp {
     String genToken();
 
     /**
-     * 投递操作
+     * 投递数据
      *
      * @param opPost 投递操作
      * @param opData 投递数据
@@ -27,19 +27,7 @@ public interface ThingOp {
     CompletableFuture<Void> post(OpPost<? super V> opPost, V opData);
 
     /**
-     * 投递操作
-     *
-     * @param topic  投递主题
-     * @param opData 投递数据
-     * @param <V>    数据类型
-     * @return 投递结果
-     */
-    default <V extends OpData> CompletableFuture<Void> post(String topic, V opData) {
-        return post(OpPost.topic(topic), opData);
-    }
-
-    /**
-     * 绑定设备消费
+     * 绑定设备数据消费
      *
      * @param opBind    绑定操作
      * @param consumeFn 消费函数
@@ -49,18 +37,7 @@ public interface ThingOp {
     <V> CompletableFuture<ThingBind> bind(OpBind<? extends V> opBind, BiConsumer<String, ? super V> consumeFn);
 
     /**
-     * 绑定设备消费
-     *
-     * @param express   监听主题表达式
-     * @param consumeFn 消费函数
-     * @return 消费操作
-     */
-    default CompletableFuture<ThingBind> bind(String express, BiConsumer<String, byte[]> consumeFn) {
-        return bind(OpBind.newBuilder(express).build(), consumeFn);
-    }
-
-    /**
-     * 绑定设备调用
+     * 绑定设备数据调用
      *
      * @param opPost 请求操作
      * @param opBind 应答操作

@@ -1,7 +1,11 @@
-package io.github.athingx.athing.thing.api.function;
+package io.github.athingx.athing.thing.api.util;
 
-import io.github.athingx.athing.thing.api.domain.OpReply;
-import io.github.athingx.athing.thing.api.domain.OpReplyException;
+import io.github.athingx.athing.thing.api.function.ExConsumer;
+import io.github.athingx.athing.thing.api.function.ExFunction;
+import io.github.athingx.athing.thing.api.function.ExRunnable;
+import io.github.athingx.athing.thing.api.function.ExSupplier;
+import io.github.athingx.athing.thing.api.op.OpReply;
+import io.github.athingx.athing.thing.api.op.OpReplyException;
 
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
@@ -14,7 +18,75 @@ import java.util.function.Function;
 /**
  * {@link CompletableFuture}函数集合
  */
-public class CompletableFutureFn {
+public class CompletableFutureUtils {
+
+    public static <T, F extends CompletableFuture<T>> F executeFuture(F future, ExRunnable<Throwable> fn) {
+        try {
+            fn.run();
+        } catch (Throwable cause) {
+            future.completeExceptionally(cause);
+        }
+        return future;
+    }
+
+    public static <T, F extends CompletableFuture<T>> F executeFuture(F future, ExConsumer<F, Throwable> fn) {
+        try {
+            fn.accept(future);
+        } catch (Throwable cause) {
+            future.completeExceptionally(cause);
+        }
+        return future;
+    }
+
+    public static <T> CompletableFuture<T> executeFuture(ExConsumer<CompletableFuture<T>, Throwable> fn) {
+        return executeFuture(new CompletableFuture<T>(), fn);
+    }
+
+    public static <T, F extends CompletableFuture<T>> F completeFuture(F future, ExSupplier<T, Throwable> fn) {
+        try {
+            future.complete(fn.get());
+        } catch (Throwable cause) {
+            future.completeExceptionally(cause);
+        }
+        return future;
+    }
+
+    public static <T, F extends CompletableFuture<T>> F completeFuture(F future, ExFunction<F, T, Throwable> fn) {
+        try {
+            future.complete(fn.apply(future));
+        } catch (Throwable cause) {
+            future.completeExceptionally(cause);
+        }
+        return future;
+    }
+
+    public static <T> CompletableFuture<T> completeFuture(ExFunction<CompletableFuture<T>, T, Throwable> fn) {
+        return completeFuture(new CompletableFuture<>(), fn);
+    }
+
+    public static <F extends CompletableFuture<Void>> F completeFuture(F future, ExRunnable<Throwable> fn) {
+        try {
+            fn.run();
+            future.complete(null);
+        } catch (Throwable cause) {
+            future.completeExceptionally(cause);
+        }
+        return future;
+    }
+
+    public static <F extends CompletableFuture<Void>> F completeFuture(F future, ExConsumer<F, Throwable> fn) {
+        try {
+            fn.accept(future);
+            future.complete(null);
+        } catch (Throwable cause) {
+            future.completeExceptionally(cause);
+        }
+        return future;
+    }
+
+    public static CompletableFuture<Void> completeFuture(ExConsumer<CompletableFuture<Void>, Throwable> fn) {
+        return completeFuture(new CompletableFuture<>(), fn);
+    }
 
     /**
      * 用于{@link CompletableFuture#whenComplete(BiConsumer)}

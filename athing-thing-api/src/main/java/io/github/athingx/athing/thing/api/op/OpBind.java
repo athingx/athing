@@ -10,26 +10,48 @@ import java.util.function.Function;
 public class OpBind<V> {
 
     private final String express;
+    private final int qos;
     private final BiFunction<String, byte[], ? extends V> decoder;
 
     /**
      * 操作绑定
      *
-     * @param express 绑定主题表达式
+     * @param express 绑定表达式
+     * @param qos     QOS
      * @param decoder 解码器
      */
-    public OpBind(String express, BiFunction<String, byte[], ? extends V> decoder) {
+    public OpBind(String express, int qos, BiFunction<String, byte[], ? extends V> decoder) {
         this.express = express;
+        this.qos = qos;
         this.decoder = decoder;
     }
 
     /**
-     * 绑定主题表达式
+     * 操作绑定
      *
-     * @return 绑定主题表达式
+     * @param express 绑定表达式
+     * @param decoder 解码器
+     */
+    public OpBind(String express, BiFunction<String, byte[], ? extends V> decoder) {
+        this(express, 1, decoder);
+    }
+
+    /**
+     * 获取绑定表达式
+     *
+     * @return 绑定表达式
      */
     public String express() {
         return express;
+    }
+
+    /**
+     * 获取QOS
+     *
+     * @return QOS
+     */
+    public int qos() {
+        return qos;
     }
 
     /**
@@ -46,11 +68,11 @@ public class OpBind<V> {
     /**
      * 创建操作绑定构建器
      *
-     * @param express 绑定主题表达式
+     * @param express 绑定表达式
      * @return 操作绑定构建器
      */
     public static Builder<byte[], byte[]> newBuilder(String express) {
-        return new Builder<>(express, (topic, data) -> data);
+        return new Builder<>(express, 1, (topic, data) -> data);
     }
 
     /**
@@ -62,17 +84,30 @@ public class OpBind<V> {
     public static class Builder<T, R> {
 
         private final String express;
+        private final int qos;
         private final BiFunction<String, byte[], ? extends R> decoder;
 
         /**
          * 操作绑定构建器
          *
-         * @param express 绑定主题表达式
+         * @param express 绑定表达式
+         * @param qos     QOS
          * @param decoder 解码器
          */
-        Builder(String express, BiFunction<String, byte[], ? extends R> decoder) {
+        Builder(String express, int qos, BiFunction<String, byte[], ? extends R> decoder) {
             this.express = express;
+            this.qos = qos;
             this.decoder = decoder;
+        }
+
+        /**
+         * 设置QOS
+         *
+         * @param qos QOS
+         * @return this
+         */
+        public Builder<T, R> qos(int qos) {
+            return new Builder<>(express, qos, decoder);
         }
 
         /**
@@ -104,7 +139,7 @@ public class OpBind<V> {
          * @return this
          */
         public <V> Builder<T, V> decode(BiFunction<String, ? super R, ? extends V> decoder) {
-            return new Builder<>(express, (topic, data) -> decoder.apply(topic, Builder.this.decoder.apply(topic, data)));
+            return new Builder<>(express, qos, (topic, data) -> decoder.apply(topic, Builder.this.decoder.apply(topic, data)));
         }
 
         /**
@@ -113,7 +148,7 @@ public class OpBind<V> {
          * @return 操作绑定
          */
         public OpBind<R> build() {
-            return new OpBind<>(express, decoder);
+            return new OpBind<>(express, qos, decoder);
         }
 
     }

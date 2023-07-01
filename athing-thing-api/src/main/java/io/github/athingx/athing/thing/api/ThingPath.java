@@ -27,18 +27,42 @@ public class ThingPath {
         this._string = uri.toString();
     }
 
+    /**
+     * 获取产品ID
+     *
+     * @return 产品ID
+     */
     public String getProductId() {
         return productId;
     }
 
+    /**
+     * 获取设备ID
+     *
+     * @return 设备ID
+     */
     public String getThingId() {
         return thingId;
     }
 
+    /**
+     * 设备路径转换为URN
+     * <p>
+     * 格式：{productId}/{thingId}
+     *
+     * @return URN
+     */
     public String toURN() {
         return urn;
     }
 
+    /**
+     * 设备路径转换为URI
+     * <p>
+     * 格式：thing://{productId}/{thingId}
+     *
+     * @return URI
+     */
     public URI toURI() {
         return uri;
     }

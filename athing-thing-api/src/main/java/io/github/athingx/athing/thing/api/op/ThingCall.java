@@ -4,7 +4,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
 /**
- * 设备调用绑定
+ * 设备数据调用者
  *
  * @param <T> 请求数据类型
  * @param <R> 应答数据类型
@@ -33,15 +33,6 @@ public interface ThingCall<T extends OpData, R extends OpData> extends ThingBind
     /**
      * 调用
      *
-     * @param option  调用选项
-     * @param encoder 编码器
-     * @return 应答结果
-     */
-    CompletableFuture<R> call(Option option, Function<String, ? extends T> encoder);
-
-    /**
-     * 调用
-     *
      * @param encoder 编码器
      * @return 应答结果
      */
@@ -50,10 +41,20 @@ public interface ThingCall<T extends OpData, R extends OpData> extends ThingBind
     }
 
     /**
+     * 调用
+     *
+     * @param option  调用选项
+     * @param encoder 编码器
+     * @return 应答结果
+     */
+    CompletableFuture<R> call(Option option, Function<String, ? extends T> encoder);
+
+    /**
      * 调用选项
      */
     class Option {
 
+        private int qos = 1;
         private long timeoutMs = 30000L;
 
         /**
@@ -61,7 +62,7 @@ public interface ThingCall<T extends OpData, R extends OpData> extends ThingBind
          *
          * @return 调用超时时间（毫秒）
          */
-        public long getTimeoutMs() {
+        public long timeoutMs() {
             return this.timeoutMs;
         }
 
@@ -71,8 +72,28 @@ public interface ThingCall<T extends OpData, R extends OpData> extends ThingBind
          * @param timeoutMs 调用超时时间（毫秒）
          * @return this
          */
-        public Option setTimeoutMs(long timeoutMs) {
+        public Option timeoutMs(long timeoutMs) {
             this.timeoutMs = timeoutMs;
+            return this;
+        }
+
+        /**
+         * 获取QOS
+         *
+         * @return QOS
+         */
+        public int qos() {
+            return qos;
+        }
+
+        /**
+         * 设置QOS
+         *
+         * @param qos QOS
+         * @return this
+         */
+        public Option qos(int qos) {
+            this.qos = qos;
             return this;
         }
 

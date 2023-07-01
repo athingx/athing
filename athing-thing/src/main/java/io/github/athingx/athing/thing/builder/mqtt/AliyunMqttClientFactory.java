@@ -1,10 +1,7 @@
 package io.github.athingx.athing.thing.builder.mqtt;
 
 import io.github.athingx.athing.thing.api.ThingPath;
-import org.eclipse.paho.client.mqttv3.IMqttAsyncClient;
-import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
-import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
-import org.eclipse.paho.client.mqttv3.MqttException;
+import org.eclipse.paho.client.mqttv3.*;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,24 +9,33 @@ import org.slf4j.LoggerFactory;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Function;
 
+import static io.github.athingx.athing.thing.builder.mqtt.MqttConnectStrategy.alwaysReTry;
 import static io.github.athingx.athing.thing.impl.util.StringUtils.bytesToHexString;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Objects.requireNonNull;
 
+/**
+ * 阿里云MQTT客户端工厂
+ */
 public class AliyunMqttClientFactory implements MqttClientFactory {
 
-    private static final Logger logger = LoggerFactory.getLogger(AliyunMqttClientFactory.class);
+    private final Logger logger = LoggerFactory.getLogger(getClass());
+
     private String remote;
     private String secret;
-    private long connectTimeoutMs = 60L * 1000;
-    private long keepAliveIntervalMs = 30L * 1000;
-    private long maxReconnectDelayMs = 30L * 1000;
-    private ConnectStrategy strategy;
+    private MqttConnectOptions options = new MqttConnectOptions() {{
+        setCleanSession(false);         // 关闭清理会话
+        setAutomaticReconnect(false);   // 关闭自动重连
+        setKeepAliveInterval(60 * 30);  // 30分钟心跳
+        setConnectionTimeout(30);       // 30秒连接超时
+        setMaxReconnectDelay(60);       // 60秒最大重连间隔
+    }};
+
+    private MqttConnectStrategy strategy;
 
     public AliyunMqttClientFactory secret(String secret) {
         this.secret = secret;
@@ -41,22 +47,12 @@ public class AliyunMqttClientFactory implements MqttClientFactory {
         return this;
     }
 
-    public AliyunMqttClientFactory connectTimeoutMs(long connectTimeoutMs) {
-        this.connectTimeoutMs = connectTimeoutMs;
+    public AliyunMqttClientFactory options(Function<MqttConnectOptions, MqttConnectOptions> optionsFn) {
+        this.options = optionsFn.apply(options);
         return this;
     }
 
-    public AliyunMqttClientFactory keepAliveIntervalMs(long keepAliveIntervalMs) {
-        this.keepAliveIntervalMs = keepAliveIntervalMs;
-        return this;
-    }
-
-    public AliyunMqttClientFactory maxReconnectDelayMs(long maxReconnectDelayMs) {
-        this.maxReconnectDelayMs = maxReconnectDelayMs;
-        return this;
-    }
-
-    public AliyunMqttClientFactory strategy(ConnectStrategy strategy) {
+    public AliyunMqttClientFactory strategy(MqttConnectStrategy strategy) {
         this.strategy = strategy;
         return this;
     }
@@ -65,18 +61,49 @@ public class AliyunMqttClientFactory implements MqttClientFactory {
     public IMqttAsyncClient make(ThingPath path) throws MqttException {
         requireNonNull(remote, "remote is required!");
         requireNonNull(secret, "secret is required!");
-        strategy = Objects.isNull(strategy) ? ConnectStrategy.alwaysReTry(maxReconnectDelayMs) : strategy;
-        final Boot boot = new Boot(path);
-        final MqttConnectOptions options = new MqttConnectOptions() {{
-            setUserName(boot.getUsername());
-            setPassword(boot.getPassword(secret));
-            setCleanSession(false);
-            setAutomaticReconnect(true);
-            setConnectionTimeout((int) (connectTimeoutMs / 1000));
-            setKeepAliveInterval((int) (keepAliveIntervalMs / 1000));
-            setMaxReconnectDelay((int) (maxReconnectDelayMs / 1000));
-        }};
-        final IMqttAsyncClient client = new MqttAsyncClient(remote, boot.getClientId(), new MemoryPersistence());
+
+        // 构建MQTT连接策略
+        final var strategy = Optional.ofNullable(this.strategy).orElse(alwaysReTry());
+
+        // 构建阿里云鉴权信息
+        final var access = new Access(path);
+
+        // 构建MQTT客户端
+        final var client = new MqttAsyncClient(remote, access.getClientId(), new MemoryPersistence());
+
+        // 构建MQTT选项
+        final var options = Optional.ofNullable(this.options).orElse(new MqttConnectOptions());
+        options.setUserName(access.getUsername());
+        options.setPassword(access.getPassword(secret));
+
+        client.setCallback(new MqttCallbackExtended() {
+
+            @Override
+            public void connectComplete(boolean b, String s) {
+                logger.info("{}/mqtt/client connect completed!", path);
+            }
+
+            @Override
+            public void connectionLost(Throwable throwable) {
+                try {
+                    logger.warn("{}/mqtt/client connect lost, reconnecting...", path, throwable);
+                    strategy.connect(path, options, client);
+                } catch (MqttException cause) {
+                    logger.error("{}/mqtt/client connect lost!", path, cause);
+                }
+            }
+
+            @Override
+            public void messageArrived(String topic, MqttMessage message) {
+
+            }
+
+            @Override
+            public void deliveryComplete(IMqttDeliveryToken token) {
+
+            }
+
+        });
 
         // 根据连接策略进行连接
         strategy.connect(path, options, client);
@@ -85,9 +112,9 @@ public class AliyunMqttClientFactory implements MqttClientFactory {
     }
 
     /**
-     * 启动信息
+     * 阿里云鉴权信息
      */
-    private static class Boot {
+    private static class Access {
 
         final String uniqueId = UUID.randomUUID().toString();
         final long timestamp = System.currentTimeMillis();
@@ -98,7 +125,7 @@ public class AliyunMqttClientFactory implements MqttClientFactory {
          *
          * @param path 设备路径
          */
-        Boot(ThingPath path) {
+        Access(ThingPath path) {
             this.path = path;
         }
 
@@ -139,101 +166,6 @@ public class AliyunMqttClientFactory implements MqttClientFactory {
          */
         String getClientId() {
             return "%s|securemode=3,signmethod=hmacsha1,timestamp=%s,ext=1|".formatted(uniqueId, timestamp);
-        }
-
-    }
-
-    /**
-     * 连接策略
-     */
-    @FunctionalInterface
-    public interface ConnectStrategy {
-
-        void connect(ThingPath path, MqttConnectOptions options, IMqttAsyncClient client) throws MqttException;
-
-        /**
-         * 有限重试
-         *
-         * @param reTryLimits 重试次数
-         * @return 连接策略
-         */
-        static ConnectStrategy limitsReTry(int reTryLimits, long reTryIntervalMs) {
-            return (path, options, client) -> {
-                final ReentrantLock lock = new ReentrantLock();
-                final Condition waiting = lock.newCondition();
-                int reTryTimes = 0;
-                while (true) {
-                    try {
-                        client.connect(options).waitForCompletion();
-                        logger.debug("{}/mqtt/client connect success!", path);
-                        break;
-                    } catch (Exception cause) {
-
-                        // 如果重试次数超过限定，则将本次失败抛出
-                        if (reTryLimits > 0 && reTryTimes++ >= reTryLimits) {
-                            if (cause instanceof MqttException mqCause) {
-                                throw mqCause;
-                            }
-                            throw new MqttException(cause);
-                        }
-
-                        logger.warn("{}/mqtt/client connect failure, will reconnect after {}ms, limits: {}/{}",
-                                path,
-                                reTryIntervalMs,
-                                reTryTimes,
-                                reTryLimits,
-                                cause
-                        );
-                        lock.lock();
-                        try {
-                            if (waiting.await(reTryIntervalMs, TimeUnit.MILLISECONDS)) {
-                                break;
-                            }
-                        } catch (InterruptedException e) {
-                            break;
-                        } finally {
-                            lock.unlock();
-                        }
-                    }
-                }// while
-
-            };
-        }
-
-        /**
-         * 永久重试
-         *
-         * @param reTryIntervalMs 重试间隔
-         * @return 连接策略
-         */
-        static ConnectStrategy alwaysReTry(long reTryIntervalMs) {
-            return (path, options, client) -> {
-                final ReentrantLock lock = new ReentrantLock();
-                final Condition waiting = lock.newCondition();
-                while (true) {
-                    try {
-                        client.connect(options).waitForCompletion();
-                        logger.debug("{}/mqtt/client connect success!", path);
-                        break;
-                    } catch (Exception cause) {
-                        logger.warn("{}/mqtt/client connect failure, will reconnect after {}ms",
-                                path,
-                                reTryIntervalMs,
-                                cause
-                        );
-                        lock.lock();
-                        try {
-                            if (waiting.await(reTryIntervalMs, TimeUnit.MILLISECONDS)) {
-                                break;
-                            }
-                        } catch (InterruptedException e) {
-                            break;
-                        } finally {
-                            lock.unlock();
-                        }
-                    }
-                }
-            };
         }
 
     }
