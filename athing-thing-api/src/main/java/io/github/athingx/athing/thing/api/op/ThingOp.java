@@ -2,6 +2,8 @@ package io.github.athingx.athing.thing.api.op;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 /**
  * 设备操作
@@ -24,7 +26,10 @@ public interface ThingOp {
      * @return 投递结果
      */
     <V extends OpData>
-    CompletableFuture<Void> post(OpPost<? super V> opPost, V opData);
+    CompletableFuture<Void> post(
+            OpPost<? super V> opPost,
+            V opData
+    );
 
     /**
      * 绑定设备数据消费
@@ -34,7 +39,28 @@ public interface ThingOp {
      * @param <V>       消费数据类型
      * @return 消费操作
      */
-    <V> CompletableFuture<ThingBind> bind(OpBind<? extends V> opBind, BiConsumer<String, ? super V> consumeFn);
+    <V>
+    CompletableFuture<ThingBind> bind(
+            OpBind<? extends V> opBind,
+            BiConsumer<String, ? super V> consumeFn
+    );
+
+    /**
+     * 绑定设备数据服务
+     *
+     * @param opBind    绑定操作
+     * @param opPost    投递操作
+     * @param serviceFn 服务函数
+     * @param <T>       请求数据类型
+     * @param <R>       应答数据类型
+     * @return 服务操作
+     */
+    <T extends OpData, R extends OpData>
+    CompletableFuture<ThingBind> bind(
+            OpBind<? extends T> opBind,
+            OpPost<? super R> opPost,
+            BiFunction<String, ? super T, CompletableFuture<? extends R>> serviceFn
+    );
 
     /**
      * 绑定设备数据调用
