@@ -65,16 +65,31 @@ public class ThingOpImpl implements ThingOp {
 
     private CompletableFuture<Void> _mqtt_post(String topic, int qos, OpData opData) {
 
-        // 修复alink协议的BUG：当回传的类型为OpReply时，器中的data如果为null，必须以{}的形式回传
-        final OpData _fix_data = opData instanceof OpReply<?> reply && Objects.isNull(reply.data())
-                ? new OpReply<>(reply.token(), reply.code(), reply.desc(), new HashMap<>())
-                : opData;
+        final var encode = Function.<OpData>identity()
+
+                // 修复alink协议的BUG：当回传的类型为OpReply时，器中的data如果为null，必须以{}的形式回传
+                .andThen(data -> {
+                    if (data instanceof OpReply<?> reply)
+                        return new OpReply<>(
+                                reply.token(),
+                                reply.code(),
+                                reply.desc(),
+                                new HashMap<>()
+                        );
+                    return data;
+                })
+
+                // 编码为JSON字符串
+                .andThen(data -> GsonFactory.getGson().toJson(data))
+
+                // 编码为UTF-8字节数组
+                .andThen(json -> json.getBytes(UTF_8));
+
 
         // MQTT: message
-        final var json = GsonFactory.getGson().toJson(_fix_data);
         final var message = new MqttMessage();
         message.setQos(qos);
-        message.setPayload(json.getBytes(UTF_8));
+        message.setPayload(encode.apply(opData));
 
         // MQTT: publish
         return executeFuture(new MqttActionFuture<>(), postF -> client.publish(topic, message, new Object(), postF));
