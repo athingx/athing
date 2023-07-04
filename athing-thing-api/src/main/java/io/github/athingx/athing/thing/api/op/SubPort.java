@@ -5,41 +5,43 @@ import java.util.function.BiPredicate;
 import java.util.function.Function;
 
 /**
- * 操作绑定
+ * 订阅端口
+ * <p>
+ * 通过订阅端口从服务器上接收数据
  */
-public class OpBind<V> {
+public class SubPort<V> {
 
-    private final String express;
     private final int qos;
+    private final String express;
     private final BiFunction<String, byte[], ? extends V> decoder;
 
     /**
-     * 操作绑定
+     * 订阅端口
      *
-     * @param express 绑定表达式
      * @param qos     QOS
-     * @param decoder 解码器
+     * @param express 订阅主题表达式
+     * @param decoder 订阅数据解码器
      */
-    public OpBind(String express, int qos, BiFunction<String, byte[], ? extends V> decoder) {
-        this.express = express;
+    public SubPort(int qos, String express, BiFunction<String, byte[], ? extends V> decoder) {
         this.qos = qos;
+        this.express = express;
         this.decoder = decoder;
     }
 
     /**
-     * 操作绑定
+     * 订阅端口
      *
-     * @param express 绑定表达式
-     * @param decoder 解码器
+     * @param express 订阅主题表达式
+     * @param decoder 订阅数据解码器
      */
-    public OpBind(String express, BiFunction<String, byte[], ? extends V> decoder) {
-        this(express, 1, decoder);
+    public SubPort(String express, BiFunction<String, byte[], ? extends V> decoder) {
+        this(1, express, decoder);
     }
 
     /**
-     * 获取绑定表达式
+     * 订阅主题表达式
      *
-     * @return 绑定表达式
+     * @return 订阅主题表达式
      */
     public String express() {
         return express;
@@ -55,10 +57,12 @@ public class OpBind<V> {
     }
 
     /**
-     * 解码
+     * 接收数据解码
+     * <p>
+     * 从服务器端接收到的数据是二进制数据，需要通过解码器解码成具体的数据类型
      *
-     * @param topic 消息主题
-     * @param data  消息数据
+     * @param topic 接收主题
+     * @param data  接收数据
      * @return 解码结果
      */
     public V decode(String topic, byte[] data) {
@@ -72,31 +76,31 @@ public class OpBind<V> {
      * @return 操作绑定构建器
      */
     public static Builder<byte[], byte[]> newBuilder(String express) {
-        return new Builder<>(express, 1, (topic, data) -> data);
+        return new Builder<>(1, express, (topic, data) -> data);
     }
 
     /**
-     * 操作绑定构建器
+     * 订阅端口构建器
      *
-     * @param <T> 消息数据类型
+     * @param <T> 解码请求类型
      * @param <R> 解码结果类型
      */
     public static class Builder<T, R> {
 
-        private final String express;
         private final int qos;
+        private final String express;
         private final BiFunction<String, byte[], ? extends R> decoder;
 
         /**
          * 操作绑定构建器
          *
-         * @param express 绑定表达式
          * @param qos     QOS
+         * @param express 绑定表达式
          * @param decoder 解码器
          */
-        Builder(String express, int qos, BiFunction<String, byte[], ? extends R> decoder) {
-            this.express = express;
+        Builder(int qos, String express, BiFunction<String, byte[], ? extends R> decoder) {
             this.qos = qos;
+            this.express = express;
             this.decoder = decoder;
         }
 
@@ -107,7 +111,7 @@ public class OpBind<V> {
          * @return this
          */
         public Builder<T, R> qos(int qos) {
-            return new Builder<>(express, qos, decoder);
+            return new Builder<>(qos, express, decoder);
         }
 
         /**
@@ -139,16 +143,16 @@ public class OpBind<V> {
          * @return this
          */
         public <V> Builder<T, V> decode(BiFunction<String, ? super R, ? extends V> decoder) {
-            return new Builder<>(express, qos, (topic, data) -> decoder.apply(topic, Builder.this.decoder.apply(topic, data)));
+            return new Builder<>(qos, express, (topic, data) -> decoder.apply(topic, Builder.this.decoder.apply(topic, data)));
         }
 
         /**
-         * 构建操作绑定
+         * 构建订阅端口
          *
-         * @return 操作绑定
+         * @return 订阅端口
          */
-        public OpBind<R> build() {
-            return new OpBind<>(express, qos, decoder);
+        public SubPort<R> build() {
+            return new SubPort<>(qos, express, decoder);
         }
 
     }

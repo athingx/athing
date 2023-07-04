@@ -3,7 +3,6 @@ package io.github.athingx.athing.thing.api.op;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
-import java.util.function.Function;
 
 /**
  * 设备操作
@@ -20,61 +19,58 @@ public interface ThingOp {
     /**
      * 投递数据
      *
-     * @param opPost 投递操作
-     * @param opData 投递数据
-     * @param <V>    数据类型
-     * @return 投递结果
+     * @param pub  发布端口
+     * @param data 发布数据
+     * @param <V>  数据类型
+     * @return 投递操作
      */
     <V extends OpData>
-    CompletableFuture<Void> post(
-            OpPost<? super V> opPost,
-            V opData
-    );
+    CompletableFuture<Void> post(PubPort<? super V> pub, V data);
 
     /**
-     * 绑定设备数据消费
+     * 绑定数据消费
      *
-     * @param opBind    绑定操作
-     * @param consumeFn 消费函数
+     * @param sub       订阅端口
+     * @param consumeFn 数据消费函数
      * @param <V>       消费数据类型
-     * @return 消费操作
+     * @return 数据消费绑定操作
      */
     <V>
     CompletableFuture<ThingBind> bind(
-            OpBind<? extends V> opBind,
+            SubPort<? extends V> sub,
             BiConsumer<String, ? super V> consumeFn
     );
 
     /**
-     * 绑定设备数据服务
+     * 绑定数据服务
      *
-     * @param opBind    绑定操作
-     * @param opPost    投递操作
-     * @param serviceFn 服务函数
+     * @param sub       订阅端口
+     * @param pub       发布端口
+     * @param serviceFn 数据服务函数
      * @param <T>       请求数据类型
      * @param <R>       应答数据类型
-     * @return 服务操作
+     * @return 数据服务绑定操作
      */
     <T extends OpData, R extends OpData>
     CompletableFuture<ThingBind> bind(
-            OpBind<? extends T> opBind,
-            OpPost<? super R> opPost,
+            SubPort<? extends T> sub,
+            PubPort<? super R> pub,
             BiFunction<String, ? super T, CompletableFuture<? extends R>> serviceFn
     );
 
     /**
-     * 绑定设备数据调用
+     * 绑定数据调用
      *
-     * @param opPost 请求操作
-     * @param opBind 应答操作
-     * @param <T>    请求数据类型
-     * @param <R>    应答数据类型
-     * @return 调用操作
+     * @param pub 发布端口
+     * @param sub 订阅端口
+     * @param <T> 请求数据类型
+     * @param <R> 应答数据类型
+     * @return 数据调用绑定操作
      */
     <T extends OpData, R extends OpData>
     CompletableFuture<? extends ThingCall<? super T, ? extends R>> bind(
-            OpPost<? super T> opPost,
-            OpBind<? extends R> opBind
+            PubPort<? super T> pub,
+            SubPort<? extends R> sub
     );
 
 }

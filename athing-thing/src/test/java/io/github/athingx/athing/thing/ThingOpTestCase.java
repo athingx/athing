@@ -5,11 +5,10 @@ import com.google.gson.reflect.TypeToken;
 import io.github.athingx.athing.thing.api.ThingPath;
 import io.github.athingx.athing.thing.api.op.OpDataObject;
 import io.github.athingx.athing.thing.api.op.OpReply;
-import io.github.athingx.athing.thing.api.op.OpBind;
-import io.github.athingx.athing.thing.api.op.OpPost;
+import io.github.athingx.athing.thing.api.op.SubPort;
+import io.github.athingx.athing.thing.api.op.PubPort;
 import io.github.athingx.athing.thing.builder.ThingBuilder;
 import io.github.athingx.athing.thing.builder.mqtt.AliyunMqttClientFactory;
-import io.github.athingx.athing.thing.builder.mqtt.MqttConnectStrategy;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -38,8 +37,8 @@ public class ThingOpTestCase implements LoadingProperties {
                 .build();
 
         final var thingCall = thing.op().bind(
-                        OpPost.topic("/sys/%s/thing/config/get".formatted(thing.path().toURN())),
-                        OpBind.newBuilder("/sys/%s/thing/config/get_reply".formatted(thing.path().toURN()))
+                        PubPort.topic("/sys/%s/thing/config/get".formatted(thing.path().toURN())),
+                        SubPort.newBuilder("/sys/%s/thing/config/get_reply".formatted(thing.path().toURN()))
                                 .decode(mappingByteToJson(UTF_8))
                                 .decode(mappingJsonToType(new TypeToken<OpReply<Data>>() {
 
@@ -89,7 +88,7 @@ public class ThingOpTestCase implements LoadingProperties {
 
         final BlockingQueue<OpReply<Data>> queue = new LinkedBlockingQueue<>();
         final var thingBind = thing.op().bind(
-                        OpBind.newBuilder("/sys/%s/thing/config/get_reply".formatted(thing.path().toURN()))
+                        SubPort.newBuilder("/sys/%s/thing/config/get_reply".formatted(thing.path().toURN()))
                                 .filter(matchingTopic(topic -> topic.equals("/sys/%s/thing/config/get_reply".formatted(thing.path().toURN()))))
                                 .decode(mappingByteToJson(UTF_8))
                                 .decode(mappingJsonToOpReply(Data.class))
@@ -105,7 +104,7 @@ public class ThingOpTestCase implements LoadingProperties {
                 .get();
 
         final String token = thing.op().genToken();
-        thing.op().post(OpPost.topic("/sys/%s/thing/config/get".formatted(thing.path().toURN())),
+        thing.op().post(PubPort.topic("/sys/%s/thing/config/get".formatted(thing.path().toURN())),
                         new OpDataObject(token)
                                 .putProperty("id", token)
                                 .putProperty("version", "1.0")

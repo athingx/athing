@@ -52,11 +52,11 @@ public class ThingOpImpl implements ThingOp {
     }
 
     @Override
-    public <V extends OpData> CompletableFuture<Void> post(OpPost<? super V> opPost, V opData) {
-        final var token = opData.token();
-        final var topic = opPost.topic(opData);
-        final var qos = opPost.qos();
-        return _mqtt_post(topic, qos, opData)
+    public <V extends OpData> CompletableFuture<Void> post(PubPort<? super V> pub, V data) {
+        final var token = data.token();
+        final var topic = pub.topic(data);
+        final var qos = pub.qos();
+        return _mqtt_post(topic, qos, data)
                 .whenComplete(whenCompleted(
                         v -> logger.debug("{}/op/post success; topic={};token={};", path, topic, token),
                         ex -> logger.warn("{}/op/post failure; topic={};token={};", path, topic, token, ex)
@@ -97,63 +97,63 @@ public class ThingOpImpl implements ThingOp {
     }
 
     @Override
-    public <V> CompletableFuture<ThingBind> bind(final OpBind<? extends V> opBind,
+    public <V> CompletableFuture<ThingBind> bind(final SubPort<? extends V> sub,
                                                  final BiConsumer<String, ? super V> consumeFn) {
 
         // ThingBind: init
-        final ThingBind bind = () -> _mqtt_unbind(opBind)
+        final ThingBind bind = () -> _mqtt_unbind(sub)
                 .whenComplete(whenCompleted(
-                        v -> logger.debug("{}/op/consume/unbind success; express={};", path, opBind.express()),
-                        ex -> logger.warn("{}/op/consume/unbind failure; express={};", path, opBind.express(), ex)
+                        v -> logger.debug("{}/op/consume/unbind success; express={};", path, sub.express()),
+                        ex -> logger.warn("{}/op/consume/unbind failure; express={};", path, sub.express(), ex)
                 ));
 
         // MQTT: bind
-        return _mqtt_bind(opBind, consumeFn)
+        return _mqtt_bind(sub, consumeFn)
                 .thenApply(unused -> bind)
                 .whenComplete(whenCompleted(
-                        v -> logger.debug("{}/op/consume/bind success; express={};", path, opBind.express()),
-                        ex -> logger.warn("{}/op/consume/bind failure; express={};", path, opBind.express(), ex)
+                        v -> logger.debug("{}/op/consume/bind success; express={};", path, sub.express()),
+                        ex -> logger.warn("{}/op/consume/bind failure; express={};", path, sub.express(), ex)
                 ));
     }
 
-    private <V> CompletableFuture<Void> _mqtt_unbind(final OpBind<? extends V> opBind) {
+    private <V> CompletableFuture<Void> _mqtt_unbind(final SubPort<? extends V> sub) {
         return executeFuture(new MqttActionFuture<>(), unbindF
-                -> client.unsubscribe(opBind.express(), new Object(), unbindF));
+                -> client.unsubscribe(sub.express(), new Object(), unbindF));
     }
 
-    private <V> CompletableFuture<Void> _mqtt_bind(final OpBind<? extends V> opBind,
+    private <V> CompletableFuture<Void> _mqtt_bind(final SubPort<? extends V> sub,
                                                    final BiConsumer<String, ? super V> consumeFn) {
 
         // MQTT: listener
         final IMqttMessageListener listener = (topic, message) ->
                 executor.execute(() ->
-                        ofNullable(opBind.decode(topic, message.getPayload()))
+                        ofNullable(sub.decode(topic, message.getPayload()))
                                 .ifPresent(v -> consumeFn.accept(topic, v)));
 
         // MQTT: subscribe
         return executeFuture(new MqttActionFuture<>(), bindF ->
-                client.subscribe(opBind.express(), opBind.qos(), new Object(), bindF, listener));
+                client.subscribe(sub.express(), sub.qos(), new Object(), bindF, listener));
     }
 
     @Override
     public <T extends OpData, R extends OpData>
-    CompletableFuture<ThingBind> bind(final OpBind<? extends T> opBind,
-                                      final OpPost<? super R> opPost,
+    CompletableFuture<ThingBind> bind(final SubPort<? extends T> sub,
+                                      final PubPort<? super R> pub,
                                       final BiFunction<String, ? super T, CompletableFuture<? extends R>> serviceFn) {
 
         // ThingBind: init
-        final ThingBind bind = () -> _mqtt_unbind(opBind)
+        final ThingBind bind = () -> _mqtt_unbind(sub)
                 .whenComplete(whenCompleted(
-                        v -> logger.debug("{}/op/service/unbind success; express={};", path, opBind.express()),
-                        ex -> logger.warn("{}/op/service/unbind failure; express={};", path, opBind.express(), ex)
+                        v -> logger.debug("{}/op/service/unbind success; express={};", path, sub.express()),
+                        ex -> logger.warn("{}/op/service/unbind failure; express={};", path, sub.express(), ex)
                 ));
 
         // Consumer: service
         final BiConsumer<String, ? super T> serviceConsumer = (token, request) -> serviceFn.apply(token, request)
                 .whenComplete(whenExceptionally(ex -> logger.warn("{}/op/service occur error; token={};", path, token, ex)))
                 .whenComplete(whenSuccessfully(response -> {
-                    final var topic = opPost.topic(response);
-                    final var qos = opPost.qos();
+                    final var topic = pub.topic(response);
+                    final var qos = pub.qos();
                     _mqtt_post(topic, qos, response)
                             .whenComplete(whenCompleted(
                                     v -> logger.debug("{}/op/service success; topic={};token={};", path, topic, token),
@@ -162,19 +162,19 @@ public class ThingOpImpl implements ThingOp {
                 }));
 
         // MQTT: bind
-        return _mqtt_bind(opBind, serviceConsumer)
+        return _mqtt_bind(sub, serviceConsumer)
                 .thenApply(unused -> bind)
                 .whenComplete(whenCompleted(
-                        v -> logger.debug("{}/op/service/bind success; express={};", path, opBind.express()),
-                        ex -> logger.warn("{}/op/service/bind failure; express={};", path, opBind.express(), ex)
+                        v -> logger.debug("{}/op/service/bind success; express={};", path, sub.express()),
+                        ex -> logger.warn("{}/op/service/bind failure; express={};", path, sub.express(), ex)
                 ));
 
     }
 
     @Override
     public <T extends OpData, R extends OpData>
-    CompletableFuture<? extends ThingCall<? super T, ? extends R>> bind(final OpPost<? super T> opPost,
-                                                                        final OpBind<? extends R> opBind) {
+    CompletableFuture<? extends ThingCall<? super T, ? extends R>> bind(final PubPort<? super T> pub,
+                                                                        final SubPort<? extends R> sub) {
 
         final var tokenFutureMap = new ConcurrentHashMap<String, CompletableFuture<R>>();
 
@@ -185,8 +185,8 @@ public class ThingOpImpl implements ThingOp {
             public CompletableFuture<R> call(Option option, T data) {
 
                 // 请求主题
-                final var topic = opPost.topic(data);
-                final var qos = opPost.qos();
+                final var topic = pub.topic(data);
+                final var qos = pub.qos();
 
                 // 生成调用存根并存入缓存
                 final var callF = new CompletableFuture<R>();
@@ -217,16 +217,16 @@ public class ThingOpImpl implements ThingOp {
 
             @Override
             public CompletableFuture<Void> unbind() {
-                return _mqtt_unbind(opBind)
+                return _mqtt_unbind(sub)
                         .whenComplete(whenCompleted(
-                                v -> logger.debug("{}/op/call/unbind success; express={};", path, opBind.express()),
-                                ex -> logger.warn("{}/op/call/unbind failure; express={};", path, opBind.express(), ex)
+                                v -> logger.debug("{}/op/call/unbind success; express={};", path, sub.express()),
+                                ex -> logger.warn("{}/op/call/unbind failure; express={};", path, sub.express(), ex)
                         ));
             }
         };
 
         // 绑定
-        final var bindF = _mqtt_bind(opBind, (topic, data) -> {
+        final var bindF = _mqtt_bind(sub, (topic, data) -> {
             final var token = data.token();
             final var callF = tokenFutureMap.remove(token);
             if (Objects.isNull(callF)) {
@@ -242,8 +242,8 @@ public class ThingOpImpl implements ThingOp {
         return bindF
                 .thenApply(unused -> call)
                 .whenComplete(whenCompleted(
-                        v -> logger.debug("{}/op/call/bind success; express={};", path, opBind.express()),
-                        ex -> logger.warn("{}/op/call/bind failure; express={};", path, opBind.express(), ex)
+                        v -> logger.debug("{}/op/call/bind success; express={};", path, sub.express()),
+                        ex -> logger.warn("{}/op/call/bind failure; express={};", path, sub.express(), ex)
                 ));
 
     }

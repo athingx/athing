@@ -2,7 +2,7 @@ package io.github.athingx.athing.thing;
 
 import io.github.athingx.athing.thing.api.Thing;
 import io.github.athingx.athing.thing.api.ThingPath;
-import io.github.athingx.athing.thing.api.op.OpBind;
+import io.github.athingx.athing.thing.api.op.SubPort;
 import io.github.athingx.athing.thing.builder.ThingBuilder;
 import io.github.athingx.athing.thing.builder.mqtt.AliyunMqttClientFactory;
 import io.github.athingx.athing.thing.builder.mqtt.MqttConnectStrategy;
@@ -68,7 +68,7 @@ public class ThingConnectTestCase implements LoadingProperties {
                 )
                 .build();
         Assert.assertNotNull(thing);
-        var future = thing.op().bind(OpBind.newBuilder("/hello").build(), (s, bytes) -> {
+        var future = thing.op().bind(SubPort.newBuilder("/hello").build(), (s, bytes) -> {
 
         });
         latch.countDown();
