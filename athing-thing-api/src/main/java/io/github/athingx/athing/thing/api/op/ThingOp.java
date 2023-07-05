@@ -36,7 +36,7 @@ public interface ThingOp {
      * @return 数据消费绑定操作
      */
     <V>
-    CompletableFuture<ThingBind> bind(
+    CompletableFuture<ThingBind> bindConsumer(
             SubPort<? extends V> sub,
             BiConsumer<String, ? super V> consumeFn
     );
@@ -52,7 +52,7 @@ public interface ThingOp {
      * @return 数据服务绑定操作
      */
     <T extends OpData, R extends OpData>
-    CompletableFuture<ThingBind> bind(
+    CompletableFuture<ThingBind> bindServices(
             SubPort<? extends T> sub,
             PubPort<? super R> pub,
             BiFunction<String, ? super T, CompletableFuture<? extends R>> serviceFn
@@ -60,6 +60,9 @@ public interface ThingOp {
 
     /**
      * 绑定数据调用
+     * bindCaller
+     * bindConsumer
+     * bindServices
      *
      * @param pub 发布端口
      * @param sub 订阅端口
@@ -68,7 +71,7 @@ public interface ThingOp {
      * @return 数据调用绑定操作
      */
     <T extends OpData, R extends OpData>
-    CompletableFuture<? extends ThingCall<? super T, ? extends R>> bind(
+    CompletableFuture<? extends ThingCall<? super T, ? extends R>> bindCaller(
             PubPort<? super T> pub,
             SubPort<? extends R> sub
     );

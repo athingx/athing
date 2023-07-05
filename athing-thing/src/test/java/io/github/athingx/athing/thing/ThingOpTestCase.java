@@ -35,7 +35,7 @@ public class ThingOpTestCase implements LoadingProperties {
                 )
                 .build();
 
-        final var thingCall = thing.op().bind(
+        final var thingCall = thing.op().bindCaller(
                         PubPort.topic("/sys/%s/thing/config/get".formatted(thing.path().toURN())),
                         SubPort.newBuilder("/sys/%s/thing/config/get_reply".formatted(thing.path().toURN()))
                                 .decode(mappingByteToJson(UTF_8))
@@ -86,7 +86,7 @@ public class ThingOpTestCase implements LoadingProperties {
                 .build();
 
         final BlockingQueue<OpReply<Data>> queue = new LinkedBlockingQueue<>();
-        final var thingBind = thing.op().bind(
+        final var thingBind = thing.op().bindConsumer(
                         SubPort.newBuilder("/sys/%s/thing/config/get_reply".formatted(thing.path().toURN()))
                                 .filter(matchingTopic(topic -> topic.equals("/sys/%s/thing/config/get_reply".formatted(thing.path().toURN()))))
                                 .decode(mappingByteToJson(UTF_8))
@@ -139,17 +139,6 @@ public class ThingOpTestCase implements LoadingProperties {
             @SerializedName("url") String url,
             @SerializedName("getType") String type
     ) {
-
-    }
-
-
-    @Test
-    public void test() throws Exception {
-
-        final var future = new CompletableFuture<String>()
-                .whenComplete((v, ex) -> System.out.println("ret1=" + v));
-        future.complete("hello");
-        future.whenComplete((v, ex) -> System.out.println("ret2=" + v));
 
     }
 

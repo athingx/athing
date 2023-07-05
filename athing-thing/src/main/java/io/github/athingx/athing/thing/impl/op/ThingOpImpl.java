@@ -97,8 +97,8 @@ public class ThingOpImpl implements ThingOp {
     }
 
     @Override
-    public <V> CompletableFuture<ThingBind> bind(final SubPort<? extends V> sub,
-                                                 final BiConsumer<String, ? super V> consumeFn) {
+    public <V> CompletableFuture<ThingBind> bindConsumer(final SubPort<? extends V> sub,
+                                                         final BiConsumer<String, ? super V> consumeFn) {
 
         // ThingBind: init
         final ThingBind bind = () -> _mqtt_unbind(sub)
@@ -137,9 +137,9 @@ public class ThingOpImpl implements ThingOp {
 
     @Override
     public <T extends OpData, R extends OpData>
-    CompletableFuture<ThingBind> bind(final SubPort<? extends T> sub,
-                                      final PubPort<? super R> pub,
-                                      final BiFunction<String, ? super T, CompletableFuture<? extends R>> serviceFn) {
+    CompletableFuture<ThingBind> bindServices(final SubPort<? extends T> sub,
+                                              final PubPort<? super R> pub,
+                                              final BiFunction<String, ? super T, CompletableFuture<? extends R>> serviceFn) {
 
         // ThingBind: init
         final ThingBind bind = () -> _mqtt_unbind(sub)
@@ -173,8 +173,8 @@ public class ThingOpImpl implements ThingOp {
 
     @Override
     public <T extends OpData, R extends OpData>
-    CompletableFuture<? extends ThingCall<? super T, ? extends R>> bind(final PubPort<? super T> pub,
-                                                                        final SubPort<? extends R> sub) {
+    CompletableFuture<? extends ThingCall<? super T, ? extends R>> bindCaller(final PubPort<? super T> pub,
+                                                                              final SubPort<? extends R> sub) {
 
         final var tokenFutureMap = new ConcurrentHashMap<String, CompletableFuture<R>>();
 
