@@ -6,6 +6,9 @@ import io.github.athingx.athing.platform.impl.client.ThingPlatformClientImpl;
 
 import static java.util.Objects.requireNonNull;
 
+/**
+ * 设备平台客户端（阿里云）工厂
+ */
 public class AliyunThingPlatformClientFactory implements ThingPlatformClientFactory {
 
     private String identity;
@@ -46,7 +49,7 @@ public class AliyunThingPlatformClientFactory implements ThingPlatformClientFact
     }
 
     @Override
-    public ThingPlatformClient make() throws Exception {
+    public ThingPlatformClient make() {
         return new ThingPlatformClientImpl(
                 DefaultProfile.getProfile(
                         requireNonNull(region, "region is required!"),

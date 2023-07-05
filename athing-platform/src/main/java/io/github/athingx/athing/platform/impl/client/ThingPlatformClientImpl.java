@@ -6,16 +6,28 @@ import com.aliyuncs.v5.IAcsClient;
 import com.aliyuncs.v5.profile.IClientProfile;
 import io.github.athingx.athing.platform.api.ThingPlatformException;
 import io.github.athingx.athing.platform.api.client.ThingPlatformClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Objects;
 
+/**
+ * 设备平台客户端实现(阿里云)
+ */
 public class ThingPlatformClientImpl implements ThingPlatformClient {
 
+    private final Logger logger = LoggerFactory.getLogger(getClass());
     private final IAcsClient client;
+    private final String _string;
 
+    /**
+     * 设备平台客户端实现
+     *
+     * @param profile 阿里云客户端连接配置
+     */
     public ThingPlatformClientImpl(IClientProfile profile) {
         this.client = new DefaultAcsClient(profile);
-        client.shutdown();
+        this._string = "thing-platform-client://%s".formatted(profile.getRegionId());
     }
 
     @SuppressWarnings("unchecked")
@@ -44,6 +56,12 @@ public class ThingPlatformClientImpl implements ThingPlatformClient {
     @Override
     public void shutdown() {
         client.shutdown();
+        logger.debug("{} shutdown!", this);
+    }
+
+    @Override
+    public String toString() {
+        return _string;
     }
 
 }
