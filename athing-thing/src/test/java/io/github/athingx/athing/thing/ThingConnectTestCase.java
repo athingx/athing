@@ -4,7 +4,7 @@ import io.github.athingx.athing.thing.api.Thing;
 import io.github.athingx.athing.thing.api.ThingPath;
 import io.github.athingx.athing.thing.api.op.SubPort;
 import io.github.athingx.athing.thing.builder.ThingBuilder;
-import io.github.athingx.athing.thing.builder.mqtt.AliyunMqttClientFactory;
+import io.github.athingx.athing.thing.builder.mqtt.MqttClientFactoryImplByAliyun;
 import io.github.athingx.athing.thing.builder.mqtt.MqttConnectStrategy;
 import org.eclipse.paho.client.mqttv3.DisconnectedBufferOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
@@ -25,7 +25,7 @@ public class ThingConnectTestCase implements LoadingProperties {
     public void test$thing$connect$success() throws Exception {
         final Thing thing = new ThingBuilder(new ThingPath(PRODUCT_ID, THING_ID))
                 .executorFactory(path -> Executors.newFixedThreadPool(20))
-                .clientFactory(new AliyunMqttClientFactory()
+                .clientFactory(new MqttClientFactoryImplByAliyun()
                         .secret(SECRET)
                         .remote(REMOTE)
                 )
@@ -45,10 +45,10 @@ public class ThingConnectTestCase implements LoadingProperties {
         final CountDownLatch latch = new CountDownLatch(1);
         final Thing thing = new ThingBuilder(new ThingPath(PRODUCT_ID, THING_ID))
                 .executorFactory(path -> Executors.newFixedThreadPool(20))
-                .clientFactory(new AliyunMqttClientFactory()
+                .clientFactory(new MqttClientFactoryImplByAliyun()
                         .secret(SECRET)
                         .remote(REMOTE)
-                        .strategy((path, options, client) -> {
+                        .strategy((isReconnect, path, options, client) -> {
                             client.setBufferOpts(new DisconnectedBufferOptions() {{
                                 setBufferEnabled(true);
                                 setPersistBuffer(false);
@@ -58,7 +58,7 @@ public class ThingConnectTestCase implements LoadingProperties {
                                     latch.await();
                                     MqttConnectStrategy
                                             .alwaysReTry()
-                                            .connect(path, options, client);
+                                            .connect(isReconnect, path, options, client);
                                 } catch (Exception e) {
                                     throw new RuntimeException(e);
                                 }
@@ -80,7 +80,7 @@ public class ThingConnectTestCase implements LoadingProperties {
     public void test$thing$connect$limits_retry() throws Exception {
         final Thing thing = new ThingBuilder(new ThingPath(PRODUCT_ID, THING_ID))
                 .executorFactory(path -> Executors.newFixedThreadPool(20))
-                .clientFactory(new AliyunMqttClientFactory()
+                .clientFactory(new MqttClientFactoryImplByAliyun()
                         .secret(SECRET)
                         .remote("tcp://imposable.com:0")
                         .strategy(limitsReTry(3))

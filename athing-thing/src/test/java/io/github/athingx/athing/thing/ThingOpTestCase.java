@@ -8,7 +8,7 @@ import io.github.athingx.athing.thing.api.op.OpReply;
 import io.github.athingx.athing.thing.api.op.SubPort;
 import io.github.athingx.athing.thing.api.op.PubPort;
 import io.github.athingx.athing.thing.builder.ThingBuilder;
-import io.github.athingx.athing.thing.builder.mqtt.AliyunMqttClientFactory;
+import io.github.athingx.athing.thing.builder.mqtt.MqttClientFactoryImplByAliyun;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -18,7 +18,6 @@ import static io.github.athingx.athing.thing.api.util.CompletableFutureUtils.the
 import static io.github.athingx.athing.thing.api.util.CompletableFutureUtils.whenSuccessfully;
 import static io.github.athingx.athing.thing.api.util.ThingOpUtils.*;
 import static io.github.athingx.athing.thing.builder.mqtt.MqttConnectStrategy.alwaysReTry;
-import static io.github.athingx.athing.thing.builder.mqtt.MqttConnectStrategy.async;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
@@ -29,7 +28,7 @@ public class ThingOpTestCase implements LoadingProperties {
     @Test
     public void test$thing$op_call$success() throws Exception {
         final var thing = new ThingBuilder(PRODUCT_ID, THING_ID)
-                .clientFactory(new AliyunMqttClientFactory()
+                .clientFactory(new MqttClientFactoryImplByAliyun()
                         .secret(SECRET)
                         .remote(REMOTE)
                         .strategy(alwaysReTry())
@@ -80,7 +79,7 @@ public class ThingOpTestCase implements LoadingProperties {
 
         final var thing = new ThingBuilder(new ThingPath(PRODUCT_ID, THING_ID))
                 .executorFactory(path -> Executors.newFixedThreadPool(20))
-                .clientFactory(new AliyunMqttClientFactory()
+                .clientFactory(new MqttClientFactoryImplByAliyun()
                         .secret(SECRET)
                         .remote(REMOTE)
                 )

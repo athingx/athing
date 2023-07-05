@@ -3,7 +3,7 @@ package io.github.athingx.athing.thing;
 import io.github.athingx.athing.thing.api.Thing;
 import io.github.athingx.athing.thing.api.ThingPath;
 import io.github.athingx.athing.thing.builder.ThingBuilder;
-import io.github.athingx.athing.thing.builder.mqtt.AliyunMqttClientFactory;
+import io.github.athingx.athing.thing.builder.mqtt.MqttClientFactoryImplByAliyun;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
@@ -17,7 +17,7 @@ public abstract class LoadingThing implements LoadingProperties {
     public static void onBeforeClass() throws Exception {
         thing = new ThingBuilder(new ThingPath(PRODUCT_ID, THING_ID))
                 .executorFactory(path -> Executors.newFixedThreadPool(20))
-                .clientFactory(new AliyunMqttClientFactory()
+                .clientFactory(new MqttClientFactoryImplByAliyun()
                         .secret(SECRET)
                         .remote(REMOTE)
                 )

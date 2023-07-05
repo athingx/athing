@@ -5,6 +5,10 @@ package io.github.athingx.athing.platform.api;
  */
 public class ThingPlatformException extends Exception {
 
+    public ThingPlatformException(Throwable cause) {
+        super(cause);
+    }
+
     /**
      * 设备平台异常
      *
