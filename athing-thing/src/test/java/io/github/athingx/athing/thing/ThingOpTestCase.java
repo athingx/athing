@@ -51,10 +51,10 @@ public class ThingOpTestCase implements LoadingProperties {
                         .putProperty("id", token)
                         .putProperty("version", "1.0")
                         .putProperty("method", "thing.config.get")
-                        .putProperty("params", new OpDataObject(token)
-                                .putProperty("configScope", "product")
-                                .putProperty("getType", "file")
-                        )
+                        .putProperty("params", object -> {
+                            object.putProperty("configScope", "product");
+                            object.putProperty("getType", "file");
+                        })
                 )
                 .whenComplete(whenSuccessfully(reply -> Assert.assertTrue(reply.isOk())))
                 .whenComplete(whenSuccessfully(reply -> Assert.assertEquals(token, reply.token())))

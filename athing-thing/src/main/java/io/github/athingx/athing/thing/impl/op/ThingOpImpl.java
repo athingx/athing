@@ -108,7 +108,7 @@ public class ThingOpImpl implements ThingOp {
                 ));
 
         // MQTT: bind
-        return _mqtt_bind(sub, consumeFn)
+        return _mqtt_bind("consume", sub, consumeFn)
                 .thenApply(unused -> bind)
                 .whenComplete(whenCompleted(
                         v -> logger.debug("{}/op/consume/bind success; express={};", path, sub.express()),
@@ -121,14 +121,37 @@ public class ThingOpImpl implements ThingOp {
                 -> client.unsubscribe(sub.express(), new Object(), unbindF));
     }
 
-    private <V> CompletableFuture<Void> _mqtt_bind(final SubPort<? extends V> sub,
+    private <V> CompletableFuture<Void> _mqtt_bind(final String action,
+                                                   final SubPort<? extends V> sub,
                                                    final BiConsumer<String, ? super V> consumeFn) {
 
         // MQTT: listener
         final IMqttMessageListener listener = (topic, message) ->
-                executor.execute(() ->
-                        ofNullable(sub.decode(topic, message.getPayload()))
-                                .ifPresent(v -> consumeFn.accept(topic, v)));
+                executor.execute(() -> {
+
+                    // 解码消息
+                    final V data;
+                    try {
+                        data = sub.decode(topic, message.getPayload());
+                    } catch (Throwable cause) {
+                        logger.warn("{}/op/{} decode failure! topic={};", path, action, topic, cause);
+                        return;
+                    }
+
+                    // 解码消息结果为空，说明本次处理需要丢弃该消息
+                    if (Objects.isNull(data)) {
+                        logger.debug("{}/op/{} decode null! topic={};", path, action, topic);
+                        return;
+                    }
+
+                    // 消费消息
+                    try {
+                        consumeFn.accept(topic, data);
+                    } catch (Throwable cause) {
+                        logger.warn("{}/op/{} failure! topic={};", path, action, topic, cause);
+                    }
+
+                });
 
         // MQTT: subscribe
         return executeFuture(new MqttActionFuture<>(), bindF ->
@@ -149,20 +172,37 @@ public class ThingOpImpl implements ThingOp {
                 ));
 
         // Consumer: service
-        final BiConsumer<String, ? super T> serviceConsumer = (token, request) -> serviceFn.apply(token, request)
-                .whenComplete(whenExceptionally(ex -> logger.warn("{}/op/service occur error; token={};", path, token, ex)))
-                .whenComplete(whenSuccessfully(response -> {
-                    final var topic = pub.topic(response);
-                    final var qos = pub.qos();
-                    _mqtt_post(topic, qos, response)
-                            .whenComplete(whenCompleted(
-                                    v -> logger.debug("{}/op/service success; topic={};token={};", path, topic, token),
-                                    ex -> logger.warn("{}/op/service failure; topic={};token={};", path, topic, token, ex)
-                            ));
-                }));
+        final BiConsumer<String, ? super T> serviceConsumer = new BiConsumer<>() {
+
+            private CompletableFuture<? extends R> executeServiceFn(String subTopic, T request) {
+                try {
+                    return serviceFn.apply(subTopic, request);
+                } catch (Throwable cause) {
+                    return CompletableFuture.failedFuture(cause);
+                }
+            }
+
+            @Override
+            public void accept(String subTopic, T request) {
+                executeServiceFn(subTopic, request)
+                        .whenComplete(whenCompleted(
+                                v -> logger.debug("{}/op/service/execute success! token={};request-topic={};", path, request.token(), subTopic),
+                                ex -> logger.warn("{}/op/service/execute failure! token={};request-topic={};", path, request.token(), subTopic, ex)
+                        ))
+                        .whenComplete(whenSuccessfully(response -> {
+                            final var pubTopic = pub.topic(response);
+                            final var pubQos = pub.qos();
+                            _mqtt_post(pubTopic, pubQos, response)
+                                    .whenComplete(whenCompleted(
+                                            v -> logger.debug("{}/op/service/response success! token={};response-topic={};", path, response.token(), pubTopic),
+                                            ex -> logger.warn("{}/op/service/response failure! token={};response-topic={};", path, response.token(), pubTopic, ex)
+                                    ));
+                        }));
+            }
+        };
 
         // MQTT: bind
-        return _mqtt_bind(sub, serviceConsumer)
+        return _mqtt_bind("service/request", sub, serviceConsumer)
                 .thenApply(unused -> bind)
                 .whenComplete(whenCompleted(
                         v -> logger.debug("{}/op/service/bind success; express={};", path, sub.express()),
@@ -196,8 +236,8 @@ public class ThingOpImpl implements ThingOp {
                 _mqtt_post(topic, qos, data)
                         .whenComplete(whenExceptionally(callF::completeExceptionally))
                         .whenComplete(whenCompleted(
-                                v -> logger.debug("{}/op/call/post success; topic={};token={};", path, topic, data.token()),
-                                ex -> logger.warn("{}/op/call/post failure; topic={};token={};", path, topic, data.token(), ex)
+                                v -> logger.debug("{}/op/call/request success; topic={};token={};", path, topic, data.token()),
+                                ex -> logger.warn("{}/op/call/request failure; topic={};token={};", path, topic, data.token(), ex)
                         ));
 
                 // 返回调用future
@@ -205,8 +245,8 @@ public class ThingOpImpl implements ThingOp {
                         .orTimeout(option.timeoutMs(), MILLISECONDS)
                         .whenComplete((v, ex) -> tokenFutureMap.remove(data.token()))
                         .whenComplete(whenCompleted(
-                                v -> logger.debug("{}/op/call success; topic={};token={};", path, topic, data.token()),
-                                ex -> logger.warn("{}/op/call failure; topic={};token={};", path, topic, data.token(), ex)
+                                v -> logger.debug("{}/op/call/response success; topic={};token={};", path, topic, data.token()),
+                                ex -> logger.warn("{}/op/call/response failure; topic={};token={};", path, topic, data.token(), ex)
                         ));
             }
 
@@ -226,15 +266,15 @@ public class ThingOpImpl implements ThingOp {
         };
 
         // 绑定
-        final var bindF = _mqtt_bind(sub, (topic, data) -> {
+        final var bindF = _mqtt_bind("call/response", sub, (topic, data) -> {
             final var token = data.token();
             final var callF = tokenFutureMap.remove(token);
             if (Objects.isNull(callF)) {
-                logger.warn("{}/op/call/bind received; but none token match, maybe timeout! topic={};token={};", path, topic, data.token());
+                logger.warn("{}/op/call/response received; but none token match, maybe timeout! topic={};token={};", path, topic, data.token());
             } else if (!callF.complete(data)) {
-                logger.warn("{}/op/call/bind received; but assign failure, maybe expired. topic={};token={};", path, topic, data.token());
+                logger.warn("{}/op/call/response received; but assign failure, maybe expired. topic={};token={};", path, topic, data.token());
             } else {
-                logger.debug("{}/op/call/bind received; topic={};token={};", path, topic, data.token());
+                logger.debug("{}/op/call/response received; topic={};token={};", path, topic, data.token());
             }
         });
 

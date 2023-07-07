@@ -81,6 +81,11 @@ public class ThingConnectTestCase implements LoadingProperties {
         final Thing thing = new ThingBuilder(new ThingPath(PRODUCT_ID, THING_ID))
                 .executorFactory(path -> Executors.newFixedThreadPool(20))
                 .clientFactory(new MqttClientFactoryImplByAliyun()
+                        .connOpt(options -> {
+                            options.setConnectionTimeout(10);
+                            options.setMaxReconnectDelay(10);
+                            return options;
+                        })
                         .secret(SECRET)
                         .remote("tcp://imposable.com:0")
                         .strategy(limitsReTry(3))

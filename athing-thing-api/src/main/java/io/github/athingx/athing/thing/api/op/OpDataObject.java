@@ -1,6 +1,7 @@
 package io.github.athingx.athing.thing.api.op;
 
 import java.util.HashMap;
+import java.util.function.Consumer;
 
 /**
  * 操作数据对象
@@ -9,7 +10,7 @@ import java.util.HashMap;
  */
 public class OpDataObject extends HashMap<String, Object> implements OpData {
 
-    private final String token;
+    private transient final String token;
 
     /**
      * 操作数据对象
@@ -29,6 +30,20 @@ public class OpDataObject extends HashMap<String, Object> implements OpData {
      */
     public OpDataObject putProperty(String name, Object value) {
         put(name, value);
+        return this;
+    }
+
+    /**
+     * 添加属性
+     *
+     * @param name     属性名
+     * @param consumer 属性值函数
+     * @return this
+     */
+    public OpDataObject putProperty(String name, Consumer<OpDataObject> consumer) {
+        final OpDataObject propertyDataObject = new OpDataObject(token);
+        consumer.accept(propertyDataObject);
+        put(name, propertyDataObject);
         return this;
     }
 

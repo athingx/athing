@@ -1,9 +1,5 @@
 package io.github.athingx.athing.thing.api.util;
 
-import io.github.athingx.athing.thing.api.function.ExConsumer;
-import io.github.athingx.athing.thing.api.function.ExFunction;
-import io.github.athingx.athing.thing.api.function.ExRunnable;
-import io.github.athingx.athing.thing.api.function.ExSupplier;
 import io.github.athingx.athing.thing.api.op.OpReply;
 import io.github.athingx.athing.thing.api.op.OpReplyException;
 
@@ -176,4 +172,27 @@ public class CompletableFutureUtils {
         ));
     }
 
+    public interface ExConsumer<T, X extends Throwable> {
+
+        void accept(T t) throws X;
+
+    }
+
+    public interface ExFunction<T, R, X extends Throwable> {
+
+        R apply(T t) throws X;
+
+    }
+
+    public interface ExRunnable<X extends Throwable> {
+
+        void run() throws X;
+
+    }
+
+    public interface ExSupplier<T, X extends Throwable> {
+
+        T get() throws X;
+
+    }
 }
