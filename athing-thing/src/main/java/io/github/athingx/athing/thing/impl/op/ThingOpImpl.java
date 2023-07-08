@@ -51,7 +51,7 @@ public class ThingOpImpl implements ThingOp {
     }
 
     @Override
-    public <V> CompletableFuture<Void> post(PubPort<? super V> pub, V data) {
+    public <V> CompletableFuture<Void> post(PubPort<V> pub, V data) {
         final var topic = pub.topic(data);
         final var opData = pub.encode(genToken(), data);
         final var qos = pub.qos();
@@ -96,8 +96,8 @@ public class ThingOpImpl implements ThingOp {
     }
 
     @Override
-    public <V> CompletableFuture<ThingBind> bindConsumer(final SubPort<? extends V> sub,
-                                                         final BiConsumer<String, ? super V> consumeFn) {
+    public <V> CompletableFuture<ThingBind> bindConsumer(final SubPort<V> sub,
+                                                         final BiConsumer<String, V> consumeFn) {
 
         // ThingBind: init
         final ThingBind bind = () -> _mqtt_unbind(sub)
@@ -159,9 +159,9 @@ public class ThingOpImpl implements ThingOp {
 
     @Override
     public <T extends OpData, R>
-    CompletableFuture<ThingBind> bindServices(final SubPort<? extends T> sub,
-                                              final PubPort<? super R> pub,
-                                              final BiFunction<String, ? super T, CompletableFuture<? extends R>> serviceFn) {
+    CompletableFuture<ThingBind> bindServices(final SubPort<T> sub,
+                                              final PubPort<R> pub,
+                                              final BiFunction<String, T, CompletableFuture<R>> serviceFn) {
 
         // ThingBind: init
         final ThingBind bind = () -> _mqtt_unbind(sub)
@@ -171,7 +171,7 @@ public class ThingOpImpl implements ThingOp {
                 ));
 
         // Consumer: service
-        final BiConsumer<String, ? super T> serviceConsumer = new BiConsumer<>() {
+        final BiConsumer<String, T> serviceConsumer = new BiConsumer<>() {
 
             private CompletableFuture<? extends R> executeServiceFn(String subTopic, T request) {
                 try {
@@ -212,9 +212,9 @@ public class ThingOpImpl implements ThingOp {
     }
 
     @Override
-    public <T, R extends OpData> CompletableFuture<? extends ThingCall<? super T, ? extends R>> bindCaller(
-            final PubPort<? super T> pub,
-            final SubPort<? extends R> sub
+    public <T, R extends OpData> CompletableFuture<ThingCall<T, R>> bindCaller(
+            final PubPort<T> pub,
+            final SubPort<R> sub
     ) {
 
         final var tokenFutureMap = new ConcurrentHashMap<String, CompletableFuture<R>>();
@@ -253,11 +253,6 @@ public class ThingOpImpl implements ThingOp {
             }
 
             @Override
-            public CompletableFuture<R> call(Option option, Function<String, ? extends T> encoder) {
-                return call(option, encoder.apply(genToken()));
-            }
-
-            @Override
             public CompletableFuture<Void> unbind() {
                 return _mqtt_unbind(sub)
                         .whenComplete(whenCompleted(
@@ -282,12 +277,11 @@ public class ThingOpImpl implements ThingOp {
 
         // 返回绑定
         return bindF
-                .thenApply(unused -> call)
+                .thenApply(unused -> (ThingCall<T, R>) call)
                 .whenComplete(whenCompleted(
                         v -> logger.debug("{}/op/call/bind success; express={};", path, sub.express()),
                         ex -> logger.warn("{}/op/call/bind failure; express={};", path, sub.express(), ex)
                 ));
-
     }
 
 

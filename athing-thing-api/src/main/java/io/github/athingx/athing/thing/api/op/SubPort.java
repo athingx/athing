@@ -13,7 +13,7 @@ public class SubPort<V> {
 
     private final int qos;
     private final String express;
-    private final BiFunction<String, byte[], ? extends V> decoder;
+    private final BiFunction<String, byte[], V> decoder;
 
     /**
      * 订阅端口
@@ -22,7 +22,7 @@ public class SubPort<V> {
      * @param express 订阅主题表达式
      * @param decoder 订阅数据解码器
      */
-    public SubPort(int qos, String express, BiFunction<String, byte[], ? extends V> decoder) {
+    public SubPort(int qos, String express, BiFunction<String, byte[], V> decoder) {
         this.qos = qos;
         this.express = express;
         this.decoder = decoder;
@@ -34,7 +34,7 @@ public class SubPort<V> {
      * @param express 订阅主题表达式
      * @param decoder 订阅数据解码器
      */
-    public SubPort(String express, BiFunction<String, byte[], ? extends V> decoder) {
+    public SubPort(String express, BiFunction<String, byte[], V> decoder) {
         this(1, express, decoder);
     }
 
@@ -82,14 +82,14 @@ public class SubPort<V> {
     /**
      * 订阅端口构建器
      *
-     * @param <T> 解码请求类型
-     * @param <R> 解码结果类型
+     * @param <T> 解码前数据类型
+     * @param <R> 解码后数据类型
      */
     public static class Builder<T, R> {
 
         private final int qos;
         private final String express;
-        private final BiFunction<String, byte[], ? extends R> decoder;
+        private final BiFunction<String, byte[], R> decoder;
 
         /**
          * 操作绑定构建器
@@ -98,7 +98,7 @@ public class SubPort<V> {
          * @param express 绑定表达式
          * @param decoder 解码器
          */
-        Builder(int qos, String express, BiFunction<String, byte[], ? extends R> decoder) {
+        Builder(int qos, String express, BiFunction<String, byte[], R> decoder) {
             this.qos = qos;
             this.express = express;
             this.decoder = decoder;
@@ -131,7 +131,7 @@ public class SubPort<V> {
          * @param <V>     解码结果类型
          * @return this
          */
-        public <V> Builder<T, V> decode(Function<? super R, ? extends V> decoder) {
+        public <V> Builder<T, V> decode(Function<R, V> decoder) {
             return decode((topic, data) -> decoder.apply(data));
         }
 
@@ -142,7 +142,7 @@ public class SubPort<V> {
          * @param <V>     解码结果类型
          * @return this
          */
-        public <V> Builder<T, V> decode(BiFunction<String, ? super R, ? extends V> decoder) {
+        public <V> Builder<T, V> decode(BiFunction<String, R, V> decoder) {
             return new Builder<>(qos, express, (topic, data) -> decoder.apply(topic, Builder.this.decoder.apply(topic, data)));
         }
 

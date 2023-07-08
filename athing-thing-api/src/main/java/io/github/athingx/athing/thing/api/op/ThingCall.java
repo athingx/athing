@@ -31,30 +31,10 @@ public interface ThingCall<T, R> extends ThingBind {
     CompletableFuture<R> call(Option option, T data);
 
     /**
-     * 调用
-     *
-     * @param encoder 编码器
-     * @return 应答结果
-     */
-    default CompletableFuture<R> call(Function<String, ? extends T> encoder) {
-        return call(new Option(), encoder);
-    }
-
-    /**
-     * 调用
-     *
-     * @param option  调用选项
-     * @param encoder 编码器
-     * @return 应答结果
-     */
-    CompletableFuture<R> call(Option option, Function<String, ? extends T> encoder);
-
-    /**
      * 调用选项
      */
     class Option {
 
-        private int qos = 1;
         private long timeoutMs = 30000L;
 
         /**
@@ -74,26 +54,6 @@ public interface ThingCall<T, R> extends ThingBind {
          */
         public Option timeoutMs(long timeoutMs) {
             this.timeoutMs = timeoutMs;
-            return this;
-        }
-
-        /**
-         * 获取QOS
-         *
-         * @return QOS
-         */
-        public int qos() {
-            return qos;
-        }
-
-        /**
-         * 设置QOS
-         *
-         * @param qos QOS
-         * @return this
-         */
-        public Option qos(int qos) {
-            this.qos = qos;
             return this;
         }
 

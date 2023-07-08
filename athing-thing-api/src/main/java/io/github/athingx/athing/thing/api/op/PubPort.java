@@ -13,8 +13,8 @@ public class PubPort<V> {
 
     private final int qos;
     private final String pattern;
-    private final BiFunction<String/*PATTERN*/, ? super V, String> formatter;
-    private final BiFunction<String/*TOPIC*/, ? super V, ? extends OpData> encoder;
+    private final BiFunction<String/*PATTERN*/, V, String> formatter;
+    private final BiFunction<String/*TOPIC*/, V, OpData> encoder;
 
     /**
      * 发布端口
@@ -23,7 +23,7 @@ public class PubPort<V> {
      * @param pattern   发布主题模板
      * @param formatter 发布主题格式化器
      */
-    public PubPort(int qos, String pattern, BiFunction<String, ? super V, String> formatter, BiFunction<String, ? super V, ? extends OpData> encoder) {
+    public PubPort(int qos, String pattern, BiFunction<String, V, String> formatter, BiFunction<String, V, OpData> encoder) {
         this.qos = qos;
         this.pattern = pattern;
         this.formatter = formatter;
@@ -60,12 +60,18 @@ public class PubPort<V> {
         return qos;
     }
 
+    /**
+     * 发布端口构造器
+     *
+     * @param <T> 编码前数据类型
+     * @param <R> 编码后数据类型
+     */
     public static class Builder<T, R> {
 
         private final int qos;
-        private final BiFunction<String, ? super R, ? extends OpData> encoder;
+        private final BiFunction<String, R, OpData> encoder;
 
-        public Builder(int qos, BiFunction<String, ? super R, ? extends OpData> encoder) {
+        public Builder(int qos, BiFunction<String, R, OpData> encoder) {
             this.qos = qos;
             this.encoder = encoder;
         }
@@ -74,15 +80,11 @@ public class PubPort<V> {
             return new Builder<>(qos, encoder);
         }
 
-        public <V> Builder<R, V> encode(BiFunction<String, ? super V, ? extends R> encoder) {
+        public <V> Builder<R, V> encode(BiFunction<String, V, R> encoder) {
             return new Builder<>(qos, (token, data) -> this.encoder.apply(token, encoder.apply(token, data)));
         }
 
-        public <V> Builder<R, V> encode(Class<? super V> type, BiFunction<String, ? super V, ? extends R> encoder) {
-            return encode(encoder);
-        }
-
-        public PubPort<R> build(String pattern, BiFunction<String, ? super R, String> formatter) {
+        public PubPort<R> build(String pattern, BiFunction<String, R, String> formatter) {
             return new PubPort<>(qos, pattern, formatter, encoder);
         }
 
