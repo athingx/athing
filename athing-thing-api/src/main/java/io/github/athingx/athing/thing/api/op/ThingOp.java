@@ -24,8 +24,7 @@ public interface ThingOp {
      * @param <V>  数据类型
      * @return 投递操作
      */
-    <V extends OpData>
-    CompletableFuture<Void> post(PubPort<? super V> pub, V data);
+    <V> CompletableFuture<Void> post(PubPort<? super V> pub, V data);
 
     /**
      * 绑定数据消费
@@ -38,7 +37,7 @@ public interface ThingOp {
     <V>
     CompletableFuture<ThingBind> bindConsumer(
             SubPort<? extends V> sub,
-            BiConsumer<String, ? super V> consumeFn
+            BiConsumer<String/*TOPIC*/, ? super V> consumeFn
     );
 
     /**
@@ -51,18 +50,15 @@ public interface ThingOp {
      * @param <R>       应答数据类型
      * @return 数据服务绑定操作
      */
-    <T extends OpData, R extends OpData>
+    <T extends OpData, R>
     CompletableFuture<ThingBind> bindServices(
             SubPort<? extends T> sub,
             PubPort<? super R> pub,
-            BiFunction<String, ? super T, CompletableFuture<? extends R>> serviceFn
+            BiFunction<String/*TOPIC*/, ? super T, CompletableFuture<? extends R>> serviceFn
     );
 
     /**
      * 绑定数据调用
-     * bindCaller
-     * bindConsumer
-     * bindServices
      *
      * @param pub 发布端口
      * @param sub 订阅端口
@@ -70,8 +66,7 @@ public interface ThingOp {
      * @param <R> 应答数据类型
      * @return 数据调用绑定操作
      */
-    <T extends OpData, R extends OpData>
-    CompletableFuture<? extends ThingCall<? super T, ? extends R>> bindCaller(
+    <T, R extends OpData> CompletableFuture<? extends ThingCall<? super T, ? extends R>> bindCaller(
             PubPort<? super T> pub,
             SubPort<? extends R> sub
     );

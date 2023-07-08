@@ -9,7 +9,7 @@ import java.util.function.Function;
  * @param <T> 请求数据类型
  * @param <R> 应答数据类型
  */
-public interface ThingCall<T extends OpData, R extends OpData> extends ThingBind {
+public interface ThingCall<T, R> extends ThingBind {
 
     /**
      * 调用
@@ -17,7 +17,7 @@ public interface ThingCall<T extends OpData, R extends OpData> extends ThingBind
      * @param data 请求数据
      * @return 应答结果
      */
-    default CompletableFuture<R> call(T data) {
+    default CompletableFuture<? extends R> call(T data) {
         return call(new Option(), data);
     }
 
@@ -28,7 +28,7 @@ public interface ThingCall<T extends OpData, R extends OpData> extends ThingBind
      * @param data   请求数据
      * @return 应答结果
      */
-    CompletableFuture<R> call(Option option, T data);
+    CompletableFuture<? extends R> call(Option option, T data);
 
     /**
      * 调用
@@ -36,7 +36,7 @@ public interface ThingCall<T extends OpData, R extends OpData> extends ThingBind
      * @param encoder 编码器
      * @return 应答结果
      */
-    default CompletableFuture<R> call(Function<String, ? extends T> encoder) {
+    default CompletableFuture<? extends R> call(Function<String, ? extends T> encoder) {
         return call(new Option(), encoder);
     }
 
@@ -47,7 +47,7 @@ public interface ThingCall<T extends OpData, R extends OpData> extends ThingBind
      * @param encoder 编码器
      * @return 应答结果
      */
-    CompletableFuture<R> call(Option option, Function<String, ? extends T> encoder);
+    CompletableFuture<? extends R> call(Option option, Function<String, ? extends T> encoder);
 
     /**
      * 调用选项

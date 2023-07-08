@@ -3,10 +3,7 @@ package io.github.athingx.athing.thing;
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
 import io.github.athingx.athing.thing.api.ThingPath;
-import io.github.athingx.athing.thing.api.op.OpDataObject;
-import io.github.athingx.athing.thing.api.op.OpReply;
-import io.github.athingx.athing.thing.api.op.SubPort;
-import io.github.athingx.athing.thing.api.op.PubPort;
+import io.github.athingx.athing.thing.api.op.*;
 import io.github.athingx.athing.thing.builder.ThingBuilder;
 import io.github.athingx.athing.thing.builder.mqtt.MqttClientFactoryImplByAliyun;
 import org.junit.Assert;
@@ -35,8 +32,10 @@ public class ThingOpTestCase implements LoadingProperties {
                 )
                 .build();
 
+
+
         final var thingCall = thing.op().bindCaller(
-                        PubPort.topic("/sys/%s/thing/config/get".formatted(thing.path().toURN())),
+                        PubPort.newBuilder().build("/sys/%s/thing/config/get".formatted(thing.path().toURN())),
                         SubPort.newBuilder("/sys/%s/thing/config/get_reply".formatted(thing.path().toURN()))
                                 .decode(mappingByteToJson(UTF_8))
                                 .decode(mappingJsonToType(new TypeToken<OpReply<Data>>() {
@@ -103,7 +102,7 @@ public class ThingOpTestCase implements LoadingProperties {
                 .get();
 
         final String token = thing.op().genToken();
-        thing.op().post(PubPort.topic("/sys/%s/thing/config/get".formatted(thing.path().toURN())),
+        thing.op().post(PubPort.newBuilder().build("/sys/%s/thing/config/get".formatted(thing.path().toURN())),
                         new OpDataObject(token)
                                 .putProperty("id", token)
                                 .putProperty("version", "1.0")

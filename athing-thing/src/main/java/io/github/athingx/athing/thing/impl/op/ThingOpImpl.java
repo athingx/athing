@@ -19,7 +19,6 @@ import java.util.function.Function;
 
 import static io.github.athingx.athing.thing.api.util.CompletableFutureUtils.*;
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.util.Optional.ofNullable;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
@@ -52,14 +51,14 @@ public class ThingOpImpl implements ThingOp {
     }
 
     @Override
-    public <V extends OpData> CompletableFuture<Void> post(PubPort<? super V> pub, V data) {
-        final var token = data.token();
+    public <V> CompletableFuture<Void> post(PubPort<? super V> pub, V data) {
         final var topic = pub.topic(data);
+        final var opData = pub.encode(genToken(), data);
         final var qos = pub.qos();
-        return _mqtt_post(topic, qos, data)
+        return _mqtt_post(topic, qos, opData)
                 .whenComplete(whenCompleted(
-                        v -> logger.debug("{}/op/post success; topic={};token={};", path, topic, token),
-                        ex -> logger.warn("{}/op/post failure; topic={};token={};", path, topic, token, ex)
+                        v -> logger.debug("{}/op/post success; topic={};token={};", path, topic, opData.token()),
+                        ex -> logger.warn("{}/op/post failure; topic={};token={};", path, topic, opData.token(), ex)
                 ));
     }
 
@@ -159,7 +158,7 @@ public class ThingOpImpl implements ThingOp {
     }
 
     @Override
-    public <T extends OpData, R extends OpData>
+    public <T extends OpData, R>
     CompletableFuture<ThingBind> bindServices(final SubPort<? extends T> sub,
                                               final PubPort<? super R> pub,
                                               final BiFunction<String, ? super T, CompletableFuture<? extends R>> serviceFn) {
@@ -192,10 +191,11 @@ public class ThingOpImpl implements ThingOp {
                         .whenComplete(whenSuccessfully(response -> {
                             final var pubTopic = pub.topic(response);
                             final var pubQos = pub.qos();
-                            _mqtt_post(pubTopic, pubQos, response)
+                            final var pubOpData = pub.encode(request.token(), response);
+                            _mqtt_post(pubTopic, pubQos, pubOpData)
                                     .whenComplete(whenCompleted(
-                                            v -> logger.debug("{}/op/service/response success! token={};response-topic={};", path, response.token(), pubTopic),
-                                            ex -> logger.warn("{}/op/service/response failure! token={};response-topic={};", path, response.token(), pubTopic, ex)
+                                            v -> logger.debug("{}/op/service/response success! token={};response-topic={};", path, pubOpData.token(), pubTopic),
+                                            ex -> logger.warn("{}/op/service/response failure! token={};response-topic={};", path, pubOpData.token(), pubTopic, ex)
                                     ));
                         }));
             }
@@ -212,9 +212,10 @@ public class ThingOpImpl implements ThingOp {
     }
 
     @Override
-    public <T extends OpData, R extends OpData>
-    CompletableFuture<? extends ThingCall<? super T, ? extends R>> bindCaller(final PubPort<? super T> pub,
-                                                                              final SubPort<? extends R> sub) {
+    public <T, R extends OpData> CompletableFuture<? extends ThingCall<? super T, ? extends R>> bindCaller(
+            final PubPort<? super T> pub,
+            final SubPort<? extends R> sub
+    ) {
 
         final var tokenFutureMap = new ConcurrentHashMap<String, CompletableFuture<R>>();
 
@@ -227,26 +228,27 @@ public class ThingOpImpl implements ThingOp {
                 // 请求主题
                 final var topic = pub.topic(data);
                 final var qos = pub.qos();
+                final var opData = pub.encode(genToken(), data);
 
                 // 生成调用存根并存入缓存
                 final var callF = new CompletableFuture<R>();
-                tokenFutureMap.put(data.token(), callF);
+                tokenFutureMap.put(opData.token(), callF);
 
                 // 发起请求，如果请求失败则让调用Future失败
-                _mqtt_post(topic, qos, data)
+                _mqtt_post(topic, qos, opData)
                         .whenComplete(whenExceptionally(callF::completeExceptionally))
                         .whenComplete(whenCompleted(
-                                v -> logger.debug("{}/op/call/request success; topic={};token={};", path, topic, data.token()),
-                                ex -> logger.warn("{}/op/call/request failure; topic={};token={};", path, topic, data.token(), ex)
+                                v -> logger.debug("{}/op/call/request success; topic={};token={};", path, topic, opData.token()),
+                                ex -> logger.warn("{}/op/call/request failure; topic={};token={};", path, topic, opData.token(), ex)
                         ));
 
                 // 返回调用future
                 return callF
                         .orTimeout(option.timeoutMs(), MILLISECONDS)
-                        .whenComplete((v, ex) -> tokenFutureMap.remove(data.token()))
+                        .whenComplete((v, ex) -> tokenFutureMap.remove(opData.token()))
                         .whenComplete(whenCompleted(
-                                v -> logger.debug("{}/op/call/response success; topic={};token={};", path, topic, data.token()),
-                                ex -> logger.warn("{}/op/call/response failure; topic={};token={};", path, topic, data.token(), ex)
+                                v -> logger.debug("{}/op/call/response success; topic={};token={};", path, topic, opData.token()),
+                                ex -> logger.warn("{}/op/call/response failure; topic={};token={};", path, topic, opData.token(), ex)
                         ));
             }
 

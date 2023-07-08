@@ -9,11 +9,12 @@ import java.util.function.BiFunction;
  *
  * @param <V> 数据类型
  */
-public class PubPort<V extends OpData> {
+public class PubPort<V> {
 
     private final int qos;
     private final String pattern;
-    private final BiFunction<String, ? super V, String> formatter;
+    private final BiFunction<String/*PATTERN*/, ? super V, String> formatter;
+    private final BiFunction<String/*TOPIC*/, ? super V, ? extends OpData> encoder;
 
     /**
      * 发布端口
@@ -22,20 +23,11 @@ public class PubPort<V extends OpData> {
      * @param pattern   发布主题模板
      * @param formatter 发布主题格式化器
      */
-    public PubPort(int qos, String pattern, BiFunction<String, ? super V, String> formatter) {
+    public PubPort(int qos, String pattern, BiFunction<String, ? super V, String> formatter, BiFunction<String, ? super V, ? extends OpData> encoder) {
         this.qos = qos;
         this.pattern = pattern;
         this.formatter = formatter;
-    }
-
-    /**
-     * 发布端口
-     *
-     * @param pattern   发布主题模板
-     * @param formatter 发布主题格式化器
-     */
-    public PubPort(String pattern, BiFunction<String, ? super V, String> formatter) {
-        this(1, pattern, formatter);
+        this.encoder = encoder;
     }
 
     /**
@@ -51,27 +43,12 @@ public class PubPort<V extends OpData> {
         return formatter.apply(pattern, data);
     }
 
-    /**
-     * 操作投递构建器
-     *
-     * @param topic 投递主题
-     * @param <V>   投递数据类型
-     * @return 操作投递构建器
-     */
-    public static <V extends OpData> PubPort<V> topic(String topic) {
-        return new PubPort<>(topic, (p, v) -> p);
+    public OpData encode(String token, V data) {
+        return encoder.apply(token, data);
     }
 
-    /**
-     * 操作投递构建器
-     *
-     * @param pattern   主题表达式
-     * @param formatter 主题格式化器
-     * @param <V>       投递数据类型
-     * @return 操作投递构建器
-     */
-    public static <V extends OpData> PubPort<V> topic(String pattern, BiFunction<String, ? super V, String> formatter) {
-        return new PubPort<>(pattern, formatter);
+    public static <V extends OpData> Builder<V, V> newBuilder() {
+        return new Builder<>(1, (token, data) -> data);
     }
 
     /**
@@ -81,6 +58,38 @@ public class PubPort<V extends OpData> {
      */
     public int qos() {
         return qos;
+    }
+
+    public static class Builder<T, R> {
+
+        private final int qos;
+        private final BiFunction<String, ? super R, ? extends OpData> encoder;
+
+        public Builder(int qos, BiFunction<String, ? super R, ? extends OpData> encoder) {
+            this.qos = qos;
+            this.encoder = encoder;
+        }
+
+        public Builder<T, R> qos(int qos) {
+            return new Builder<>(qos, encoder);
+        }
+
+        public <V> Builder<R, V> encode(BiFunction<String, ? super V, ? extends R> encoder) {
+            return new Builder<>(qos, (token, data) -> this.encoder.apply(token, encoder.apply(token, data)));
+        }
+
+        public <V> Builder<R, V> encode(Class<? super V> type, BiFunction<String, ? super V, ? extends R> encoder) {
+            return encode(encoder);
+        }
+
+        public PubPort<R> build(String pattern, BiFunction<String, ? super R, String> formatter) {
+            return new PubPort<>(qos, pattern, formatter, encoder);
+        }
+
+        public PubPort<R> build(String topic) {
+            return new PubPort<>(qos, topic, (pattern, data) -> pattern, encoder);
+        }
+
     }
 
 }
