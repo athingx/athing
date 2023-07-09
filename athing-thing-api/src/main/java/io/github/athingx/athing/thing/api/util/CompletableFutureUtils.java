@@ -16,6 +16,19 @@ import java.util.function.Function;
  */
 public class CompletableFutureUtils {
 
+    /**
+     * 为指定的{@link CompletableFuture}执行一段代码
+     * <ul>
+     *     <li>如果代码执行失败，则{@link CompletableFuture}标记为异常</li>
+     *     <li>如果代码执行成功，则{@link CompletableFuture}原样返回</li>
+     * </ul>
+     *
+     * @param future {@link CompletableFuture}
+     * @param fn     执行代码
+     * @param <T>    {@link CompletableFuture}数据类型
+     * @param <F>    {@link CompletableFuture}类型
+     * @return {@link CompletableFuture}
+     */
     public static <T, F extends CompletableFuture<T>> F executeFuture(F future, ExRunnable<Throwable> fn) {
         try {
             fn.run();
@@ -25,6 +38,24 @@ public class CompletableFutureUtils {
         return future;
     }
 
+    /**
+     * 创建{@link CompletableFuture}并执行一段代码
+     * <ul>
+     *     <li>如果代码执行失败，则{@link CompletableFuture}标记为异常</li>
+     *     <li>如果代码执行成功，则{@link CompletableFuture}原样返回</li>
+     * </ul>
+     *
+     * @param fn  执行代码
+     * @param <T> {@link CompletableFuture}数据类型
+     * @return {@link CompletableFuture}
+     */
+    public static <T> CompletableFuture<T> executeFuture(ExRunnable<Throwable> fn) {
+        return executeFuture(new CompletableFuture<>(), fn);
+    }
+
+    /**
+     * @see #executeFuture(CompletableFuture, ExRunnable)
+     */
     public static <T, F extends CompletableFuture<T>> F executeFuture(F future, ExConsumer<F, Throwable> fn) {
         try {
             fn.accept(future);
@@ -34,11 +65,27 @@ public class CompletableFutureUtils {
         return future;
     }
 
+    /**
+     * @see #executeFuture(ExRunnable)
+     */
     public static <T> CompletableFuture<T> executeFuture(ExConsumer<CompletableFuture<T>, Throwable> fn) {
-        return executeFuture(new CompletableFuture<T>(), fn);
+        return executeFuture(new CompletableFuture<>(), fn);
     }
 
-    public static <T, F extends CompletableFuture<T>> F completeFuture(F future, ExSupplier<T, Throwable> fn) {
+    /**
+     * 获取值并完成指定的{@link CompletableFuture}
+     * <ul>
+     *     <li>如果取值失败，则{@link CompletableFuture}标记为异常</li>
+     *     <li>如果取值成功，则{@link CompletableFuture}标记为完成，并赋予对应的值</li>
+     * </ul>
+     *
+     * @param future {@link CompletableFuture}
+     * @param fn     获取值
+     * @param <T>    {@link CompletableFuture}数据类型
+     * @param <F>    {@link CompletableFuture}类型
+     * @return {@link CompletableFuture}
+     */
+    public static <T, F extends CompletableFuture<T>> F completedFuture(F future, ExSupplier<T, Throwable> fn) {
         try {
             future.complete(fn.get());
         } catch (Throwable cause) {
@@ -47,41 +94,36 @@ public class CompletableFutureUtils {
         return future;
     }
 
-    public static <T, F extends CompletableFuture<T>> F completeFuture(F future, ExFunction<F, T, Throwable> fn) {
-        try {
-            future.complete(fn.apply(future));
-        } catch (Throwable cause) {
-            future.completeExceptionally(cause);
-        }
-        return future;
+    /**
+     * 获取值并创建{@link CompletableFuture}
+     * <ul>
+     *     <li>如果取值失败，则{@link CompletableFuture}标记为异常</li>
+     *     <li>如果取值成功，则{@link CompletableFuture}标记为完成，并赋予对应的值</li>
+     * </ul>
+     *
+     * @param fn  获取值
+     * @param <T> {@link CompletableFuture}数据类型
+     * @return {@link CompletableFuture}
+     */
+    public static <T> CompletableFuture<T> completedFuture(ExSupplier<T, Throwable> fn) {
+        return completedFuture(new CompletableFuture<>(), fn);
     }
 
-    public static <T> CompletableFuture<T> completeFuture(ExFunction<CompletableFuture<T>, T, Throwable> fn) {
-        return completeFuture(new CompletableFuture<>(), fn);
-    }
-
-    public static <F extends CompletableFuture<Void>> F completeFuture(F future, ExRunnable<Throwable> fn) {
-        try {
+    /**
+     * 创建{@link CompletableFuture}并执行一段代码后标记为完成
+     * <ul>
+     *     <li>如果取值失败，则{@link CompletableFuture}标记为异常</li>
+     *     <li>如果取值成功，则{@link CompletableFuture}标记为完成</li>
+     * </ul>
+     *
+     * @param fn 执行代码
+     * @return {@link CompletableFuture}
+     */
+    public static CompletableFuture<Void> completedFuture(ExRunnable<Throwable> fn) {
+        return completedFuture(() -> {
             fn.run();
-            future.complete(null);
-        } catch (Throwable cause) {
-            future.completeExceptionally(cause);
-        }
-        return future;
-    }
-
-    public static <F extends CompletableFuture<Void>> F completeFuture(F future, ExConsumer<F, Throwable> fn) {
-        try {
-            fn.accept(future);
-            future.complete(null);
-        } catch (Throwable cause) {
-            future.completeExceptionally(cause);
-        }
-        return future;
-    }
-
-    public static CompletableFuture<Void> completeFuture(ExConsumer<CompletableFuture<Void>, Throwable> fn) {
-        return completeFuture(new CompletableFuture<>(), fn);
+            return null;
+        });
     }
 
     /**
