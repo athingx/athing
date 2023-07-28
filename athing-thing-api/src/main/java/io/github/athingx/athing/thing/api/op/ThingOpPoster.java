@@ -19,4 +19,14 @@ public interface ThingOpPoster<V> extends ThingOpBinder {
      */
     CompletableFuture<V> post(OpSupplier<V> supplier);
 
+    /**
+     * 投递数据
+     *
+     * @param data 数据
+     * @return 投递结果
+     */
+    default CompletableFuture<V> post(V data) {
+        return post(((topic, token) -> data));
+    }
+
 }

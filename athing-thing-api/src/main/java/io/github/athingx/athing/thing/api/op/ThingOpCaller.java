@@ -30,6 +30,27 @@ public interface ThingOpCaller<T, R> extends ThingOpBinder {
     CompletableFuture<R> call(Option option, OpSupplier<T> supplier);
 
     /**
+     * 数据调用
+     *
+     * @param request 请求
+     * @return 应答结果
+     */
+    default CompletableFuture<R> call(T request) {
+        return call(((topic, token) -> request));
+    }
+
+    /**
+     * 数据调用
+     *
+     * @param option  调用选项
+     * @param request 请求
+     * @return 应答结果
+     */
+    default CompletableFuture<R> call(Option option, T request) {
+        return call(option, ((topic, token) -> request));
+    }
+
+    /**
      * 调用选项
      */
     class Option {
