@@ -1,8 +1,10 @@
 package io.github.athingx.athing.thing.api.op;
 
+import io.github.athingx.athing.thing.api.op.domain.OpData;
+import io.github.athingx.athing.thing.api.op.function.OpConsumer;
+import io.github.athingx.athing.thing.api.op.function.OpFunction;
+
 import java.util.concurrent.CompletableFuture;
-import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
 
 /**
  * 设备操作
@@ -10,51 +12,38 @@ import java.util.function.BiFunction;
 public interface ThingOp {
 
     /**
-     * 生成操作令牌
+     * 数据投递
      *
-     * @return 操作令牌
+     * @param pub 投递端口
+     * @param <V> 投递数据类型
+     * @return 设备数据发布者
      */
-    String genToken();
+    <V> CompletableFuture<ThingOpPoster<V>> poster(PubPort<V> pub);
 
     /**
-     * 投递数据
-     *
-     * @param pub  发布端口
-     * @param data 发布数据
-     * @param <V>  数据类型
-     * @return 投递操作
-     */
-    <V> CompletableFuture<Void> post(PubPort<V> pub, V data);
-
-    /**
-     * 绑定数据消费
+     * 数据消费
      *
      * @param sub       订阅端口
      * @param consumeFn 数据消费函数
      * @param <V>       消费数据类型
-     * @return 数据消费绑定操作
+     * @return 数据消费操作绑定
      */
-    <V>
-    CompletableFuture<ThingBind> bindConsumer(
-            SubPort<V> sub,
-            BiConsumer<String/*TOPIC*/, V> consumeFn
-    );
+    <V> CompletableFuture<ThingOpBinder> consumer(SubPort<V> sub, OpConsumer<V> consumeFn);
 
     /**
      * 绑定数据服务
      *
-     * @param sub       订阅端口
-     * @param pub       发布端口
-     * @param serviceFn 数据服务函数
-     * @param <T>       请求数据类型
-     * @param <R>       应答数据类型
-     * @return 数据服务绑定操作
+     * @param sub          订阅端口
+     * @param routingPubFn 发布端口路由函数
+     * @param serviceFn    数据服务函数
+     * @param <T>          请求数据类型
+     * @param <R>          应答数据类型
+     * @return 数据服务操作绑定
      */
-    <T extends OpData, R>
-    CompletableFuture<ThingBind> bindServices(
+    <T extends OpData, R> CompletableFuture<ThingOpBinder> services(
             SubPort<T> sub,
-            PubPort<R> pub,
-            BiFunction<String/*TOPIC*/, T, CompletableFuture<R>> serviceFn
+            OpFunction<T, PubPort<R>> routingPubFn,
+            OpFunction<T, CompletableFuture<R>> serviceFn
     );
 
     /**
@@ -64,9 +53,9 @@ public interface ThingOp {
      * @param sub 订阅端口
      * @param <T> 请求数据类型
      * @param <R> 应答数据类型
-     * @return 数据调用绑定操作
+     * @return 设备数据调用者
      */
-    <T, R extends OpData> CompletableFuture<ThingCall<T, R>> bindCaller(
+    <T, R extends OpData> CompletableFuture<ThingOpCaller<T, R>> caller(
             PubPort<T> pub,
             SubPort<R> sub
     );

@@ -1,9 +1,9 @@
-package io.github.athingx.athing.thing.api.op;
+package io.github.athingx.athing.thing.api.op.domain;
 
 /**
  * 应答异常
  */
-public class OpReplyException extends Exception {
+public class OpResponseException extends Exception {
 
     private final String token;
     private final int code;
@@ -15,7 +15,7 @@ public class OpReplyException extends Exception {
      * @param code 应答编码
      * @param desc 应答消息
      */
-    public OpReplyException(String token, int code, String desc) {
+    public OpResponseException(String token, int code, String desc) {
         this.token = token;
         this.code = code;
         this.desc = desc;

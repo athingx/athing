@@ -1,24 +1,24 @@
 package io.github.athingx.athing.thing.impl.op;
 
-import io.github.athingx.athing.common.gson.GsonFactory;
 import io.github.athingx.athing.thing.api.ThingPath;
 import io.github.athingx.athing.thing.api.op.*;
+import io.github.athingx.athing.thing.api.op.domain.OpData;
+import io.github.athingx.athing.thing.api.op.function.OpConsumer;
+import io.github.athingx.athing.thing.api.op.function.OpFunction;
+import io.github.athingx.athing.thing.api.op.function.OpSupplier;
 import io.github.athingx.athing.thing.impl.util.TokenSequencer;
 import org.eclipse.paho.client.mqttv3.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
-import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
-import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
-import java.util.function.Function;
 
-import static io.github.athingx.athing.thing.api.util.CompletableFutureUtils.*;
-import static java.nio.charset.StandardCharsets.UTF_8;
+import static io.github.athingx.athing.thing.api.util.CompletableFutureUtils.executeFuture;
+import static io.github.athingx.athing.thing.api.util.CompletableFutureUtils.whenCompleted;
+import static java.util.Objects.isNull;
+import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
@@ -45,50 +45,75 @@ public class ThingOpImpl implements ThingOp {
         this.executor = executor;
     }
 
-    @Override
-    public String genToken() {
+    /**
+     * 生成操作令牌
+     *
+     * @return 操作令牌
+     */
+    private String genToken() {
         return sequencer.next();
     }
 
+    /**
+     * 数据投递者实现
+     *
+     * @param <V> 投递数据类型
+     */
+    private class ThingOpPosterImpl<V> extends ThingOpBinderImpl implements ThingOpPoster<V> {
+
+        private final PubPort<V> pub;
+
+        /**
+         * 数据投递者实现
+         *
+         * @param pub 发布端口
+         */
+        private ThingOpPosterImpl(PubPort<V> pub) {
+            this.pub = pub;
+        }
+
+        @Override
+        public CompletableFuture<Void> unbind() {
+            // 数据投递没有实际的绑定行为，所以这里的解绑操作为一个虚假的空操作
+            return CompletableFuture.<Void>completedFuture(null)
+                    .whenComplete(whenCompleted(
+                            v -> logger.debug("{}/op/poster/unbind success; topic={};", path, pub.topic()),
+                            ex -> logger.warn("{}/op/poster/unbind failure; topic={};", path, pub.topic(), ex)
+                    ));
+        }
+
+        @Override
+        public CompletableFuture<V> post(OpSupplier<V> supplier) {
+            final var topic = pub.topic();
+            final var token = genToken();
+            final var data = supplier.get(topic, token);
+            return _mqtt_publish(topic, pub.qos().getValue(), pub.encoder().encode(token, data))
+                    .thenApply(unused -> data)
+                    .whenComplete(((unused, cause) -> updateStatistics(cause)))
+                    .whenComplete(whenCompleted(
+                            v -> logger.debug("{}/op/poster/post success; token={};topic={};", path, token, topic),
+                            ex -> logger.warn("{}/op/poster/post failure; token={};topic={};", path, token, topic, ex)
+                    ));
+        }
+
+    }
+
     @Override
-    public <V> CompletableFuture<Void> post(PubPort<V> pub, V data) {
-        final var topic = pub.topic(data);
-        final var opData = pub.encode(genToken(), data);
-        final var qos = pub.qos();
-        return _mqtt_post(topic, qos, opData)
+    public <V> CompletableFuture<ThingOpPoster<V>> poster(PubPort<V> pub) {
+        // 数据投递没有实际的绑定行为，所以这里的绑定操作为一个虚假的空操作
+        return CompletableFuture.<ThingOpPoster<V>>completedFuture(new ThingOpPosterImpl<>(pub))
                 .whenComplete(whenCompleted(
-                        v -> logger.debug("{}/op/post success; topic={};token={};", path, topic, opData.token()),
-                        ex -> logger.warn("{}/op/post failure; topic={};token={};", path, topic, opData.token(), ex)
+                        v -> logger.debug("{}/op/poster/bind success; topic={};", path, pub.topic()),
+                        ex -> logger.warn("{}/op/poster/bind failure; topic={};", path, pub.topic(), ex)
                 ));
     }
 
-    private CompletableFuture<Void> _mqtt_post(String topic, int qos, OpData opData) {
-
-        final var encode = Function.<OpData>identity()
-
-                // 修复alink协议的BUG：当回传的类型为OpReply时，器中的data如果为null，必须以{}的形式回传
-                .andThen(data -> {
-                    if (data instanceof OpReply<?> reply)
-                        return new OpReply<>(
-                                reply.token(),
-                                reply.code(),
-                                reply.desc(),
-                                new HashMap<>()
-                        );
-                    return data;
-                })
-
-                // 编码为JSON字符串
-                .andThen(data -> GsonFactory.getGson().toJson(data))
-
-                // 编码为UTF-8字节数组
-                .andThen(json -> json.getBytes(UTF_8));
-
+    private CompletableFuture<Void> _mqtt_publish(String topic, int qos, byte[] payload) {
 
         // MQTT: message
         final var message = new MqttMessage();
         message.setQos(qos);
-        message.setPayload(encode.apply(opData));
+        message.setPayload(payload);
 
         // MQTT: publish
         return executeFuture(new MqttActionFuture<>(), postF -> client.publish(topic, message, new Object(), postF));
@@ -96,114 +121,168 @@ public class ThingOpImpl implements ThingOp {
     }
 
     @Override
-    public <V> CompletableFuture<ThingBind> bindConsumer(final SubPort<V> sub,
-                                                         final BiConsumer<String, V> consumeFn) {
+    public <V> CompletableFuture<ThingOpBinder> consumer(SubPort<V> sub, OpConsumer<V> consumeFn) {
 
-        // ThingBind: init
-        final ThingBind bind = () -> _mqtt_unbind(sub)
-                .whenComplete(whenCompleted(
-                        v -> logger.debug("{}/op/consume/unbind success; express={};", path, sub.express()),
-                        ex -> logger.warn("{}/op/consume/unbind failure; express={};", path, sub.express(), ex)
-                ));
+        // 消费操作绑定
+        final var binder = new ThingOpBinderImpl() {
+
+            @Override
+            public CompletableFuture<Void> unbind() {
+                return _mqtt_unsubscribe(sub.express())
+                        .whenComplete(whenCompleted(
+                                v -> logger.debug("{}/op/consumer/unbind success; express={};", path, sub.express()),
+                                ex -> logger.warn("{}/op/consumer/unbind failure; express={};", path, sub.express(), ex)
+                        ));
+            }
+
+        };
+
+
+        // 消费MQTT消息监听器
+        final IMqttMessageListener listener = (topic, message) -> executor.execute(() -> {
+
+
+            // 解码消息
+            final V data;
+            try {
+
+                // 解码消息数据
+                data = sub.decoder().decode(topic, message.getPayload());
+
+                // 解码消息数据为空，说明本次处理需要丢弃该消息
+                if (isNull(data)) {
+                    logger.debug("{}/op/consumer decode none, will be ignored! topic={};", path, topic);
+                    return;
+                }
+
+            } catch (Throwable cause) {
+                binder.updateStatistics(cause);
+                logger.warn("{}/op/consumer decode error! topic={};", path, topic, cause);
+                return;
+            }
+
+
+            // 消费消息
+            try {
+                consumeFn.accept(topic, data);
+                binder.updateStatistics(null);
+                logger.debug("{}/op/consumer success; topic={};", path, topic);
+            } catch (Throwable cause) {
+                binder.updateStatistics(cause);
+                logger.warn("{}/op/consumer failure; topic={};", path, topic, cause);
+            }
+
+        });
 
         // MQTT: bind
-        return _mqtt_bind("consume", sub, consumeFn)
-                .thenApply(unused -> bind)
+        return _mqtt_subscribe(sub.express(), sub.qos().getValue(), listener)
+                .thenApply(unused -> (ThingOpBinder) binder)
                 .whenComplete(whenCompleted(
-                        v -> logger.debug("{}/op/consume/bind success; express={};", path, sub.express()),
-                        ex -> logger.warn("{}/op/consume/bind failure; express={};", path, sub.express(), ex)
+                        v -> logger.debug("{}/op/consumer/bind success; express={};", path, sub.express()),
+                        ex -> logger.warn("{}/op/consumer/bind failure; express={};", path, sub.express(), ex)
                 ));
     }
 
-    private <V> CompletableFuture<Void> _mqtt_unbind(final SubPort<? extends V> sub) {
+    private CompletableFuture<Void> _mqtt_unsubscribe(String express) {
         return executeFuture(new MqttActionFuture<>(), unbindF
-                -> client.unsubscribe(sub.express(), new Object(), unbindF));
+                -> client.unsubscribe(express, new Object(), unbindF));
     }
 
-    private <V> CompletableFuture<Void> _mqtt_bind(final String action,
-                                                   final SubPort<? extends V> sub,
-                                                   final BiConsumer<String, ? super V> consumeFn) {
-
-        // MQTT: listener
-        final IMqttMessageListener listener = (topic, message) ->
-                executor.execute(() -> {
-
-                    // 解码消息
-                    final V data;
-                    try {
-                        data = sub.decode(topic, message.getPayload());
-                    } catch (Throwable cause) {
-                        logger.warn("{}/op/{} decode failure! topic={};", path, action, topic, cause);
-                        return;
-                    }
-
-                    // 解码消息结果为空，说明本次处理需要丢弃该消息
-                    if (Objects.isNull(data)) {
-                        logger.debug("{}/op/{} decode null! topic={};", path, action, topic);
-                        return;
-                    }
-
-                    // 消费消息
-                    try {
-                        consumeFn.accept(topic, data);
-                    } catch (Throwable cause) {
-                        logger.warn("{}/op/{} failure! topic={};", path, action, topic, cause);
-                    }
-
-                });
-
-        // MQTT: subscribe
-        return executeFuture(new MqttActionFuture<>(), bindF ->
-                client.subscribe(sub.express(), sub.qos(), new Object(), bindF, listener));
+    private CompletableFuture<Void> _mqtt_subscribe(String express, int qos, IMqttMessageListener listener) {
+        return executeFuture(new MqttActionFuture<>(), bindF
+                -> client.subscribe(express, qos, new Object(), bindF, listener));
     }
 
     @Override
-    public <T extends OpData, R>
-    CompletableFuture<ThingBind> bindServices(final SubPort<T> sub,
-                                              final PubPort<R> pub,
-                                              final BiFunction<String, T, CompletableFuture<R>> serviceFn) {
+    public <T extends OpData, R> CompletableFuture<ThingOpBinder> services(
+            SubPort<T> sub,
+            OpFunction<T, PubPort<R>> routingPubFn,
+            OpFunction<T, CompletableFuture<R>> serviceFn
+    ) {
 
-        // ThingBind: init
-        final ThingBind bind = () -> _mqtt_unbind(sub)
-                .whenComplete(whenCompleted(
-                        v -> logger.debug("{}/op/service/unbind success; express={};", path, sub.express()),
-                        ex -> logger.warn("{}/op/service/unbind failure; express={};", path, sub.express(), ex)
-                ));
-
-        // Consumer: service
-        final BiConsumer<String, T> serviceConsumer = new BiConsumer<>() {
-
-            private CompletableFuture<? extends R> executeServiceFn(String subTopic, T request) {
-                try {
-                    return serviceFn.apply(subTopic, request);
-                } catch (Throwable cause) {
-                    return CompletableFuture.failedFuture(cause);
-                }
-            }
+        // 服务操作绑定
+        final var binder = new ThingOpBinderImpl() {
 
             @Override
-            public void accept(String subTopic, T request) {
-                executeServiceFn(subTopic, request)
+            public CompletableFuture<Void> unbind() {
+                return _mqtt_unsubscribe(sub.express())
                         .whenComplete(whenCompleted(
-                                v -> logger.debug("{}/op/service/execute success! token={};request-topic={};", path, request.token(), subTopic),
-                                ex -> logger.warn("{}/op/service/execute failure! token={};request-topic={};", path, request.token(), subTopic, ex)
-                        ))
-                        .whenComplete(whenSuccessfully(response -> {
-                            final var pubTopic = pub.topic(response);
-                            final var pubQos = pub.qos();
-                            final var pubOpData = pub.encode(request.token(), response);
-                            _mqtt_post(pubTopic, pubQos, pubOpData)
-                                    .whenComplete(whenCompleted(
-                                            v -> logger.debug("{}/op/service/response success! token={};response-topic={};", path, pubOpData.token(), pubTopic),
-                                            ex -> logger.warn("{}/op/service/response failure! token={};response-topic={};", path, pubOpData.token(), pubTopic, ex)
-                                    ));
-                        }));
+                                v -> logger.debug("{}/op/service/unbind success; express={};", path, sub.express()),
+                                ex -> logger.warn("{}/op/service/unbind failure; express={};", path, sub.express(), ex)
+                        ));
             }
+
         };
 
-        // MQTT: bind
-        return _mqtt_bind("service/request", sub, serviceConsumer)
-                .thenApply(unused -> bind)
+        // 服务MQTT消息监听器
+        final IMqttMessageListener listener = (topic, message) -> executor.execute(() -> {
+
+            // 解码消息
+            final T request;
+            final String token;
+            try {
+
+                // 解码服务请求
+                request = sub.decoder().decode(topic, message.getPayload());
+
+                // 解码消息结果为空，说明本次处理需要丢弃该请求
+                if (isNull(request)) {
+                    logger.debug("{}/op/service/request decode none, will be ignored! topic={};", path, topic);
+                    return;
+                }
+
+                // 解码操作令牌
+                token = requireNonNull(request.token(), "token is missing!");
+
+            } catch (Throwable cause) {
+                binder.updateStatistics(cause);
+                logger.warn("{}/op/service/request decode error! topic={};", path, topic, cause);
+                return;
+            }
+
+            // 执行服务
+            try {
+
+                // 调用服务
+                serviceFn.apply(topic, token, request)
+
+                        // 服务调用成功后，准备服务应答
+                        .thenCompose(response -> {
+
+                            // 路由服务应答的发布端口
+                            final var pub = requireNonNull(routingPubFn.apply(topic, token, request), "response pub-port routing none!");
+                            final var responseTopic = pub.topic();
+                            logger.debug("{}/op/service/response pub-port routing success! token={};topic={};", path, token, responseTopic);
+
+                            // 服务应答
+                            return _mqtt_publish(pub.topic(), pub.qos().getValue(), pub.encoder().encode(token, response))
+                                    .whenComplete(whenCompleted(
+                                            v -> logger.debug("{}/op/service/response success! token={};topic={};", path, token, responseTopic),
+                                            ex -> logger.warn("{}/op/service/response failure! token={};topic={};", path, token, responseTopic, ex)
+                                    ));
+
+                        })
+
+                        // 完整的请求-应答结束，统计并输出本次服务
+                        .whenComplete((v, ex) -> binder.updateStatistics(ex))
+                        .whenComplete(whenCompleted(
+                                v -> logger.debug("{}/op/service success! token={};", path, token),
+                                ex -> logger.warn("{}/op/service failure! token={};", path, token, ex)
+                        ));
+
+            }
+
+            // 执行服务过程中发生任何异常，都不会回应服务端
+            catch (Throwable cause) {
+                binder.updateStatistics(cause);
+                logger.warn("{}/op/service/execute occur error! token={};topic={};", path, token, topic, cause);
+            }
+
+        });
+
+        // 绑定服务
+        return _mqtt_subscribe(sub.express(), sub.qos().getValue(), listener)
+                .thenApply(unused -> (ThingOpBinder) binder)
                 .whenComplete(whenCompleted(
                         v -> logger.debug("{}/op/service/bind success; express={};", path, sub.express()),
                         ex -> logger.warn("{}/op/service/bind failure; express={};", path, sub.express(), ex)
@@ -211,76 +290,129 @@ public class ThingOpImpl implements ThingOp {
 
     }
 
+    /**
+     * 设备调用操作实现
+     *
+     * @param <T> 请求类型
+     * @param <R> 应答类型
+     */
+    private class ThingOpCallerImpl<T, R> extends ThingOpBinderImpl implements ThingOpCaller<T, R> {
+
+        private final PubPort<T> pub;
+        private final SubPort<R> sub;
+        private final ConcurrentHashMap<String, CompletableFuture<R>> tokenFutureMap;
+
+        private ThingOpCallerImpl(PubPort<T> pub, SubPort<R> sub, ConcurrentHashMap<String, CompletableFuture<R>> tokenFutureMap) {
+            this.pub = pub;
+            this.sub = sub;
+            this.tokenFutureMap = tokenFutureMap;
+        }
+
+        @Override
+        public CompletableFuture<Void> unbind() {
+            return _mqtt_unsubscribe(sub.express())
+                    .whenComplete(whenCompleted(
+                            v -> logger.debug("{}/op/caller/unbind success; express={};", path, sub.express()),
+                            ex -> logger.warn("{}/op/caller/unbind failure; express={};", path, sub.express(), ex)
+                    ));
+        }
+
+        /**
+         * 数据调用
+         *
+         * @param supplier 获取请求函数
+         * @return 应答结果
+         */
+        @Override
+        public CompletableFuture<R> call(OpSupplier<T> supplier) {
+            return call(new Option(), supplier);
+        }
+
+
+        @Override
+        public CompletableFuture<R> call(Option option, OpSupplier<T> supplier) {
+
+            final var token = genToken();
+            final var topic = pub.topic();
+            final var request = supplier.get(topic, token);
+            final var payload = pub.encoder().encode(token, request);
+
+            // 生成调用存根并存入缓存
+            final var callF = new CompletableFuture<R>();
+            tokenFutureMap.put(token, callF);
+
+            return callF
+                    .thenCombine(
+                            _mqtt_publish(topic, pub.qos().getValue(), payload)
+                                    .whenComplete(whenCompleted(
+                                            v -> logger.debug("{}/op/call/request success; token={};topic={};", path, token, topic),
+                                            ex -> logger.warn("{}/op/call/request failure; token={};topic={};", path, token, topic, ex)
+                                    )),
+                            (response, unused) -> response
+                    )
+                    .orTimeout(option.timeoutMs(), MILLISECONDS)
+                    .whenComplete((v, ex) -> tokenFutureMap.remove(token))
+                    .whenComplete((v, ex) -> updateStatistics(ex))
+                    .whenComplete(whenCompleted(
+                            v -> logger.debug("{}/op/call/response success; token={};topic={};", path, token, topic),
+                            ex -> logger.warn("{}/op/call/response failure; token={};topic={};", path, token, topic, ex)
+                    ));
+        }
+
+    }
+
     @Override
-    public <T, R extends OpData> CompletableFuture<ThingCall<T, R>> bindCaller(
-            final PubPort<T> pub,
-            final SubPort<R> sub
-    ) {
+    public <T, R extends OpData>
+    CompletableFuture<ThingOpCaller<T, R>> caller(PubPort<T> pub, SubPort<R> sub) {
 
         final var tokenFutureMap = new ConcurrentHashMap<String, CompletableFuture<R>>();
+        final var caller = new ThingOpCallerImpl<>(pub, sub, tokenFutureMap);
 
-        // ThingCall: init
-        final var call = new ThingCall<T, R>() {
+        final IMqttMessageListener listener = (topic, message) -> executor.execute(() -> {
 
-            @Override
-            public CompletableFuture<R> call(Option option, T data) {
+            // 解码应答
+            final R response;
+            final String token;
+            try {
 
-                // 请求主题
-                final var topic = pub.topic(data);
-                final var qos = pub.qos();
-                final var opData = pub.encode(genToken(), data);
+                // 解码应答
+                response = sub.decoder().decode(topic, message.getPayload());
 
-                // 生成调用存根并存入缓存
-                final var callF = new CompletableFuture<R>();
-                tokenFutureMap.put(opData.token(), callF);
+                // 如果应答解码为空，说明本次消息应该放弃
+                if (isNull(response)) {
+                    logger.debug("{}/op/call/response decode none, will be ignored! topic={};", path, topic);
+                    return;
+                }
 
-                // 发起请求，如果请求失败则让调用Future失败
-                _mqtt_post(topic, qos, opData)
-                        .whenComplete(whenExceptionally(callF::completeExceptionally))
-                        .whenComplete(whenCompleted(
-                                v -> logger.debug("{}/op/call/request success; topic={};token={};", path, topic, opData.token()),
-                                ex -> logger.warn("{}/op/call/request failure; topic={};token={};", path, topic, opData.token(), ex)
-                        ));
+                // 拿到操作令牌，用于贯穿上下文
+                token = requireNonNull(response.token(), "token is missing!");
 
-                // 返回调用future
-                return callF
-                        .orTimeout(option.timeoutMs(), MILLISECONDS)
-                        .whenComplete((v, ex) -> tokenFutureMap.remove(opData.token()))
-                        .whenComplete(whenCompleted(
-                                v -> logger.debug("{}/op/call/response success; topic={};token={};", path, topic, opData.token()),
-                                ex -> logger.warn("{}/op/call/response failure; topic={};token={};", path, topic, opData.token(), ex)
-                        ));
+            } catch (Throwable cause) {
+                caller.updateStatistics(cause);
+                logger.warn("{}/op/call/response decode error! topic={};", path, topic, cause);
+                return;
             }
 
-            @Override
-            public CompletableFuture<Void> unbind() {
-                return _mqtt_unbind(sub)
-                        .whenComplete(whenCompleted(
-                                v -> logger.debug("{}/op/call/unbind success; express={};", path, sub.express()),
-                                ex -> logger.warn("{}/op/call/unbind failure; express={};", path, sub.express(), ex)
-                        ));
-            }
-        };
-
-        // 绑定
-        final var bindF = _mqtt_bind("call/response", sub, (topic, data) -> {
-            final var token = data.token();
+            // 获取调用存根
             final var callF = tokenFutureMap.remove(token);
-            if (Objects.isNull(callF)) {
-                logger.warn("{}/op/call/response received; but none token match, maybe timeout! topic={};token={};", path, topic, data.token());
-            } else if (!callF.complete(data)) {
-                logger.warn("{}/op/call/response received; but assign failure, maybe expired. topic={};token={};", path, topic, data.token());
-            } else {
-                logger.debug("{}/op/call/response received; topic={};token={};", path, topic, data.token());
+
+            // 如果调用存根为空，说明本次应答已经超时，应该放弃
+            if (isNull(callF)) {
+                logger.warn("{}/op/call/response assign failure: none token match, maybe timeout! topic={};token={};", path, topic, token);
             }
+
+            // 如果完成调用存根失败，说明本次应答已经过期（被其他结果提前完成），应该放弃
+            else if (!callF.complete(response)) {
+                logger.warn("{}/op/call/response assign failure: maybe expired. topic={};token={};", path, topic, token);
+            }
+
         });
 
-        // 返回绑定
-        return bindF
-                .thenApply(unused -> (ThingCall<T, R>) call)
+        return _mqtt_subscribe(sub.express(), sub.qos().getValue(), listener)
+                .thenApply(unused -> (ThingOpCaller<T, R>) caller)
                 .whenComplete(whenCompleted(
-                        v -> logger.debug("{}/op/call/bind success; express={};", path, sub.express()),
-                        ex -> logger.warn("{}/op/call/bind failure; express={};", path, sub.express(), ex)
+                        v -> logger.debug("{}/op/caller/bind success; express={};", path, sub.express()),
+                        ex -> logger.warn("{}/op/caller/bind failure; express={};", path, sub.express(), ex)
                 ));
     }
 

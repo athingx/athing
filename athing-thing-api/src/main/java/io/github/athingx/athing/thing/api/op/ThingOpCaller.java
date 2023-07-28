@@ -1,34 +1,33 @@
 package io.github.athingx.athing.thing.api.op;
 
+import io.github.athingx.athing.thing.api.op.function.OpSupplier;
+
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Function;
 
 /**
- * 设备数据调用者
+ * 设备调用操作
  *
  * @param <T> 请求数据类型
  * @param <R> 应答数据类型
  */
-public interface ThingCall<T, R> extends ThingBind {
+public interface ThingOpCaller<T, R> extends ThingOpBinder {
 
     /**
-     * 调用
+     * 数据调用
      *
-     * @param data 请求数据
+     * @param supplier 获取请求函数
      * @return 应答结果
      */
-    default CompletableFuture<R> call(T data) {
-        return call(new Option(), data);
-    }
+    CompletableFuture<R> call(OpSupplier<T> supplier);
 
     /**
-     * 调用
+     * 数据调用
      *
-     * @param option 调用选项
-     * @param data   请求数据
+     * @param option   调用选项
+     * @param supplier 获取请求函数
      * @return 应答结果
      */
-    CompletableFuture<R> call(Option option, T data);
+    CompletableFuture<R> call(Option option, OpSupplier<T> supplier);
 
     /**
      * 调用选项

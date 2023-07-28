@@ -1,19 +1,23 @@
 package io.github.athingx.athing.thing;
 
 import com.google.gson.annotations.SerializedName;
-import com.google.gson.reflect.TypeToken;
 import io.github.athingx.athing.thing.api.ThingPath;
-import io.github.athingx.athing.thing.api.op.*;
+import io.github.athingx.athing.thing.api.op.PubPort;
+import io.github.athingx.athing.thing.api.op.SubPort;
+import io.github.athingx.athing.thing.api.op.domain.OpRequest;
+import io.github.athingx.athing.thing.api.op.domain.OpResponse;
+import io.github.athingx.athing.thing.api.op.function.OpDecoder;
+import io.github.athingx.athing.thing.api.op.function.OpEncoder;
 import io.github.athingx.athing.thing.builder.ThingBuilder;
 import io.github.athingx.athing.thing.builder.mqtt.MqttClientFactoryImplByAliyun;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.concurrent.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import static io.github.athingx.athing.thing.api.util.CompletableFutureUtils.thenComposeOpReply;
 import static io.github.athingx.athing.thing.api.util.CompletableFutureUtils.whenSuccessfully;
-import static io.github.athingx.athing.thing.api.util.ThingOpUtils.*;
 import static io.github.athingx.athing.thing.builder.mqtt.MqttConnectStrategy.alwaysReTry;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -32,44 +36,32 @@ public class ThingOpTestCase implements LoadingProperties {
                 )
                 .build();
 
+        final var path = thing.path().toURN();
 
-
-        final var thingCall = thing.op().bindCaller(
-                        PubPort.newBuilder().build("/sys/%s/thing/config/get".formatted(thing.path().toURN())),
-                        SubPort.newBuilder("/sys/%s/thing/config/get_reply".formatted(thing.path().toURN()))
-                                .decode(mappingByteToJson(UTF_8))
-                                .decode(mappingJsonToType(new TypeToken<OpReply<Data>>() {
-
-                                }))
-                                .build()
-                )
+        final var caller = thing.op()
+                .caller(PubPort.topic("/sys/%s/thing/config/get".formatted(path))
+                                .encode(OpEncoder.encodeByteFromJson(UTF_8))
+                                .encode(OpEncoder.encodeJsonFromOpRequest(ReqData.class)),
+                        SubPort.express("/sys/%s/thing/config/get_reply".formatted(path))
+                                .decode(OpDecoder.decodeByteToJson(UTF_8))
+                                .decode(OpDecoder.decodeJsonToOpResponse(RespData.class)))
                 .get();
 
-        final var token = thing.op().genToken();
-        final var data = thingCall.call(new OpDataObject(token)
-                        .putProperty("id", token)
-                        .putProperty("version", "1.0")
-                        .putProperty("method", "thing.config.get")
-                        .putProperty("params", object -> {
-                            object.putProperty("configScope", "product");
-                            object.putProperty("getType", "file");
-                        })
-                )
+        final var response = caller.call((topic, token) -> OpRequest.of(token, "thing.config.get", new ReqData("product", "file")))
                 .whenComplete(whenSuccessfully(reply -> Assert.assertTrue(reply.isOk())))
-                .whenComplete(whenSuccessfully(reply -> Assert.assertEquals(token, reply.token())))
                 .whenComplete(whenSuccessfully(reply -> Assert.assertNotNull(reply.data())))
                 .thenCompose(thenComposeOpReply())
                 .get();
 
-        Assert.assertNotNull(data.id);
-        Assert.assertTrue(data.size > 0);
-        Assert.assertNotNull(data.sign);
-        Assert.assertNotNull(data.method);
-        Assert.assertNotNull(data.url);
-        Assert.assertNotNull(data.type);
+        Assert.assertNotNull(response.id);
+        Assert.assertTrue(response.size > 0);
+        Assert.assertNotNull(response.sign);
+        Assert.assertNotNull(response.method);
+        Assert.assertNotNull(response.url);
+        Assert.assertNotNull(response.type);
 
         // 销毁
-        thingCall.unbind().get();
+        caller.unbind().get();
         thing.destroy();
     }
 
@@ -84,53 +76,55 @@ public class ThingOpTestCase implements LoadingProperties {
                 )
                 .build();
 
-        final BlockingQueue<OpReply<Data>> queue = new LinkedBlockingQueue<>();
-        final var thingBind = thing.op().bindConsumer(
-                        SubPort.newBuilder("/sys/%s/thing/config/get_reply".formatted(thing.path().toURN()))
-                                .filter(matchingTopic(topic -> topic.equals("/sys/%s/thing/config/get_reply".formatted(thing.path().toURN()))))
-                                .decode(mappingByteToJson(UTF_8))
-                                .decode(mappingJsonToOpReply(Data.class))
-                                .build(),
-                        (topic, reply) -> {
+        final var path = thing.path().toURN();
+        final var queue = new LinkedBlockingQueue<OpResponse<RespData>>();
+        final var binder = thing.op()
+                .consumer(SubPort.express("/sys/%s/thing/config/get_reply".formatted(path))
+                                .decode(OpDecoder.filter((topic, data) -> topic.equals("/sys/%s/thing/config/get_reply".formatted(path))))
+                                .decode(OpDecoder.decodeByteToJson(UTF_8))
+                                .decode(OpDecoder.decodeJsonToOpResponse(RespData.class)),
+                        (topic, response) -> {
                             while (true) {
-                                if (queue.offer(reply)) {
+                                if (queue.offer(response)) {
                                     break;
                                 }
                             }
-                        }
-                )
+                        })
                 .get();
 
-        final String token = thing.op().genToken();
-        thing.op().post(PubPort.newBuilder().build("/sys/%s/thing/config/get".formatted(thing.path().toURN())),
-                        new OpDataObject(token)
-                                .putProperty("id", token)
-                                .putProperty("version", "1.0")
-                                .putProperty("method", "thing.config.get")
-                                .putProperty("params", new OpDataObject(token)
-                                        .putProperty("configScope", "product")
-                                        .putProperty("getType", "file")
-                                )
-                )
+
+        final var poster = thing.op()
+                .poster(PubPort.topic("/sys/%s/thing/config/get".formatted(path))
+                        .encode(OpEncoder.encodeByteFromJson(UTF_8))
+                        .encode(OpEncoder.encodeJsonFromOpRequest(ReqData.class)))
                 .get();
 
-        final OpReply<Data> reply = queue.take();
-        Assert.assertEquals(token, reply.token());
-        Assert.assertTrue(reply.isOk());
-        Assert.assertNotNull(reply.data());
-        Assert.assertNotNull(reply.data().id);
-        Assert.assertTrue(reply.data().size > 0);
-        Assert.assertNotNull(reply.data().sign);
-        Assert.assertNotNull(reply.data().method);
-        Assert.assertNotNull(reply.data().url);
-        Assert.assertNotNull(reply.data().type);
+        final var request = poster.post((token, data) -> OpRequest.of(token, "thing.config.get", new ReqData("product", "file")))
+                .get();
 
-        thingBind.unbind().get();
+        final OpResponse<RespData> response = queue.take();
+        Assert.assertEquals(request.token(), response.token());
+        Assert.assertTrue(response.isOk());
+        Assert.assertNotNull(response.data());
+        Assert.assertNotNull(response.data().id);
+        Assert.assertTrue(response.data().size > 0);
+        Assert.assertNotNull(response.data().sign);
+        Assert.assertNotNull(response.data().method);
+        Assert.assertNotNull(response.data().url);
+        Assert.assertNotNull(response.data().type);
+
+        binder.unbind().get();
+        poster.unbind().get();
         thing.destroy();
     }
 
+    record ReqData(
+            @SerializedName("configScope") String scope,
+            @SerializedName("getType") String type) {
+    }
+
     // 数据格式
-    record Data(
+    record RespData(
             @SerializedName("configId") String id,
             @SerializedName("configSize") int size,
             @SerializedName("sign") String sign,

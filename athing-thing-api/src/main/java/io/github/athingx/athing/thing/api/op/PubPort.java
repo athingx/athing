@@ -1,6 +1,8 @@
 package io.github.athingx.athing.thing.api.op;
 
-import java.util.function.BiFunction;
+import io.github.athingx.athing.thing.api.op.function.OpEncoder;
+
+import static io.github.athingx.athing.thing.api.op.OpQos.AT_LEAST_ONCE;
 
 /**
  * 发布端口
@@ -9,89 +11,38 @@ import java.util.function.BiFunction;
  *
  * @param <V> 数据类型
  */
-public class PubPort<V> {
-
-    private final int qos;
-    private final String pattern;
-    private final BiFunction<String/*PATTERN*/, V, String> formatter;
-    private final BiFunction<String/*TOPIC*/, V, OpData> encoder;
+public record PubPort<V>(OpQos qos, String topic, OpEncoder<V, byte[]> encoder) {
 
     /**
-     * 发布端口
+     * 编码发布数据
      *
-     * @param qos       QOS
-     * @param pattern   发布主题模板
-     * @param formatter 发布主题格式化器
+     * @param encoder 编码器
+     * @param <T>     编码数据类型
+     * @return 发布端口
      */
-    public PubPort(int qos, String pattern, BiFunction<String, V, String> formatter, BiFunction<String, V, OpData> encoder) {
-        this.qos = qos;
-        this.pattern = pattern;
-        this.formatter = formatter;
-        this.encoder = encoder;
+    public <T> PubPort<T> encode(OpEncoder<? super T, ? extends V> encoder) {
+        return new PubPort<>(qos, topic, this.encoder.compose(encoder));
     }
 
     /**
-     * 投递主题
-     * <p>
-     * 一些发布主题是由数据动态生成的，比如：${productId}/${thingId}/property/${property}，
-     * 所以需要通过投递数据来生成发布主题
+     * 构造发布端口
      *
-     * @param data 投递数据
-     * @return 投递主题
+     * @param qos   QOS
+     * @param topic 主题
+     * @return 发布端口
      */
-    public String topic(V data) {
-        return formatter.apply(pattern, data);
-    }
-
-    public OpData encode(String token, V data) {
-        return encoder.apply(token, data);
-    }
-
-    public static <V extends OpData> Builder<V, V> newBuilder() {
-        return new Builder<>(1, (token, data) -> data);
+    public static PubPort<byte[]> topic(OpQos qos, String topic) {
+        return new PubPort<>(qos, topic, OpEncoder.identity());
     }
 
     /**
-     * 获取QOS
+     * 构造发布端口
      *
-     * @return QOS
+     * @param topic 主题
+     * @return 发布端口
      */
-    public int qos() {
-        return qos;
-    }
-
-    /**
-     * 发布端口构造器
-     *
-     * @param <T> 编码前数据类型
-     * @param <R> 编码后数据类型
-     */
-    public static class Builder<T, R> {
-
-        private final int qos;
-        private final BiFunction<String, R, OpData> encoder;
-
-        public Builder(int qos, BiFunction<String, R, OpData> encoder) {
-            this.qos = qos;
-            this.encoder = encoder;
-        }
-
-        public Builder<T, R> qos(int qos) {
-            return new Builder<>(qos, encoder);
-        }
-
-        public <V> Builder<R, V> encode(BiFunction<String, V, R> encoder) {
-            return new Builder<>(qos, (token, data) -> this.encoder.apply(token, encoder.apply(token, data)));
-        }
-
-        public PubPort<R> build(String pattern, BiFunction<String, R, String> formatter) {
-            return new PubPort<>(qos, pattern, formatter, encoder);
-        }
-
-        public PubPort<R> build(String topic) {
-            return new PubPort<>(qos, topic, (pattern, data) -> pattern, encoder);
-        }
-
+    public static PubPort<byte[]> topic(String topic) {
+        return topic(AT_LEAST_ONCE, topic);
     }
 
 }

@@ -62,6 +62,7 @@ public class ThingImpl implements Thing {
 
         // 设备关闭完成
         logger.info("{}/destroy success!", path);
+
     }
 
 }

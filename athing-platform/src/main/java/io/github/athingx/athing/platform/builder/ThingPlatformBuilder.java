@@ -5,8 +5,6 @@ import io.github.athingx.athing.platform.builder.client.ThingPlatformClientFacto
 import io.github.athingx.athing.platform.builder.message.ThingMessageConsumerFactory;
 import io.github.athingx.athing.platform.impl.ThingPlatformImpl;
 
-import java.util.Objects;
-
 /**
  * 设备平台构造器
  */

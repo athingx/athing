@@ -1,6 +1,5 @@
 package io.github.athingx.athing.platform.impl;
 
-import com.aliyuncs.v5.IAcsClient;
 import io.github.athingx.athing.platform.api.ThingPlatform;
 import io.github.athingx.athing.platform.api.ThingTemplate;
 import io.github.athingx.athing.platform.api.ThingTemplateFactory;

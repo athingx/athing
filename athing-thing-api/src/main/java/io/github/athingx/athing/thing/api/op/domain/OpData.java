@@ -1,4 +1,4 @@
-package io.github.athingx.athing.thing.api.op;
+package io.github.athingx.athing.thing.api.op.domain;
 
 /**
  * 操作数据

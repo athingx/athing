@@ -4,12 +4,9 @@ import io.github.athingx.athing.thing.api.Thing;
 import io.github.athingx.athing.thing.api.ThingPath;
 import io.github.athingx.athing.thing.builder.executor.ExecutorServiceFactory;
 import io.github.athingx.athing.thing.builder.mqtt.MqttClientFactory;
-import io.github.athingx.athing.thing.builder.mqtt.MqttConnectStrategy;
 import io.github.athingx.athing.thing.impl.ThingImpl;
-import org.eclipse.paho.client.mqttv3.IMqttAsyncClient;
 
 import java.util.Objects;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static java.util.concurrent.Executors.newFixedThreadPool;

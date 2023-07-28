@@ -25,6 +25,7 @@ public interface Thing {
 
     /**
      * 获取线程池
+     *
      * @return 线程池
      */
     ExecutorService executor();

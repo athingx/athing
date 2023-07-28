@@ -1,4 +1,4 @@
-package io.github.athingx.athing.thing.api.op;
+package io.github.athingx.athing.thing.api.op.domain;
 
 import com.google.gson.annotations.SerializedName;
 import io.github.athingx.athing.common.ThingCodes;
@@ -10,9 +10,9 @@ import io.github.athingx.athing.common.ThingCodes;
  * @param code  应答编码
  * @param desc  应答消息
  * @param data  应答数据
- * @param <T>   数据类型
+ * @param <T>   应答数据类型
  */
-public record OpReply<T>(
+public record OpResponse<T>(
         @SerializedName("id") String token,
         @SerializedName("code") int code,
         @SerializedName("message") String desc,
@@ -36,8 +36,8 @@ public record OpReply<T>(
      * @param <T>   数据类型
      * @return 操作应答
      */
-    public static <T> OpReply<T> success(String token, T data) {
-        return new OpReply<>(token, OK, "success", data);
+    public static <T> OpResponse<T> success(String token, T data) {
+        return new OpResponse<>(token, OK, "success", data);
     }
 
     /**
@@ -47,8 +47,8 @@ public record OpReply<T>(
      * @param desc  应答消息
      * @return 操作应答
      */
-    public static OpReply<Void> success(String token, String desc) {
-        return new OpReply<>(token, OK, desc, null);
+    public static OpResponse<Void> succeed(String token, String desc) {
+        return new OpResponse<>(token, OK, desc, null);
     }
 
     /**
@@ -57,7 +57,7 @@ public record OpReply<T>(
      * @param token 操作令牌
      * @return 操作应答
      */
-    public static OpReply<Void> success(String token) {
+    public static OpResponse<Void> succeed(String token) {
         return success(token, null);
     }
 
@@ -69,8 +69,8 @@ public record OpReply<T>(
      * @param desc  应答消息
      * @return 操作应答
      */
-    public static OpReply<Void> reply(String token, int code, String desc) {
-        return new OpReply<>(token, code, desc, null);
+    public static OpResponse<Void> of(String token, int code, String desc) {
+        return new OpResponse<>(token, code, desc, null);
     }
 
     /**
@@ -82,8 +82,8 @@ public record OpReply<T>(
      * @param data  应答数据
      * @return 操作应答
      */
-    public static <T> OpReply<T> reply(String token, int code, String desc, T data) {
-        return new OpReply<>(token, code, desc, data);
+    public static <T> OpResponse<T> of(String token, int code, String desc, T data) {
+        return new OpResponse<>(token, code, desc, data);
     }
 
 }
