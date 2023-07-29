@@ -5,6 +5,7 @@ import io.github.athingx.athing.thing.api.op.function.OpConsumer;
 import io.github.athingx.athing.thing.api.op.function.OpFunction;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 
 /**
  * 设备操作

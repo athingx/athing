@@ -6,18 +6,53 @@ import io.github.athingx.athing.common.ThingCodes;
 /**
  * 操作应答
  *
- * @param token 操作令牌
- * @param code  应答编码
- * @param desc  应答消息
- * @param data  应答数据
- * @param <T>   应答数据类型
+ * @param <T> 应答数据类型
  */
-public record OpResponse<T>(
-        @SerializedName("id") String token,
-        @SerializedName("code") int code,
-        @SerializedName("message") String desc,
-        @SerializedName("data") T data
-) implements OpData, ThingCodes {
+public class OpResponse<T> implements OpData, ThingCodes {
+
+    @SerializedName("id")
+    private final String token;
+
+    @SerializedName("code")
+    private final int code;
+
+    @SerializedName("message")
+    private final String desc;
+
+    @SerializedName("data")
+    private final T data;
+
+    /**
+     * 构造操作应答
+     *
+     * @param token 操作令牌
+     * @param code  应答编码
+     * @param desc  应答消息
+     * @param data  应答数据
+     */
+    public OpResponse(String token, int code, String desc, T data) {
+        this.token = token;
+        this.code = code;
+        this.desc = desc;
+        this.data = data;
+    }
+
+    @Override
+    public String getToken() {
+        return token;
+    }
+
+    public int getCode() {
+        return code;
+    }
+
+    public String getDesc() {
+        return desc;
+    }
+
+    public T getData() {
+        return data;
+    }
 
     /**
      * 是否应答成功

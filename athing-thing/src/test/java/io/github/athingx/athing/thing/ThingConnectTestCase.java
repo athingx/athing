@@ -31,12 +31,12 @@ public class ThingConnectTestCase implements LoadingProperties {
                 )
                 .build();
         Assert.assertNotNull(thing);
-        Assert.assertEquals(PRODUCT_ID, thing.path().getProductId());
-        Assert.assertEquals(THING_ID, thing.path().getThingId());
-        Assert.assertEquals("%s/%s".formatted(PRODUCT_ID, THING_ID), thing.path().toURN());
-        Assert.assertEquals("thing://%s/%s".formatted(PRODUCT_ID, THING_ID), thing.path().toURI().toString());
-        Assert.assertEquals("thing://%s/%s".formatted(PRODUCT_ID, THING_ID), thing.path().toString());
-        Assert.assertNotNull(thing.executor());
+        Assert.assertEquals(PRODUCT_ID, thing.getPath().getProductId());
+        Assert.assertEquals(THING_ID, thing.getPath().getThingId());
+        Assert.assertEquals("%s/%s".formatted(PRODUCT_ID, THING_ID), thing.getPath().toURN());
+        Assert.assertEquals("thing://%s/%s".formatted(PRODUCT_ID, THING_ID), thing.getPath().toURI().toString());
+        Assert.assertEquals("thing://%s/%s".formatted(PRODUCT_ID, THING_ID), thing.getPath().toString());
+        Assert.assertNotNull(thing.getExecutor());
         thing.destroy();
     }
 
@@ -69,9 +69,10 @@ public class ThingConnectTestCase implements LoadingProperties {
                 .build();
         Assert.assertNotNull(thing);
 
-        var future = thing.op().consumer(SubPort.express("/hello"), (s, bytes) -> {
+        var future = thing.op()
+                .consumer(SubPort.newBuilder().build("/hello"), (s, bytes) -> {
 
-        });
+                });
         latch.countDown();
         future.get().unbind().get();
         thing.destroy();
@@ -93,11 +94,11 @@ public class ThingConnectTestCase implements LoadingProperties {
                 )
                 .build();
         Assert.assertNotNull(thing);
-        Assert.assertEquals(PRODUCT_ID, thing.path().getProductId());
-        Assert.assertEquals(THING_ID, thing.path().getThingId());
-        Assert.assertEquals("%s/%s".formatted(PRODUCT_ID, THING_ID), thing.path().toURN());
-        Assert.assertEquals("thing://%s/%s".formatted(PRODUCT_ID, THING_ID), thing.path().toURI().toString());
-        Assert.assertEquals("thing://%s/%s".formatted(PRODUCT_ID, THING_ID), thing.path().toString());
+        Assert.assertEquals(PRODUCT_ID, thing.getPath().getProductId());
+        Assert.assertEquals(THING_ID, thing.getPath().getThingId());
+        Assert.assertEquals("%s/%s".formatted(PRODUCT_ID, THING_ID), thing.getPath().toURN());
+        Assert.assertEquals("thing://%s/%s".formatted(PRODUCT_ID, THING_ID), thing.getPath().toURI().toString());
+        Assert.assertEquals("thing://%s/%s".formatted(PRODUCT_ID, THING_ID), thing.getPath().toString());
         thing.destroy();
     }
 

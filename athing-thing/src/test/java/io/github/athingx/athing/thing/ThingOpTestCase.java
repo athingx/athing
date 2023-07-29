@@ -36,20 +36,22 @@ public class ThingOpTestCase implements LoadingProperties {
                 )
                 .build();
 
-        final var path = thing.path().toURN();
-
+        final var path = thing.getPath().toURN();
         final var caller = thing.op()
-                .caller(PubPort.topic("/sys/%s/thing/config/get".formatted(path))
+                .caller(
+                        PubPort.newBuilder()
                                 .encode(OpEncoder.encodeByteFromJson(UTF_8))
-                                .encode(OpEncoder.encodeJsonFromOpRequest(ReqData.class)),
-                        SubPort.express("/sys/%s/thing/config/get_reply".formatted(path))
+                                .encode(OpEncoder.encodeJsonFromOpRequest(ReqData.class))
+                                .build("/sys/%s/thing/config/get".formatted(path)),
+                        SubPort.newBuilder()
                                 .decode(OpDecoder.decodeByteToJson(UTF_8))
-                                .decode(OpDecoder.decodeJsonToOpResponse(RespData.class)))
+                                .decode(OpDecoder.decodeJsonToOpResponse(RespData.class))
+                                .build("/sys/%s/thing/config/get_reply".formatted(path)))
                 .get();
 
-        final var response = caller.call((topic, token) -> OpRequest.of(token, "thing.config.get", new ReqData("product", "file")))
+        final var response = caller.call(token -> OpRequest.of(token, "thing.config.get", new ReqData("product", "file")))
                 .whenComplete(whenSuccessfully(reply -> Assert.assertTrue(reply.isOk())))
-                .whenComplete(whenSuccessfully(reply -> Assert.assertNotNull(reply.data())))
+                .whenComplete(whenSuccessfully(reply -> Assert.assertNotNull(reply.getData())))
                 .thenCompose(thenComposeOpReply())
                 .get();
 
@@ -76,13 +78,14 @@ public class ThingOpTestCase implements LoadingProperties {
                 )
                 .build();
 
-        final var path = thing.path().toURN();
+        final var path = thing.getPath().toURN();
         final var queue = new LinkedBlockingQueue<OpResponse<RespData>>();
         final var binder = thing.op()
-                .consumer(SubPort.express("/sys/%s/thing/config/get_reply".formatted(path))
+                .consumer(SubPort.newBuilder()
                                 .decode(OpDecoder.filter((topic, data) -> topic.equals("/sys/%s/thing/config/get_reply".formatted(path))))
                                 .decode(OpDecoder.decodeByteToJson(UTF_8))
-                                .decode(OpDecoder.decodeJsonToOpResponse(RespData.class)),
+                                .decode(OpDecoder.decodeJsonToOpResponse(RespData.class))
+                                .build("/sys/%s/thing/config/get_reply".formatted(path)),
                         (topic, response) -> {
                             while (true) {
                                 if (queue.offer(response)) {
@@ -94,24 +97,25 @@ public class ThingOpTestCase implements LoadingProperties {
 
 
         final var poster = thing.op()
-                .poster(PubPort.topic("/sys/%s/thing/config/get".formatted(path))
+                .poster(PubPort.newBuilder()
                         .encode(OpEncoder.encodeByteFromJson(UTF_8))
-                        .encode(OpEncoder.encodeJsonFromOpRequest(ReqData.class)))
+                        .encode(OpEncoder.encodeJsonFromOpRequest(ReqData.class))
+                        .build("/sys/%s/thing/config/get".formatted(path)))
                 .get();
 
-        final var request = poster.post((token, data) -> OpRequest.of(token, "thing.config.get", new ReqData("product", "file")))
+        final var request = poster.post(token -> OpRequest.of(token, "thing.config.get", new ReqData("product", "file")))
                 .get();
 
         final OpResponse<RespData> response = queue.take();
-        Assert.assertEquals(request.token(), response.token());
+        Assert.assertEquals(request.getToken(), response.getToken());
         Assert.assertTrue(response.isOk());
-        Assert.assertNotNull(response.data());
-        Assert.assertNotNull(response.data().id);
-        Assert.assertTrue(response.data().size > 0);
-        Assert.assertNotNull(response.data().sign);
-        Assert.assertNotNull(response.data().method);
-        Assert.assertNotNull(response.data().url);
-        Assert.assertNotNull(response.data().type);
+        Assert.assertNotNull(response.getData());
+        Assert.assertNotNull(response.getData().id);
+        Assert.assertTrue(response.getData().size > 0);
+        Assert.assertNotNull(response.getData().sign);
+        Assert.assertNotNull(response.getData().method);
+        Assert.assertNotNull(response.getData().url);
+        Assert.assertNotNull(response.getData().type);
 
         binder.unbind().get();
         poster.unbind().get();
@@ -130,8 +134,7 @@ public class ThingOpTestCase implements LoadingProperties {
             @SerializedName("sign") String sign,
             @SerializedName("signMethod") String method,
             @SerializedName("url") String url,
-            @SerializedName("getType") String type
-    ) {
+            @SerializedName("getType") String type) {
 
     }
 

@@ -30,7 +30,7 @@ public class ThingImpl implements Thing {
     }
 
     @Override
-    public ThingPath path() {
+    public ThingPath getPath() {
         return path;
     }
 
@@ -40,7 +40,7 @@ public class ThingImpl implements Thing {
     }
 
     @Override
-    public ExecutorService executor() {
+    public ExecutorService getExecutor() {
         return executor;
     }
 

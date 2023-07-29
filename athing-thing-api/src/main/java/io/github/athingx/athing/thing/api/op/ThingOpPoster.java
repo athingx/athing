@@ -26,7 +26,7 @@ public interface ThingOpPoster<V> extends ThingOpBinder {
      * @return 投递结果
      */
     default CompletableFuture<V> post(V data) {
-        return post(((topic, token) -> data));
+        return post(token -> data);
     }
 
 }

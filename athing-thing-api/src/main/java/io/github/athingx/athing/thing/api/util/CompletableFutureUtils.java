@@ -206,11 +206,11 @@ public class CompletableFutureUtils {
      */
     public static <T> Function<OpResponse<T>, CompletionStage<T>> thenComposeOpReply() {
         return reply -> reply.isOk()
-                ? CompletableFuture.completedFuture(reply.data())
+                ? CompletableFuture.completedFuture(reply.getData())
                 : CompletableFuture.failedFuture(new OpResponseException(
-                reply.token(),
-                reply.code(),
-                reply.desc()
+                reply.getToken(),
+                reply.getCode(),
+                reply.getDesc()
         ));
     }
 

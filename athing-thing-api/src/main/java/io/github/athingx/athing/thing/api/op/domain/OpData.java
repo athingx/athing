@@ -10,6 +10,6 @@ public interface OpData {
      *
      * @return 操作令牌
      */
-    String token();
+    String getToken();
 
 }

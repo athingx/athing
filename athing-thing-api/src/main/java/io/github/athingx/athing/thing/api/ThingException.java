@@ -15,7 +15,7 @@ public class ThingException extends Exception {
      * @param cause   错误异常
      */
     public ThingException(Thing thing, String message, Throwable cause) {
-        this(thing.path(), message, cause);
+        this(thing.getPath(), message, cause);
     }
 
     /**
@@ -25,7 +25,7 @@ public class ThingException extends Exception {
      * @param message 错误信息
      */
     public ThingException(Thing thing, String message) {
-        this(thing.path(), message);
+        this(thing.getPath(), message);
     }
 
     /**
@@ -61,7 +61,7 @@ public class ThingException extends Exception {
      *
      * @return 设备路径
      */
-    public ThingPath path() {
+    public ThingPath getPath() {
         return path;
     }
 

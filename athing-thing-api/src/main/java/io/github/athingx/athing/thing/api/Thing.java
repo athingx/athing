@@ -14,7 +14,7 @@ public interface Thing {
      *
      * @return 设备路径
      */
-    ThingPath path();
+    ThingPath getPath();
 
     /**
      * 获取设备操作
@@ -28,7 +28,7 @@ public interface Thing {
      *
      * @return 线程池
      */
-    ExecutorService executor();
+    ExecutorService getExecutor();
 
     /**
      * 销毁设备

@@ -77,17 +77,17 @@ public class ThingOpImpl implements ThingOp {
             // 数据投递没有实际的绑定行为，所以这里的解绑操作为一个虚假的空操作
             return CompletableFuture.<Void>completedFuture(null)
                     .whenComplete(whenCompleted(
-                            v -> logger.debug("{}/op/poster/unbind success; topic={};", path, pub.topic()),
-                            ex -> logger.warn("{}/op/poster/unbind failure; topic={};", path, pub.topic(), ex)
+                            v -> logger.debug("{}/op/poster/unbind success;", path),
+                            ex -> logger.warn("{}/op/poster/unbind failure;", path, ex)
                     ));
         }
 
         @Override
         public CompletableFuture<V> post(OpSupplier<V> supplier) {
-            final var topic = pub.topic();
             final var token = genToken();
-            final var data = supplier.get(topic, token);
-            return _mqtt_publish(topic, pub.qos().getValue(), pub.encoder().encode(token, data))
+            final var data = supplier.get(token);
+            final var topic = pub.topic(data);
+            return _mqtt_publish(topic, pub.getQos().getValue(), pub.encode(token, data))
                     .thenApply(unused -> data)
                     .whenComplete(((unused, cause) -> updateStatistics(cause)))
                     .whenComplete(whenCompleted(
@@ -103,8 +103,8 @@ public class ThingOpImpl implements ThingOp {
         // 数据投递没有实际的绑定行为，所以这里的绑定操作为一个虚假的空操作
         return CompletableFuture.<ThingOpPoster<V>>completedFuture(new ThingOpPosterImpl<>(pub))
                 .whenComplete(whenCompleted(
-                        v -> logger.debug("{}/op/poster/bind success; topic={};", path, pub.topic()),
-                        ex -> logger.warn("{}/op/poster/bind failure; topic={};", path, pub.topic(), ex)
+                        v -> logger.debug("{}/op/poster/bind success;", path),
+                        ex -> logger.warn("{}/op/poster/bind failure;", path, ex)
                 ));
     }
 
@@ -128,10 +128,10 @@ public class ThingOpImpl implements ThingOp {
 
             @Override
             public CompletableFuture<Void> unbind() {
-                return _mqtt_unsubscribe(sub.express())
+                return _mqtt_unsubscribe(sub.getExpress())
                         .whenComplete(whenCompleted(
-                                v -> logger.debug("{}/op/consumer/unbind success; express={};", path, sub.express()),
-                                ex -> logger.warn("{}/op/consumer/unbind failure; express={};", path, sub.express(), ex)
+                                v -> logger.debug("{}/op/consumer/unbind success; express={};", path, sub.getExpress()),
+                                ex -> logger.warn("{}/op/consumer/unbind failure; express={};", path, sub.getExpress(), ex)
                         ));
             }
 
@@ -147,7 +147,7 @@ public class ThingOpImpl implements ThingOp {
             try {
 
                 // 解码消息数据
-                data = sub.decoder().decode(topic, message.getPayload());
+                data = sub.decode(topic, message.getPayload());
 
                 // 解码消息数据为空，说明本次处理需要丢弃该消息
                 if (isNull(data)) {
@@ -175,11 +175,11 @@ public class ThingOpImpl implements ThingOp {
         });
 
         // MQTT: bind
-        return _mqtt_subscribe(sub.express(), sub.qos().getValue(), listener)
+        return _mqtt_subscribe(sub.getExpress(), sub.getQos().getValue(), listener)
                 .thenApply(unused -> (ThingOpBinder) binder)
                 .whenComplete(whenCompleted(
-                        v -> logger.debug("{}/op/consumer/bind success; express={};", path, sub.express()),
-                        ex -> logger.warn("{}/op/consumer/bind failure; express={};", path, sub.express(), ex)
+                        v -> logger.debug("{}/op/consumer/bind success; express={};", path, sub.getExpress()),
+                        ex -> logger.warn("{}/op/consumer/bind failure; express={};", path, sub.getExpress(), ex)
                 ));
     }
 
@@ -205,10 +205,10 @@ public class ThingOpImpl implements ThingOp {
 
             @Override
             public CompletableFuture<Void> unbind() {
-                return _mqtt_unsubscribe(sub.express())
+                return _mqtt_unsubscribe(sub.getExpress())
                         .whenComplete(whenCompleted(
-                                v -> logger.debug("{}/op/service/unbind success; express={};", path, sub.express()),
-                                ex -> logger.warn("{}/op/service/unbind failure; express={};", path, sub.express(), ex)
+                                v -> logger.debug("{}/op/service/unbind success; express={};", path, sub.getExpress()),
+                                ex -> logger.warn("{}/op/service/unbind failure; express={};", path, sub.getExpress(), ex)
                         ));
             }
 
@@ -223,7 +223,7 @@ public class ThingOpImpl implements ThingOp {
             try {
 
                 // 解码服务请求
-                request = sub.decoder().decode(topic, message.getPayload());
+                request = sub.decode(topic, message.getPayload());
 
                 // 解码消息结果为空，说明本次处理需要丢弃该请求
                 if (isNull(request)) {
@@ -232,7 +232,7 @@ public class ThingOpImpl implements ThingOp {
                 }
 
                 // 解码操作令牌
-                token = requireNonNull(request.token(), "token is missing!");
+                token = requireNonNull(request.getToken(), "token is missing!");
 
             } catch (Throwable cause) {
                 binder.updateStatistics(cause);
@@ -251,11 +251,11 @@ public class ThingOpImpl implements ThingOp {
 
                             // 路由服务应答的发布端口
                             final var pub = requireNonNull(routingPubFn.apply(topic, token, request), "response pub-port routing none!");
-                            final var responseTopic = pub.topic();
+                            final var responseTopic = pub.topic(response);
                             logger.debug("{}/op/service/response pub-port routing success! token={};topic={};", path, token, responseTopic);
 
                             // 服务应答
-                            return _mqtt_publish(pub.topic(), pub.qos().getValue(), pub.encoder().encode(token, response))
+                            return _mqtt_publish(responseTopic, pub.getQos().getValue(), pub.encode(token, response))
                                     .whenComplete(whenCompleted(
                                             v -> logger.debug("{}/op/service/response success! token={};topic={};", path, token, responseTopic),
                                             ex -> logger.warn("{}/op/service/response failure! token={};topic={};", path, token, responseTopic, ex)
@@ -281,11 +281,11 @@ public class ThingOpImpl implements ThingOp {
         });
 
         // 绑定服务
-        return _mqtt_subscribe(sub.express(), sub.qos().getValue(), listener)
+        return _mqtt_subscribe(sub.getExpress(), sub.getQos().getValue(), listener)
                 .thenApply(unused -> (ThingOpBinder) binder)
                 .whenComplete(whenCompleted(
-                        v -> logger.debug("{}/op/service/bind success; express={};", path, sub.express()),
-                        ex -> logger.warn("{}/op/service/bind failure; express={};", path, sub.express(), ex)
+                        v -> logger.debug("{}/op/service/bind success; express={};", path, sub.getExpress()),
+                        ex -> logger.warn("{}/op/service/bind failure; express={};", path, sub.getExpress(), ex)
                 ));
 
     }
@@ -310,10 +310,10 @@ public class ThingOpImpl implements ThingOp {
 
         @Override
         public CompletableFuture<Void> unbind() {
-            return _mqtt_unsubscribe(sub.express())
+            return _mqtt_unsubscribe(sub.getExpress())
                     .whenComplete(whenCompleted(
-                            v -> logger.debug("{}/op/caller/unbind success; express={};", path, sub.express()),
-                            ex -> logger.warn("{}/op/caller/unbind failure; express={};", path, sub.express(), ex)
+                            v -> logger.debug("{}/op/caller/unbind success; express={};", path, sub.getExpress()),
+                            ex -> logger.warn("{}/op/caller/unbind failure; express={};", path, sub.getExpress(), ex)
                     ));
         }
 
@@ -333,9 +333,9 @@ public class ThingOpImpl implements ThingOp {
         public CompletableFuture<R> call(Option option, OpSupplier<T> supplier) {
 
             final var token = genToken();
-            final var topic = pub.topic();
-            final var request = supplier.get(topic, token);
-            final var payload = pub.encoder().encode(token, request);
+            final var request = supplier.get(token);
+            final var topic = pub.topic(request);
+            final var payload = pub.encode(token, request);
 
             // 生成调用存根并存入缓存
             final var callF = new CompletableFuture<R>();
@@ -343,7 +343,7 @@ public class ThingOpImpl implements ThingOp {
 
             return callF
                     .thenCombine(
-                            _mqtt_publish(topic, pub.qos().getValue(), payload)
+                            _mqtt_publish(topic, pub.getQos().getValue(), payload)
                                     .whenComplete(whenCompleted(
                                             v -> logger.debug("{}/op/call/request success; token={};topic={};", path, token, topic),
                                             ex -> logger.warn("{}/op/call/request failure; token={};topic={};", path, token, topic, ex)
@@ -376,7 +376,7 @@ public class ThingOpImpl implements ThingOp {
             try {
 
                 // 解码应答
-                response = sub.decoder().decode(topic, message.getPayload());
+                response = sub.decode(topic, message.getPayload());
 
                 // 如果应答解码为空，说明本次消息应该放弃
                 if (isNull(response)) {
@@ -385,7 +385,7 @@ public class ThingOpImpl implements ThingOp {
                 }
 
                 // 拿到操作令牌，用于贯穿上下文
-                token = requireNonNull(response.token(), "token is missing!");
+                token = requireNonNull(response.getToken(), "token is missing!");
 
             } catch (Throwable cause) {
                 caller.updateStatistics(cause);
@@ -408,11 +408,11 @@ public class ThingOpImpl implements ThingOp {
 
         });
 
-        return _mqtt_subscribe(sub.express(), sub.qos().getValue(), listener)
+        return _mqtt_subscribe(sub.getExpress(), sub.getQos().getValue(), listener)
                 .thenApply(unused -> (ThingOpCaller<T, R>) caller)
                 .whenComplete(whenCompleted(
-                        v -> logger.debug("{}/op/caller/bind success; express={};", path, sub.express()),
-                        ex -> logger.warn("{}/op/caller/bind failure; express={};", path, sub.express(), ex)
+                        v -> logger.debug("{}/op/caller/bind success; express={};", path, sub.getExpress()),
+                        ex -> logger.warn("{}/op/caller/bind failure; express={};", path, sub.getExpress(), ex)
                 ));
     }
 

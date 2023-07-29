@@ -36,7 +36,7 @@ public interface ThingOpCaller<T, R> extends ThingOpBinder {
      * @return 应答结果
      */
     default CompletableFuture<R> call(T request) {
-        return call(((topic, token) -> request));
+        return call(token -> request);
     }
 
     /**
@@ -47,7 +47,7 @@ public interface ThingOpCaller<T, R> extends ThingOpBinder {
      * @return 应答结果
      */
     default CompletableFuture<R> call(Option option, T request) {
-        return call(option, ((topic, token) -> request));
+        return call(option, token -> request);
     }
 
     /**
