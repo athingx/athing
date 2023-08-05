@@ -2,12 +2,9 @@ package io.github.athingx.athing.thing;
 
 import com.google.gson.annotations.SerializedName;
 import io.github.athingx.athing.thing.api.ThingPath;
-import io.github.athingx.athing.thing.api.op.PubPort;
-import io.github.athingx.athing.thing.api.op.SubPort;
-import io.github.athingx.athing.thing.api.op.domain.OpRequest;
-import io.github.athingx.athing.thing.api.op.domain.OpResponse;
-import io.github.athingx.athing.thing.api.op.function.OpDecoder;
-import io.github.athingx.athing.thing.api.op.function.OpEncoder;
+import io.github.athingx.athing.thing.api.op.OpMapData;
+import io.github.athingx.athing.thing.api.op.OpReply;
+import io.github.athingx.athing.thing.api.util.MapData;
 import io.github.athingx.athing.thing.builder.ThingBuilder;
 import io.github.athingx.athing.thing.builder.mqtt.MqttClientFactoryImplByAliyun;
 import org.junit.Assert;
@@ -16,8 +13,10 @@ import org.junit.Test;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import static io.github.athingx.athing.thing.api.op.function.OpFunction.identity;
+import static io.github.athingx.athing.thing.api.op.function.OpMapper.mappingBytesToJson;
+import static io.github.athingx.athing.thing.api.op.function.OpMapper.mappingJsonToOpReply;
 import static io.github.athingx.athing.thing.api.util.CompletableFutureUtils.thenComposeOpReply;
-import static io.github.athingx.athing.thing.api.util.CompletableFutureUtils.whenSuccessfully;
 import static io.github.athingx.athing.thing.builder.mqtt.MqttConnectStrategy.alwaysReTry;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -36,31 +35,35 @@ public class ThingOpTestCase implements LoadingProperties {
                 )
                 .build();
 
-        final var path = thing.getPath().toURN();
-        final var caller = thing.op()
-                .caller(
-                        PubPort.newBuilder()
-                                .encode(OpEncoder.encodeByteFromJson(UTF_8))
-                                .encode(OpEncoder.encodeJsonFromOpRequest(ReqData.class))
-                                .build("/sys/%s/thing/config/get".formatted(path)),
-                        SubPort.newBuilder()
-                                .decode(OpDecoder.decodeByteToJson(UTF_8))
-                                .decode(OpDecoder.decodeJsonToOpResponse(RespData.class))
-                                .build("/sys/%s/thing/config/get_reply".formatted(path)))
+        final var path = thing.path().toURN();
+        final var caller = thing.op().bind("/sys/%s/thing/config/get_reply".formatted(path))
+                .map(mappingBytesToJson(UTF_8))
+                .map(mappingJsonToOpReply(Data.class))
+                .call(identity())
                 .get();
 
-        final var response = caller.call(token -> OpRequest.of(token, "thing.config.get", new ReqData("product", "file")))
-                .whenComplete(whenSuccessfully(reply -> Assert.assertTrue(reply.isOk())))
-                .whenComplete(whenSuccessfully(reply -> Assert.assertNotNull(reply.getData())))
+        final var token = thing.op().genToken();
+        final var data = caller.call("/sys/%s/thing/config/get".formatted(path),
+                        new OpMapData(token, new MapData()
+                                .putProperty("id", token)
+                                .putProperty("version", "1.0")
+                                .putProperty("method", "thing.config.get")
+                                .putProperty("sys", prop -> prop
+                                        .putProperty("ack", 1)
+                                )
+                                .putProperty("params", prop -> prop
+                                        .putProperty("configScope", "product")
+                                        .putProperty("getType", "file")
+                                )))
                 .thenCompose(thenComposeOpReply())
                 .get();
 
-        Assert.assertNotNull(response.id);
-        Assert.assertTrue(response.size > 0);
-        Assert.assertNotNull(response.sign);
-        Assert.assertNotNull(response.method);
-        Assert.assertNotNull(response.url);
-        Assert.assertNotNull(response.type);
+        Assert.assertNotNull(data.id);
+        Assert.assertTrue(data.size > 0);
+        Assert.assertNotNull(data.sign);
+        Assert.assertNotNull(data.method);
+        Assert.assertNotNull(data.url);
+        Assert.assertNotNull(data.type);
 
         // 销毁
         caller.unbind().get();
@@ -78,57 +81,54 @@ public class ThingOpTestCase implements LoadingProperties {
                 )
                 .build();
 
-        final var path = thing.getPath().toURN();
-        final var queue = new LinkedBlockingQueue<OpResponse<RespData>>();
-        final var binder = thing.op()
-                .consumer(SubPort.newBuilder()
-                                .decode(OpDecoder.filter((topic, data) -> topic.equals("/sys/%s/thing/config/get_reply".formatted(path))))
-                                .decode(OpDecoder.decodeByteToJson(UTF_8))
-                                .decode(OpDecoder.decodeJsonToOpResponse(RespData.class))
-                                .build("/sys/%s/thing/config/get_reply".formatted(path)),
-                        (topic, response) -> {
-                            while (true) {
-                                if (queue.offer(response)) {
-                                    break;
-                                }
-                            }
-                        })
+        final var path = thing.path().toURN();
+        final var queue = new LinkedBlockingQueue<OpReply<Data>>();
+
+        final var binder = thing.op().bind("/sys/%s/thing/config/get_reply".formatted(path))
+                .matches((topic, data) -> true)
+                .map(mappingBytesToJson(UTF_8))
+                .map(mappingJsonToOpReply(Data.class))
+                .consume((topic, reply) -> {
+                    while (true) {
+                        if (queue.offer(reply)) {
+                            break;
+                        }
+                    }
+                })
                 .get();
 
-
-        final var poster = thing.op()
-                .poster(PubPort.newBuilder()
-                        .encode(OpEncoder.encodeByteFromJson(UTF_8))
-                        .encode(OpEncoder.encodeJsonFromOpRequest(ReqData.class))
-                        .build("/sys/%s/thing/config/get".formatted(path)))
+        final var token = thing.op().genToken();
+        thing.op().post("/sys/%s/thing/config/get".formatted(path),
+                        new OpMapData(token, new MapData()
+                                .putProperty("id", token)
+                                .putProperty("version", "1.0")
+                                .putProperty("method", "thing.config.get")
+                                .putProperty("sys", prop -> prop
+                                        .putProperty("ack", 1)
+                                )
+                                .putProperty("params", prop -> prop
+                                        .putProperty("configScope", "product")
+                                        .putProperty("getType", "file")
+                                )))
                 .get();
 
-        final var request = poster.post(token -> OpRequest.of(token, "thing.config.get", new ReqData("product", "file")))
-                .get();
-
-        final OpResponse<RespData> response = queue.take();
-        Assert.assertEquals(request.getToken(), response.getToken());
-        Assert.assertTrue(response.isOk());
-        Assert.assertNotNull(response.getData());
-        Assert.assertNotNull(response.getData().id);
-        Assert.assertTrue(response.getData().size > 0);
-        Assert.assertNotNull(response.getData().sign);
-        Assert.assertNotNull(response.getData().method);
-        Assert.assertNotNull(response.getData().url);
-        Assert.assertNotNull(response.getData().type);
+        final OpReply<Data> reply = queue.take();
+        Assert.assertEquals(token, reply.token());
+        Assert.assertTrue(reply.isSuccess());
+        Assert.assertNotNull(reply.data());
+        Assert.assertNotNull(reply.data().id);
+        Assert.assertTrue(reply.data().size > 0);
+        Assert.assertNotNull(reply.data().sign);
+        Assert.assertNotNull(reply.data().method);
+        Assert.assertNotNull(reply.data().url);
+        Assert.assertNotNull(reply.data().type);
 
         binder.unbind().get();
-        poster.unbind().get();
         thing.destroy();
     }
 
-    record ReqData(
-            @SerializedName("configScope") String scope,
-            @SerializedName("getType") String type) {
-    }
-
     // 数据格式
-    record RespData(
+    record Data(
             @SerializedName("configId") String id,
             @SerializedName("configSize") int size,
             @SerializedName("sign") String sign,

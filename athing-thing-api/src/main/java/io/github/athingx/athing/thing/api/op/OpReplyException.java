@@ -1,13 +1,12 @@
-package io.github.athingx.athing.thing.api.op.domain;
+package io.github.athingx.athing.thing.api.op;
 
 /**
  * 应答异常
  */
-public class OpResponseException extends Exception {
+public class OpReplyException extends RuntimeException {
 
     private final String token;
     private final int code;
-    private final String desc;
 
     /**
      * 应答异常
@@ -15,10 +14,10 @@ public class OpResponseException extends Exception {
      * @param code 应答编码
      * @param desc 应答消息
      */
-    public OpResponseException(String token, int code, String desc) {
+    public OpReplyException(String token, int code, String desc) {
+        super(desc);
         this.token = token;
         this.code = code;
-        this.desc = desc;
     }
 
     /**
@@ -35,14 +34,6 @@ public class OpResponseException extends Exception {
      */
     public int getCode() {
         return code;
-    }
-
-    /**
-     * 获取应答消息
-     * @return 应答消息
-     */
-    public String getDesc() {
-        return desc;
     }
 
 }

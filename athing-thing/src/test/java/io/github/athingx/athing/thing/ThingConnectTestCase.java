@@ -2,7 +2,6 @@ package io.github.athingx.athing.thing;
 
 import io.github.athingx.athing.thing.api.Thing;
 import io.github.athingx.athing.thing.api.ThingPath;
-import io.github.athingx.athing.thing.api.op.SubPort;
 import io.github.athingx.athing.thing.builder.ThingBuilder;
 import io.github.athingx.athing.thing.builder.mqtt.MqttClientFactoryImplByAliyun;
 import io.github.athingx.athing.thing.builder.mqtt.MqttConnectStrategy;
@@ -31,12 +30,12 @@ public class ThingConnectTestCase implements LoadingProperties {
                 )
                 .build();
         Assert.assertNotNull(thing);
-        Assert.assertEquals(PRODUCT_ID, thing.getPath().getProductId());
-        Assert.assertEquals(THING_ID, thing.getPath().getThingId());
-        Assert.assertEquals("%s/%s".formatted(PRODUCT_ID, THING_ID), thing.getPath().toURN());
-        Assert.assertEquals("thing://%s/%s".formatted(PRODUCT_ID, THING_ID), thing.getPath().toURI().toString());
-        Assert.assertEquals("thing://%s/%s".formatted(PRODUCT_ID, THING_ID), thing.getPath().toString());
-        Assert.assertNotNull(thing.getExecutor());
+        Assert.assertEquals(PRODUCT_ID, thing.path().getProductId());
+        Assert.assertEquals(THING_ID, thing.path().getThingId());
+        Assert.assertEquals("%s/%s".formatted(PRODUCT_ID, THING_ID), thing.path().toURN());
+        Assert.assertEquals("thing://%s/%s".formatted(PRODUCT_ID, THING_ID), thing.path().toURI().toString());
+        Assert.assertEquals("thing://%s/%s".formatted(PRODUCT_ID, THING_ID), thing.path().toString());
+        Assert.assertNotNull(thing.executor());
         thing.destroy();
     }
 
@@ -69,8 +68,8 @@ public class ThingConnectTestCase implements LoadingProperties {
                 .build();
         Assert.assertNotNull(thing);
 
-        var future = thing.op()
-                .consumer(SubPort.newBuilder().build("/hello"), (s, bytes) -> {
+        var future = thing.op().bind("/hello")
+                .consume((topic, bytes) -> {
 
                 });
         latch.countDown();
@@ -94,11 +93,11 @@ public class ThingConnectTestCase implements LoadingProperties {
                 )
                 .build();
         Assert.assertNotNull(thing);
-        Assert.assertEquals(PRODUCT_ID, thing.getPath().getProductId());
-        Assert.assertEquals(THING_ID, thing.getPath().getThingId());
-        Assert.assertEquals("%s/%s".formatted(PRODUCT_ID, THING_ID), thing.getPath().toURN());
-        Assert.assertEquals("thing://%s/%s".formatted(PRODUCT_ID, THING_ID), thing.getPath().toURI().toString());
-        Assert.assertEquals("thing://%s/%s".formatted(PRODUCT_ID, THING_ID), thing.getPath().toString());
+        Assert.assertEquals(PRODUCT_ID, thing.path().getProductId());
+        Assert.assertEquals(THING_ID, thing.path().getThingId());
+        Assert.assertEquals("%s/%s".formatted(PRODUCT_ID, THING_ID), thing.path().toURN());
+        Assert.assertEquals("thing://%s/%s".formatted(PRODUCT_ID, THING_ID), thing.path().toURI().toString());
+        Assert.assertEquals("thing://%s/%s".formatted(PRODUCT_ID, THING_ID), thing.path().toString());
         thing.destroy();
     }
 

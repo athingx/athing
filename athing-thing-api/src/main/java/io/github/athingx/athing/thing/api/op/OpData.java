@@ -1,4 +1,4 @@
-package io.github.athingx.athing.thing.api.op.domain;
+package io.github.athingx.athing.thing.api.op;
 
 /**
  * 操作数据
@@ -10,6 +10,6 @@ public interface OpData {
      *
      * @return 操作令牌
      */
-    String getToken();
+    String token();
 
 }
