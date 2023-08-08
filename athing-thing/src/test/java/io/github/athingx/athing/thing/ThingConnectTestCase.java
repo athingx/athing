@@ -36,19 +36,17 @@ public class ThingConnectTestCase implements LoadingProperties {
         final CountDownLatch latch = new CountDownLatch(1);
         final Thing thing = new ThingBuilder(new ThingPath(PRODUCT_ID, THING_ID))
                 .client(new DefaultMqttClientFactory(REMOTE, SECRET)
-                        .strategy((path, client, options, isReconnect) -> {
-                            new Thread(() -> {
-                                try {
-                                    latch.await();
-                                    MqttConnectStrategy
-                                            .always(30 * 1000L, 3 * 60 * 1000L)
-                                            .connect(path, client, options, isReconnect);
-                                } catch (Exception e) {
-                                    throw new RuntimeException(e);
-                                }
-                            }).start();
-
-                        })
+                        .strategy((path, client, options, isReconnect) ->
+                                new Thread(() -> {
+                                    try {
+                                        latch.await();
+                                        MqttConnectStrategy
+                                                .always(30 * 1000L, 3 * 60 * 1000L)
+                                                .connect(path, client, options, isReconnect);
+                                    } catch (Exception e) {
+                                        throw new RuntimeException(e);
+                                    }
+                                }).start())
                 )
                 .build();
         Assert.assertNotNull(thing);
