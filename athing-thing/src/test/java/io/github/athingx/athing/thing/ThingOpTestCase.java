@@ -6,18 +6,16 @@ import io.github.athingx.athing.thing.api.op.OpMapData;
 import io.github.athingx.athing.thing.api.op.OpReply;
 import io.github.athingx.athing.thing.api.util.MapData;
 import io.github.athingx.athing.thing.builder.ThingBuilder;
-import io.github.athingx.athing.thing.builder.mqtt.MqttClientFactoryImplByAliyun;
+import io.github.athingx.athing.thing.builder.client.DefaultMqttClientFactory;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import static io.github.athingx.athing.thing.api.op.function.OpFunction.identity;
 import static io.github.athingx.athing.thing.api.op.function.OpMapper.mappingBytesToJson;
 import static io.github.athingx.athing.thing.api.op.function.OpMapper.mappingJsonToOpReply;
 import static io.github.athingx.athing.thing.api.util.CompletableFutureUtils.thenComposeOpReply;
-import static io.github.athingx.athing.thing.builder.mqtt.MqttConnectStrategy.alwaysReTry;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
@@ -28,11 +26,7 @@ public class ThingOpTestCase implements LoadingProperties {
     @Test
     public void test$thing$op_call$success() throws Exception {
         final var thing = new ThingBuilder(PRODUCT_ID, THING_ID)
-                .clientFactory(new MqttClientFactoryImplByAliyun()
-                        .secret(SECRET)
-                        .remote(REMOTE)
-                        .strategy(alwaysReTry())
-                )
+                .client(new DefaultMqttClientFactory(REMOTE, SECRET))
                 .build();
 
         final var path = thing.path().toURN();
@@ -74,11 +68,7 @@ public class ThingOpTestCase implements LoadingProperties {
     public void test$thing$op_bind$success() throws Exception {
 
         final var thing = new ThingBuilder(new ThingPath(PRODUCT_ID, THING_ID))
-                .executorFactory(path -> Executors.newFixedThreadPool(20))
-                .clientFactory(new MqttClientFactoryImplByAliyun()
-                        .secret(SECRET)
-                        .remote(REMOTE)
-                )
+                .client(new DefaultMqttClientFactory(REMOTE, SECRET))
                 .build();
 
         final var path = thing.path().toURN();

@@ -1,10 +1,15 @@
 package io.github.athingx.athing.thing.api.op.function;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
 import io.github.athingx.athing.common.gson.GsonFactory;
 import io.github.athingx.athing.thing.api.op.OpReply;
 
 import java.nio.charset.Charset;
+
+import static java.util.Optional.ofNullable;
 
 /**
  * 操作映射函数
@@ -50,8 +55,24 @@ public interface OpMapper<T, R> extends OpFunction<T, R> {
      * @return {@code json->}{@link OpReply}
      */
     static <T> OpMapper<String, OpReply<T>> mappingJsonToOpReply(Class<T> type) {
-        return mappingJsonToType(new TypeToken<>() {
-        });
+        return (topic, json) -> {
+            final JsonObject root = JsonParser.parseString(json).getAsJsonObject();
+            return new OpReply<>(
+                    ofNullable(root.get("id"))
+                            .map(JsonElement::getAsString)
+                            .orElseThrow(() -> new IllegalArgumentException("missing id")),
+                    ofNullable(root.get("code"))
+                            .map(JsonElement::getAsInt)
+                            .orElseThrow(() -> new IllegalArgumentException("missing code")),
+                    ofNullable(root.get("message"))
+                            .map(JsonElement::getAsString)
+                            .orElse(null),
+                    ofNullable(root.get("data"))
+                            .filter(element -> !element.getAsJsonObject().keySet().isEmpty())
+                            .map(element -> GsonFactory.getGson().fromJson(element, type))
+                            .orElse(null)
+            );
+        };
     }
 
 }

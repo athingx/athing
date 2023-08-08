@@ -2,6 +2,7 @@ package io.github.athingx.athing.thing.api;
 
 import io.github.athingx.athing.thing.api.op.ThingOp;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 
 /**

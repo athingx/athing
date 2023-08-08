@@ -7,7 +7,7 @@ import io.github.athingx.athing.thing.api.op.function.OpConsumer;
 import io.github.athingx.athing.thing.api.op.function.OpFunction;
 import io.github.athingx.athing.thing.api.op.function.OpPredicate;
 import io.github.athingx.athing.thing.impl.util.TokenSequencer;
-import org.eclipse.paho.client.mqttv3.*;
+import org.eclipse.paho.client.mqttv3.IMqttAsyncClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,11 +23,10 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 /**
  * 设备操作实现
  */
-public class ThingOpImpl implements ThingOp {
+public class ThingOpImpl extends MqttClientSupport implements ThingOp {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final ThingPath path;
-    private final IMqttAsyncClient client;
     private final ExecutorService executor;
     private final TokenSequencer sequencer = new TokenSequencer();
 
@@ -39,39 +38,9 @@ public class ThingOpImpl implements ThingOp {
      * @param executor 线程池
      */
     public ThingOpImpl(ThingPath path, IMqttAsyncClient client, ExecutorService executor) {
+        super(client);
         this.path = path;
-        this.client = client;
         this.executor = executor;
-    }
-
-    private CompletableFuture<Void> _mqtt_publish(String topic, byte[] payload) {
-        final var future = new MqttActionFuture<Void>();
-        try {
-            client.publish(topic, payload, 1, false, null, future);
-        } catch (MqttException cause) {
-            future.completeExceptionally(cause);
-        }
-        return future;
-    }
-
-    private CompletableFuture<Void> _mqtt_subscribe(String topic, IMqttMessageListener listener) {
-        final var future = new MqttActionFuture<Void>();
-        try {
-            client.subscribe(topic, 1, null, future, listener);
-        } catch (MqttException cause) {
-            future.completeExceptionally(cause);
-        }
-        return future;
-    }
-
-    private CompletableFuture<Void> _mqtt_unsubscribe(String topic) {
-        final var future = new MqttActionFuture<Void>();
-        try {
-            client.unsubscribe(topic, null, future);
-        } catch (MqttException cause) {
-            future.completeExceptionally(cause);
-        }
-        return future;
     }
 
     @Override
@@ -81,7 +50,7 @@ public class ThingOpImpl implements ThingOp {
 
     @Override
     public CompletableFuture<Void> post(String topic, OpData data) {
-        return _mqtt_publish(topic, GsonFactory.getGson().toJson(data).getBytes(UTF_8))
+        return pahoMqttPublish(topic, 1, GsonFactory.getGson().toJson(data).getBytes(UTF_8))
                 .whenComplete(whenCompleted(
                         v -> logger.debug("{}/op/post success, token={};topic={}", path, data.token(), topic),
                         ex -> logger.warn("{}/op/post failure, token={};topic={}", path, data.token(), topic, ex)
@@ -93,35 +62,6 @@ public class ThingOpImpl implements ThingOp {
         return new OpBindImpl<>(express, (topic, data) -> data);
     }
 
-
-    /**
-     * MQTT回调-Future封装
-     *
-     * @param <T> 成功返回数据类型
-     */
-    private static class MqttActionFuture<T> extends CompletableFuture<T> implements IMqttActionListener {
-
-        private final T target;
-
-        private MqttActionFuture() {
-            this(null);
-        }
-
-        private MqttActionFuture(T target) {
-            this.target = target;
-        }
-
-        @Override
-        public void onSuccess(IMqttToken asyncActionToken) {
-            complete(target);
-        }
-
-        @Override
-        public void onFailure(IMqttToken asyncActionToken, Throwable exception) {
-            completeExceptionally(exception);
-        }
-
-    }
 
     private class OpBindImpl<V> implements OpBind<V> {
 
@@ -154,7 +94,7 @@ public class ThingOpImpl implements ThingOp {
 
         @Override
         public CompletableFuture<OpBinder> consume(OpConsumer<? super V> consumer) {
-            return _mqtt_subscribe(express, (topic, message) -> executor.execute(() -> {
+            return pahoMqttSubscribe(express, 1, (topic, message) -> executor.execute(() -> {
 
                 try {
 
@@ -173,7 +113,7 @@ public class ThingOpImpl implements ThingOp {
             }))
 
                     // 转换结果为OpBinder并返回
-                    .thenApply(v -> (OpBinder) () -> _mqtt_unsubscribe(express).whenComplete(whenCompleted(
+                    .thenApply(v -> (OpBinder) () -> pahoMqttUnsubscribe(express).whenComplete(whenCompleted(
                             uv -> logger.debug("{}/op/consumer unbind success, express={}", path, express),
                             uex -> logger.warn("{}/op/consumer unbind failure, express={}", path, express, uex)
                     )))
@@ -188,7 +128,7 @@ public class ThingOpImpl implements ThingOp {
         @Override
         public <P extends OpData, R extends OpData> CompletableFuture<OpCaller<P, R>> call(Option opOption, OpFunction<? super V, ? extends R> mapper) {
             final var futureMap = new ConcurrentHashMap<String, CompletableFuture<R>>();
-            return _mqtt_subscribe(express, (topic, message) -> executor.execute(() -> {
+            return pahoMqttSubscribe(express, 1, (topic, message) -> executor.execute(() -> {
 
                 try {
 
@@ -235,20 +175,22 @@ public class ThingOpImpl implements ThingOp {
 
                             // 发送请求
                             return future.thenCombine(
-                                    _mqtt_publish(topic, GsonFactory.getGson().toJson(data).getBytes(UTF_8)).whenComplete(whenCompleted(
-                                            v -> logger.debug("{}/op/caller/request success, token={};topic={}", path, data.token(), topic),
-                                            ex -> logger.warn("{}/op/caller/request failure, token={};topic={}", path, data.token(), topic, ex)
-                                    )),
+                                    pahoMqttPublish(topic, 1, GsonFactory.getGson().toJson(data).getBytes(UTF_8))
+                                            .whenComplete(whenCompleted(
+                                                    v -> logger.debug("{}/op/caller/request success, token={};topic={}", path, data.token(), topic),
+                                                    ex -> logger.warn("{}/op/caller/request failure, token={};topic={}", path, data.token(), topic, ex)
+                                            )),
                                     (r, v) -> r
                             );
                         }
 
                         @Override
                         public CompletableFuture<Void> unbind() {
-                            return _mqtt_unsubscribe(express).whenComplete(whenCompleted(
-                                    uv -> logger.debug("{}/op/caller unbind success, express={}", path, express),
-                                    uex -> logger.warn("{}/op/caller unbind failure, express={}", path, express, uex)
-                            ));
+                            return pahoMqttUnsubscribe(express)
+                                    .whenComplete(whenCompleted(
+                                            uv -> logger.debug("{}/op/caller unbind success, express={}", path, express),
+                                            uex -> logger.warn("{}/op/caller unbind failure, express={}", path, express, uex)
+                                    ));
                         }
 
                     })

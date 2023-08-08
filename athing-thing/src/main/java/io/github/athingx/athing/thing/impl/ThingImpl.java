@@ -47,13 +47,20 @@ public class ThingImpl implements Thing {
     @Override
     public void destroy() {
 
-        // 关闭MQTT客户端
+        // 断连MQTT
         try {
-            client.disconnect().waitForCompletion();
+            client.disconnect();
+            logger.debug("{}/destroy/mqtt/disconnect success!", path);
+        } catch (MqttException cause) {
+            logger.warn("{}/destroy/mqtt/disconnect failure!", path, cause);
+        }
+
+        // 关闭MQTT
+        try {
             client.close();
-            logger.debug("{}/destroy/client/close success!", path);
-        } catch (MqttException e) {
-            logger.warn("{}/destroy/client/close failure!", path, e);
+            logger.debug("{}/destroy/mqtt/close success!", path);
+        } catch (MqttException cause) {
+            logger.warn("{}/destroy/mqtt/close failure!", path, cause);
         }
 
         // 关闭线程池

@@ -5,15 +5,15 @@ import io.github.athingx.athing.thing.api.ThingPath;
 import java.util.concurrent.ExecutorService;
 
 /**
- * Executor工厂
+ * 线程池工厂
  */
 public interface ExecutorServiceFactory {
 
     /**
-     * 生产Executor
+     * 创建线程池
      *
      * @param path 设备路径
-     * @return Executor
+     * @return 线程池
      */
     ExecutorService make(ThingPath path);
 
