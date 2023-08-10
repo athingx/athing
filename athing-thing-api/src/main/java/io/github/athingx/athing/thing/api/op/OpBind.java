@@ -37,7 +37,7 @@ public interface OpBind<V> {
      * @param consumer 消费函数
      * @return 操作绑定
      */
-    CompletableFuture<OpBinder> consume(OpConsumer<? super V> consumer);
+    CompletableFuture<OpBinder> consumer(OpConsumer<? super V> consumer);
 
     /**
      * 绑定呼叫操作
@@ -48,7 +48,8 @@ public interface OpBind<V> {
      * @param <R>      应答数据类型
      * @return 操作绑定
      */
-    <P extends OpData, R extends OpData> CompletableFuture<OpCaller<P, R>> call(Option opOption, OpFunction<? super V, ? extends R> mapper);
+    <P extends OpData, R extends OpData>
+    CompletableFuture<OpCaller<P, R>> caller(Option opOption, OpFunction<? super V, ? extends R> mapper);
 
     /**
      * 绑定呼叫操作
@@ -58,8 +59,9 @@ public interface OpBind<V> {
      * @param <R>    应答数据类型
      * @return 操作绑定
      */
-    default <P extends OpData, R extends OpData> CompletableFuture<OpCaller<P, R>> call(OpFunction<? super V, ? extends R> mapper) {
-        return call(new Option(), mapper);
+    default <P extends OpData, R extends OpData>
+    CompletableFuture<OpCaller<P, R>> caller(OpFunction<? super V, ? extends R> mapper) {
+        return caller(new Option(), mapper);
     }
 
     /**

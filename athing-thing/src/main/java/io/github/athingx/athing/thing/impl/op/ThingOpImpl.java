@@ -93,7 +93,7 @@ public class ThingOpImpl extends MqttClientSupport implements ThingOp {
         }
 
         @Override
-        public CompletableFuture<OpBinder> consume(OpConsumer<? super V> consumer) {
+        public CompletableFuture<OpBinder> consumer(OpConsumer<? super V> consumer) {
             return pahoMqttSubscribe(express, 1, (topic, message) -> executor.execute(() -> {
 
                 try {
@@ -126,7 +126,7 @@ public class ThingOpImpl extends MqttClientSupport implements ThingOp {
         }
 
         @Override
-        public <P extends OpData, R extends OpData> CompletableFuture<OpCaller<P, R>> call(Option opOption, OpFunction<? super V, ? extends R> mapper) {
+        public <P extends OpData, R extends OpData> CompletableFuture<OpCaller<P, R>> caller(Option opOption, OpFunction<? super V, ? extends R> mapper) {
             final var futureMap = new ConcurrentHashMap<String, CompletableFuture<R>>();
             return pahoMqttSubscribe(express, 1, (topic, message) -> executor.execute(() -> {
 

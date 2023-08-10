@@ -33,7 +33,7 @@ public class ThingOpTestCase implements LoadingProperties {
         final var caller = thing.op().bind("/sys/%s/thing/config/get_reply".formatted(path))
                 .map(mappingBytesToJson(UTF_8))
                 .map(mappingJsonToOpReply(Data.class))
-                .call(identity())
+                .caller(identity())
                 .get();
 
         final var token = thing.op().genToken();
@@ -78,7 +78,7 @@ public class ThingOpTestCase implements LoadingProperties {
                 .matches((topic, data) -> true)
                 .map(mappingBytesToJson(UTF_8))
                 .map(mappingJsonToOpReply(Data.class))
-                .consume((topic, reply) -> {
+                .consumer((topic, reply) -> {
                     while (true) {
                         if (queue.offer(reply)) {
                             break;

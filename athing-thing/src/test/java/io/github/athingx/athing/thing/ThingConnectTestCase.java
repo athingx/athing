@@ -52,7 +52,7 @@ public class ThingConnectTestCase implements LoadingProperties {
         Assert.assertNotNull(thing);
 
         var future = thing.op().bind("/hello")
-                .consume((topic, bytes) -> {
+                .consumer((topic, bytes) -> {
 
                 });
         latch.countDown();
