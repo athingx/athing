@@ -7,6 +7,7 @@ import java.util.Objects;
  * @param <T> 请求类型
  * @param <R> 返回类型
  */
+@FunctionalInterface
 public interface OpFunction<T, R> {
 
     /**

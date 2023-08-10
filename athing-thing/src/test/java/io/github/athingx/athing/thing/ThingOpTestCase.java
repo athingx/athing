@@ -4,6 +4,7 @@ import com.google.gson.annotations.SerializedName;
 import io.github.athingx.athing.thing.api.ThingPath;
 import io.github.athingx.athing.thing.api.op.OpMapData;
 import io.github.athingx.athing.thing.api.op.OpReply;
+import io.github.athingx.athing.thing.api.op.ThingOpBind;
 import io.github.athingx.athing.thing.api.util.MapData;
 import io.github.athingx.athing.thing.builder.ThingBuilder;
 import io.github.athingx.athing.thing.builder.client.DefaultMqttClientFactory;
@@ -33,7 +34,7 @@ public class ThingOpTestCase implements LoadingProperties {
         final var caller = thing.op().bind("/sys/%s/thing/config/get_reply".formatted(path))
                 .map(mappingBytesToJson(UTF_8))
                 .map(mappingJsonToOpReply(Data.class))
-                .caller(identity())
+                .caller(new ThingOpBind.Option(), identity())
                 .get();
 
         final var token = thing.op().genToken();

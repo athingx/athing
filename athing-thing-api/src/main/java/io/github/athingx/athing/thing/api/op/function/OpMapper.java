@@ -16,6 +16,7 @@ import static java.util.Optional.ofNullable;
  * @param <T> 映射前类型
  * @param <R> 映射后类型
  */
+@FunctionalInterface
 public interface OpMapper<T, R> extends OpFunction<T, R> {
 
     /**

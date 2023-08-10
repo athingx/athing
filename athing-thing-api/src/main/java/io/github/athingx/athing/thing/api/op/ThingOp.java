@@ -27,6 +27,6 @@ public interface ThingOp {
      * @param express 绑定主题表达式
      * @return 函数绑定
      */
-    OpBind<byte[]> bind(String express);
+    ThingOpBind<byte[]> bind(String express);
 
 }

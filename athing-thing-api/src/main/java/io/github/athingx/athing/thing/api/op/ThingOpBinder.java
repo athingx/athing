@@ -5,7 +5,7 @@ import java.util.concurrent.CompletableFuture;
 /**
  * 设备操作绑定
  */
-public interface OpBinder {
+public interface ThingOpBinder {
 
     /**
      * 取消绑定

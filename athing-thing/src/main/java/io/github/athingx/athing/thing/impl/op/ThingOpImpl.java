@@ -58,17 +58,17 @@ public class ThingOpImpl extends MqttClientSupport implements ThingOp {
     }
 
     @Override
-    public OpBind<byte[]> bind(String express) {
-        return new OpBindImpl<>(express, (topic, data) -> data);
+    public ThingOpBind<byte[]> bind(String express) {
+        return new ThingOpBindImpl<>(express, (topic, data) -> data);
     }
 
 
-    private class OpBindImpl<V> implements OpBind<V> {
+    private class ThingOpBindImpl<V> implements ThingOpBind<V> {
 
         private final String express;
         private final OpFunction<byte[], V> mapper;
 
-        private OpBindImpl(String express, OpFunction<byte[], V> mapper) {
+        private ThingOpBindImpl(String express, OpFunction<byte[], V> mapper) {
             this.express = express;
             this.mapper = mapper;
         }
@@ -77,8 +77,8 @@ public class ThingOpImpl extends MqttClientSupport implements ThingOp {
         }
 
         @Override
-        public OpBind<V> matches(OpPredicate<? super V> matcher) {
-            return new OpBindImpl<>(express, (topic, data) -> {
+        public ThingOpBind<V> matches(OpPredicate<? super V> matcher) {
+            return new ThingOpBindImpl<>(express, (topic, data) -> {
                 final V value = mapper.apply(topic, data);
                 if (!matcher.test(topic, value)) {
                     throw new SkipException();
@@ -88,12 +88,12 @@ public class ThingOpImpl extends MqttClientSupport implements ThingOp {
         }
 
         @Override
-        public <R> OpBind<R> map(OpFunction<? super V, ? extends R> mapper) {
-            return new OpBindImpl<>(express, this.mapper.then(mapper));
+        public <R> ThingOpBind<R> map(OpFunction<? super V, ? extends R> mapper) {
+            return new ThingOpBindImpl<>(express, this.mapper.then(mapper));
         }
 
         @Override
-        public CompletableFuture<OpBinder> consumer(OpConsumer<? super V> consumer) {
+        public CompletableFuture<ThingOpBinder> consumer(OpConsumer<? super V> consumer) {
             return pahoMqttSubscribe(express, 1, (topic, message) -> executor.execute(() -> {
 
                 try {
@@ -113,7 +113,7 @@ public class ThingOpImpl extends MqttClientSupport implements ThingOp {
             }))
 
                     // 转换结果为OpBinder并返回
-                    .thenApply(v -> (OpBinder) () -> pahoMqttUnsubscribe(express).whenComplete(whenCompleted(
+                    .thenApply(v -> (ThingOpBinder) () -> pahoMqttUnsubscribe(express).whenComplete(whenCompleted(
                             uv -> logger.debug("{}/op/consumer unbind success, express={}", path, express),
                             uex -> logger.warn("{}/op/consumer unbind failure, express={}", path, express, uex)
                     )))
@@ -126,13 +126,13 @@ public class ThingOpImpl extends MqttClientSupport implements ThingOp {
         }
 
         @Override
-        public <P extends OpData, R extends OpData> CompletableFuture<OpCaller<P, R>> caller(Option opOption, OpFunction<? super V, ? extends R> mapper) {
+        public <P extends OpData, R extends OpData> CompletableFuture<ThingOpRouteCaller<P, R>> caller(Option option, OpFunction<? super V, ? extends R> mapper) {
             final var futureMap = new ConcurrentHashMap<String, CompletableFuture<R>>();
             return pahoMqttSubscribe(express, 1, (topic, message) -> executor.execute(() -> {
 
                 try {
 
-                    final var data = OpBindImpl.this.mapper.then(mapper).apply(topic, message.getPayload());
+                    final var data = ThingOpBindImpl.this.mapper.then(mapper).apply(topic, message.getPayload());
                     final var token = data.token();
                     final var future = futureMap.remove(token);
 
@@ -157,13 +157,13 @@ public class ThingOpImpl extends MqttClientSupport implements ThingOp {
                 }
 
             }))
-                    .<OpCaller<P, R>>thenApply(unused -> new OpCaller<>() {
+                    .<ThingOpRouteCaller<P, R>>thenApply(unused -> new ThingOpRouteCaller<>() {
                         @Override
                         public CompletableFuture<R> call(String topic, P data) {
 
                             // call存根
                             final var future = new CompletableFuture<R>();
-                            future.orTimeout(opOption.getTimeoutMs(), TimeUnit.MILLISECONDS)
+                            future.orTimeout(option.getTimeoutMs(), TimeUnit.MILLISECONDS)
                                     .whenComplete((v, ex) -> futureMap.remove(data.token()))
                                     .whenComplete(whenCompleted(
                                             v -> logger.debug("{}/op/caller success, token={};", path, data.token()),

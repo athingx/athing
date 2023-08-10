@@ -4,6 +4,7 @@ package io.github.athingx.athing.thing.api.op.function;
  * 操作消费函数
  * @param <V> 消费数据类型
  */
+@FunctionalInterface
 public interface OpConsumer<V> {
 
     /**

@@ -4,6 +4,7 @@ package io.github.athingx.athing.thing.api.op.function;
  * 操作匹配函数
  * @param <V> 数据类型
  */
+@FunctionalInterface
 public interface OpPredicate<V> {
 
     /**

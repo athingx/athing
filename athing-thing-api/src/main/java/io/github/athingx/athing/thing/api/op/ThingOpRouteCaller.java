@@ -11,7 +11,7 @@ import java.util.function.Function;
  * @param <T> 请求数据类型
  * @param <R> 应答数据类型
  */
-public interface OpCaller<T, R> extends OpBinder {
+public interface ThingOpRouteCaller<T, R> extends ThingOpBinder {
 
     /**
      * 呼叫
@@ -22,46 +22,46 @@ public interface OpCaller<T, R> extends OpBinder {
      */
     CompletableFuture<R> call(String topic, T data);
 
-    default <V> OpCaller<V, R> compose(OpFunction<? super V, ? extends T> before) {
-        return new OpCaller<>() {
+    default <V> ThingOpRouteCaller<V, R> compose(OpFunction<? super V, ? extends T> before) {
+        return new ThingOpRouteCaller<>() {
             @Override
             public CompletableFuture<R> call(String topic, V data) {
-                return OpCaller.this.call(topic, before.apply(topic, data));
+                return ThingOpRouteCaller.this.call(topic, before.apply(topic, data));
             }
 
             @Override
             public CompletableFuture<Void> unbind() {
-                return OpCaller.this.unbind();
+                return ThingOpRouteCaller.this.unbind();
             }
 
         };
     }
 
-    default <V> OpCaller<T, V> then(OpFunction<? super R, ? extends V> after) {
-        return new OpCaller<>() {
+    default <V> ThingOpRouteCaller<T, V> then(OpFunction<? super R, ? extends V> after) {
+        return new ThingOpRouteCaller<>() {
             @Override
             public CompletableFuture<V> call(String topic, T data) {
-                return OpCaller.this.call(topic, data).thenApply(r -> after.apply(topic, r));
+                return ThingOpRouteCaller.this.call(topic, data).thenApply(r -> after.apply(topic, r));
             }
 
             @Override
             public CompletableFuture<Void> unbind() {
-                return OpCaller.this.unbind();
+                return ThingOpRouteCaller.this.unbind();
             }
 
         };
     }
 
-    default OpRouteCaller<T, R> route(Function<T, String> router) {
-        return new OpRouteCaller<>() {
+    default ThingOpCaller<T, R> route(Function<? super T, String> router) {
+        return new ThingOpCaller<>() {
             @Override
             public CompletableFuture<R> call(T data) {
-                return OpCaller.this.call(router.apply(data), data);
+                return ThingOpRouteCaller.this.call(router.apply(data), data);
             }
 
             @Override
             public CompletableFuture<Void> unbind() {
-                return OpCaller.this.unbind();
+                return ThingOpRouteCaller.this.unbind();
             }
 
         };
