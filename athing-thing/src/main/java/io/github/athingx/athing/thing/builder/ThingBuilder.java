@@ -2,10 +2,10 @@ package io.github.athingx.athing.thing.builder;
 
 import io.github.athingx.athing.thing.api.Thing;
 import io.github.athingx.athing.thing.api.ThingPath;
+import io.github.athingx.athing.thing.builder.client.MqttClientFactory;
 import io.github.athingx.athing.thing.builder.executor.DefaultExecutorServiceFactory;
 import io.github.athingx.athing.thing.builder.executor.ExecutorServiceFactory;
 import io.github.athingx.athing.thing.impl.ThingImpl;
-import io.github.athingx.athing.thing.builder.client.MqttClientFactory;
 import org.eclipse.paho.client.mqttv3.IMqttAsyncClient;
 
 import java.util.concurrent.ExecutorService;

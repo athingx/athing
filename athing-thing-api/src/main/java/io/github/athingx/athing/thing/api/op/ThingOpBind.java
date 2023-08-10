@@ -3,10 +3,8 @@ package io.github.athingx.athing.thing.api.op;
 import io.github.athingx.athing.thing.api.op.function.OpConsumer;
 import io.github.athingx.athing.thing.api.op.function.OpFunction;
 import io.github.athingx.athing.thing.api.op.function.OpPredicate;
-import io.github.athingx.athing.thing.api.op.function.OpService;
 
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Function;
 
 /**
  * 操作绑定
