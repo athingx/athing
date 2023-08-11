@@ -1,6 +1,5 @@
 package io.github.athingx.athing.thing.impl.op;
 
-import io.github.athingx.athing.common.gson.GsonFactory;
 import io.github.athingx.athing.thing.api.ThingPath;
 import io.github.athingx.athing.thing.api.op.*;
 import io.github.athingx.athing.thing.api.op.function.OpConsumer;
@@ -50,7 +49,7 @@ public class ThingOpImpl extends MqttClientSupport implements ThingOp {
 
     @Override
     public CompletableFuture<Void> post(String topic, OpData data) {
-        return pahoMqttPublish(topic, 1, GsonFactory.getGson().toJson(data).getBytes(UTF_8))
+        return pahoMqttPublish(topic, 1, JsonHelper.toJson(data).getBytes(UTF_8))
                 .whenComplete(whenCompleted(
                         v -> logger.debug("{}/op/post success, token={};topic={}", path, data.token(), topic),
                         ex -> logger.warn("{}/op/post failure, token={};topic={}", path, data.token(), topic, ex)
@@ -175,7 +174,7 @@ public class ThingOpImpl extends MqttClientSupport implements ThingOp {
 
                             // 发送请求
                             return future.thenCombine(
-                                    pahoMqttPublish(topic, 1, GsonFactory.getGson().toJson(data).getBytes(UTF_8))
+                                    pahoMqttPublish(topic, 1, JsonHelper.toJson(data).getBytes(UTF_8))
                                             .whenComplete(whenCompleted(
                                                     v -> logger.debug("{}/op/caller/request success, token={};topic={}", path, data.token(), topic),
                                                     ex -> logger.warn("{}/op/caller/request failure, token={};topic={}", path, data.token(), topic, ex)
