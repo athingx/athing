@@ -27,7 +27,10 @@ public class ThingOpTestCase implements LoadingProperties {
     @Test
     public void test$thing$op_call$success() throws Exception {
         final var thing = new ThingBuilder(PRODUCT_ID, THING_ID)
-                .client(new DefaultMqttClientFactory(REMOTE, SECRET))
+                .client(new DefaultMqttClientFactory()
+                        .remote(REMOTE)
+                        .secret(SECRET)
+                )
                 .build();
 
         final var path = thing.path().toURN();
@@ -69,7 +72,10 @@ public class ThingOpTestCase implements LoadingProperties {
     public void test$thing$op_bind$success() throws Exception {
 
         final var thing = new ThingBuilder(new ThingPath(PRODUCT_ID, THING_ID))
-                .client(new DefaultMqttClientFactory(REMOTE, SECRET))
+                .client(new DefaultMqttClientFactory()
+                        .remote(REMOTE)
+                        .secret(SECRET)
+                )
                 .build();
 
         final var path = thing.path().toURN();

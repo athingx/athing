@@ -14,7 +14,10 @@ public abstract class LoadingThing implements LoadingProperties {
     @BeforeClass
     public static void onBeforeClass() throws Exception {
         thing = new ThingBuilder(new ThingPath(PRODUCT_ID, THING_ID))
-                .client(new DefaultMqttClientFactory(REMOTE, SECRET))
+                .client(new DefaultMqttClientFactory()
+                        .remote(REMOTE)
+                        .secret(SECRET)
+                )
                 .build();
     }
 

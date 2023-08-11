@@ -21,7 +21,7 @@ public class ThingBuilder {
 
     private ExecutorServiceFactory esFactory = new DefaultExecutorServiceFactory();
 
-    private MqttClientFactory mcFactory;
+    private MqttClientFactory mcFactory = path -> null;
 
     /**
      * 设备构造器

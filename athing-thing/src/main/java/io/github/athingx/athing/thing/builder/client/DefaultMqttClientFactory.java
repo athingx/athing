@@ -13,8 +13,8 @@ import static io.github.athingx.athing.thing.builder.client.MqttConnectStrategy.
 
 public class DefaultMqttClientFactory implements MqttClientFactory {
 
-    private final String remote;
-    private final String secret;
+    private String remote;
+    private String secret;
 
     private MqttConnectStrategy strategy = always(30 * 1000L, 3 * 60 * 1000L);
 
@@ -34,11 +34,6 @@ public class DefaultMqttClientFactory implements MqttClientFactory {
         setBufferSize(5000);            // 缓冲区大小
         setDeleteOldestMessages(true);  // 删除最旧的消息
     }};
-
-    public DefaultMqttClientFactory(String remote, String secret) {
-        this.remote = remote;
-        this.secret = secret;
-    }
 
     public DefaultMqttClientFactory strategy(MqttConnectStrategy strategy) {
         this.strategy = strategy;
@@ -70,8 +65,21 @@ public class DefaultMqttClientFactory implements MqttClientFactory {
         return bufferOpt(factory.apply(bufferOpt));
     }
 
+    public DefaultMqttClientFactory remote(String remote) {
+        this.remote = remote;
+        return this;
+    }
+
+    public DefaultMqttClientFactory secret(String secret) {
+        this.secret = secret;
+        return this;
+    }
+
     @Override
     public IMqttAsyncClient make(ThingPath path) throws MqttException {
+
+        Objects.requireNonNull(remote, "remote is required");
+        Objects.requireNonNull(secret, "secret is required");
 
         final var sign = new MqttSign(path);
         final var client = new MqttAsyncClient(remote, sign.getClientId(), persistable);

@@ -19,7 +19,10 @@ public class ThingConnectTestCase implements LoadingProperties {
     @Test
     public void test$thing$connect$success() throws Exception {
         final Thing thing = new ThingBuilder(new ThingPath(PRODUCT_ID, THING_ID))
-                .client(new DefaultMqttClientFactory(REMOTE, SECRET))
+                .client(new DefaultMqttClientFactory()
+                        .remote(REMOTE)
+                        .secret(SECRET)
+                )
                 .build();
         Assert.assertNotNull(thing);
         Assert.assertEquals(PRODUCT_ID, thing.path().getProductId());
@@ -35,7 +38,9 @@ public class ThingConnectTestCase implements LoadingProperties {
     public void test$thing$connect_after_bind$success() throws Exception {
         final CountDownLatch latch = new CountDownLatch(1);
         final Thing thing = new ThingBuilder(new ThingPath(PRODUCT_ID, THING_ID))
-                .client(new DefaultMqttClientFactory(REMOTE, SECRET)
+                .client(new DefaultMqttClientFactory()
+                        .remote(REMOTE)
+                        .secret(SECRET)
                         .strategy((path, client, options, isReconnect) ->
                                 new Thread(() -> {
                                     try {
@@ -63,7 +68,9 @@ public class ThingConnectTestCase implements LoadingProperties {
     @Test(expected = MqttException.class)
     public void test$thing$connect$limits_retry() throws Exception {
         final Thing thing = new ThingBuilder(new ThingPath(PRODUCT_ID, THING_ID))
-                .client(new DefaultMqttClientFactory("tcp://imposable.com:0", SECRET)
+                .client(new DefaultMqttClientFactory()
+                        .remote("tcp://imposable.com:0")
+                        .secret(SECRET)
                         .connOpt(options -> {
                             options.setConnectionTimeout(10);
                             options.setMaxReconnectDelay(10);

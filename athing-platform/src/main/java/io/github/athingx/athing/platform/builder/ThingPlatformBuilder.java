@@ -1,9 +1,11 @@
 package io.github.athingx.athing.platform.builder;
 
 import io.github.athingx.athing.platform.api.ThingPlatform;
+import io.github.athingx.athing.platform.api.client.ThingPlatformClient;
 import io.github.athingx.athing.platform.builder.client.ThingPlatformClientFactory;
 import io.github.athingx.athing.platform.builder.message.ThingMessageConsumerFactory;
 import io.github.athingx.athing.platform.impl.ThingPlatformImpl;
+import io.github.athingx.athing.platform.message.ThingMessageConsumer;
 
 /**
  * 设备平台构造器
@@ -19,9 +21,13 @@ public class ThingPlatformBuilder {
      * @param tmcFactory 设备消息消费者工厂
      * @return this
      */
-    public ThingPlatformBuilder consumerFactory(ThingMessageConsumerFactory tmcFactory) {
+    public ThingPlatformBuilder consumer(ThingMessageConsumerFactory tmcFactory) {
         this.tmcFactory = tmcFactory;
         return this;
+    }
+
+    public ThingPlatformBuilder consumer(ThingMessageConsumer consumer) {
+        return consumer(() -> consumer);
     }
 
     /**
@@ -30,9 +36,13 @@ public class ThingPlatformBuilder {
      * @param tpcFactory 设备平台客户端工厂
      * @return this
      */
-    public ThingPlatformBuilder clientFactory(ThingPlatformClientFactory tpcFactory) {
+    public ThingPlatformBuilder client(ThingPlatformClientFactory tpcFactory) {
         this.tpcFactory = tpcFactory;
         return this;
+    }
+
+    public ThingPlatformBuilder client(ThingPlatformClient client) {
+        return client(() -> client);
     }
 
     /**
