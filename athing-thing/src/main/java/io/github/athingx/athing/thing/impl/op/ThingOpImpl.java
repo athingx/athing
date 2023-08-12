@@ -76,10 +76,10 @@ public class ThingOpImpl extends MqttClientSupport implements ThingOp {
         }
 
         @Override
-        public ThingOpBind<V> matches(OpPredicate<? super V> matcher) {
+        public ThingOpBind<V> filter(OpPredicate<? super V> filter) {
             return new ThingOpBindImpl<>(express, (topic, data) -> {
                 final V value = mapper.apply(topic, data);
-                if (!matcher.test(topic, value)) {
+                if (!filter.test(topic, value)) {
                     throw new SkipException();
                 }
                 return value;

@@ -2,7 +2,7 @@ package io.github.athingx.athing.thing.api;
 
 import io.github.athingx.athing.thing.api.op.ThingOp;
 
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executor;
 
 /**
  * 设备
@@ -28,7 +28,7 @@ public interface Thing {
      *
      * @return 线程池
      */
-    ExecutorService executor();
+    Executor executor();
 
     /**
      * 销毁设备

@@ -9,6 +9,7 @@ import org.eclipse.paho.client.mqttv3.MqttException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 
 /**
@@ -40,7 +41,7 @@ public class ThingImpl implements Thing {
     }
 
     @Override
-    public ExecutorService executor() {
+    public Executor executor() {
         return executor;
     }
 

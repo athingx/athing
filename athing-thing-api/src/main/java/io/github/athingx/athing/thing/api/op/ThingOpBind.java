@@ -16,10 +16,10 @@ public interface ThingOpBind<V> {
     /**
      * 过滤
      *
-     * @param matcher 过滤函数
+     * @param filter 过滤函数
      * @return 操作绑定
      */
-    ThingOpBind<V> matches(OpPredicate<? super V> matcher);
+    ThingOpBind<V> filter(OpPredicate<? super V> filter);
 
     /**
      * 映射数据为其他类型：

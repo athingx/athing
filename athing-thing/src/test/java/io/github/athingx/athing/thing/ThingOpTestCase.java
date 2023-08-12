@@ -82,7 +82,7 @@ public class ThingOpTestCase implements LoadingProperties {
         final var queue = new LinkedBlockingQueue<OpReply<Data>>();
 
         final var binder = thing.op().bind("/sys/%s/thing/config/get_reply".formatted(path))
-                .matches((topic, data) -> true)
+                .filter((topic, data) -> true)
                 .map(mappingBytesToJson(UTF_8))
                 .map(mappingJsonToOpReply(Data.class))
                 .consumer((topic, reply) -> {
