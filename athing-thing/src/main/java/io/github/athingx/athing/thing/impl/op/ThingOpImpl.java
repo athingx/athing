@@ -10,13 +10,14 @@ import org.eclipse.paho.client.mqttv3.IMqttAsyncClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Objects;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.Objects.isNull;
 
 /**
  * 设备操作实现
@@ -49,8 +50,8 @@ public class ThingOpImpl extends MqttClientSupport implements ThingOp {
     @Override
     public CompletableFuture<Void> post(String topic, OpData data) {
         return pahoMqttPublish(topic, 1, JsonHelper.toJson(data).getBytes(UTF_8))
-                .whenComplete((v, ex)
-                        -> logger.debug("{}/op/post completed, token={};topic={};", path, data.token(), topic, ex));
+                .whenComplete((v, ex) ->
+                        logger.debug("{}/op/post completed, token={};topic={};", path, data.token(), topic, ex));
     }
 
     @Override
@@ -98,10 +99,11 @@ public class ThingOpImpl extends MqttClientSupport implements ThingOp {
 
             // 绑定操作
             final ThingOpBinder binder = () -> pahoMqttUnsubscribe(express)
-                    .whenComplete((v, ex)
-                            -> logger.debug("{}/op/consumer unbind completed, express={}", path, express));
+                    .whenComplete((v, ex) ->
+                            logger.debug("{}/op/consumer unbind completed, express={};", path, express, ex));
 
 
+            // 绑定数据消费
             return pahoMqttSubscribe(express, 1, (topic, message) ->
 
                     // 消费数据
@@ -115,10 +117,16 @@ public class ThingOpImpl extends MqttClientSupport implements ThingOp {
                             // 消费数据
                             consumer.accept(topic, data);
 
-                        } catch (SkipException cause) {
+                        }
+
+                        // 捕获跳过异常，说明本次消息消费已被过滤
+                        catch (SkipException cause) {
                             logger.debug("{}/op/consumer skipped! topic={};", path, topic);
-                        } catch (Throwable cause) {
-                            logger.warn("{}/op/consumer failure! topic={};", path, topic, cause);
+                        }
+
+                        // 兜底捕获所有异常并记录
+                        catch (Throwable cause) {
+                            logger.warn("{}/op/consumer occur error! topic={};", path, topic, cause);
                         }
 
                     }))
@@ -127,14 +135,55 @@ public class ThingOpImpl extends MqttClientSupport implements ThingOp {
                     .thenApply(v -> binder)
 
                     // 绑定成功或失败都要记录日志
-                    .whenComplete((v, ex)
-                            -> logger.debug("{}/op/consumer bind completed, express={};", path, express));
+                    .whenComplete((v, ex) ->
+                            logger.debug("{}/op/consumer bind completed, express={};", path, express, ex));
 
         }
 
         @Override
         public <P extends OpData, R extends OpData> CompletableFuture<ThingOpRouteCaller<P, R>> caller(Option option, OpFunction<? super V, ? extends R> mapper) {
-            final var futureMap = new ConcurrentHashMap<String, CompletableFuture<R>>();
+
+            // 呼叫操作存根集合
+            final Map<String, CompletableFuture<R>> futureMap = new ConcurrentHashMap<>();
+
+            // 设备呼叫器
+            final ThingOpRouteCaller<P, R> caller = new ThingOpRouteCaller<>() {
+                @Override
+                public CompletableFuture<R> call(String topic, P data) {
+
+                    // call存根
+                    final var future = new CompletableFuture<R>();
+
+                    // 设置超时时间
+                    if (option.getTimeoutMs() > 0L) {
+                        future.orTimeout(option.getTimeoutMs(), TimeUnit.MILLISECONDS);
+                    }
+
+                    // 记录存根
+                    futureMap.put(data.token(), future);
+
+                    // 发送请求
+                    final var requestF = pahoMqttPublish(topic, 1, JsonHelper.toJson(data).getBytes(UTF_8))
+                            .whenComplete((v, ex) ->
+                                    logger.debug("{}/op/caller/request completed, token={};topic={};", path, data.token(), topic, ex));
+
+                    // 合并请求
+                    return future.thenCombine(requestF, (r, v) -> r)
+                            .whenComplete((v, ex) -> futureMap.remove(data.token()))
+                            .whenComplete((v, ex) ->
+                                    logger.debug("{}/op/caller completed, token={};", path, data.token(), ex));
+                }
+
+                @Override
+                public CompletableFuture<Void> unbind() {
+                    return pahoMqttUnsubscribe(express)
+                            .whenComplete((v, ex) ->
+                                    logger.debug("{}/op/caller unbind completed, express={};", path, express, ex));
+                }
+
+            };
+
+            // 绑定response数据消费
             return pahoMqttSubscribe(express, 1, (topic, message) ->
 
                     // 消费数据
@@ -147,8 +196,8 @@ public class ThingOpImpl extends MqttClientSupport implements ThingOp {
                             final var future = futureMap.remove(token);
 
                             // future超时
-                            if (Objects.isNull(future)) {
-                                logger.warn("{}/op/caller/response token not found, maybe timeout! token={};topic={};", path, token, topic);
+                            if (isNull(future)) {
+                                logger.warn("{}/op/caller/response maybe timeout! token={};topic={};", path, token, topic);
                                 return;
                             }
 
@@ -157,54 +206,29 @@ public class ThingOpImpl extends MqttClientSupport implements ThingOp {
 
                             // future过期
                             if (!future.complete(data)) {
-                                logger.warn("{}/op/caller/response assert failure, maybe expired! token={};topic={};", path, token, topic);
+                                logger.warn("{}/op/caller/response maybe expired! token={};topic={};", path, token, topic);
                             }
 
-                        } catch (SkipException cause) {
+                        }
+
+                        // 捕获跳过异常，说明本次消息消费已被过滤
+                        catch (SkipException cause) {
                             logger.debug("{}/op/caller/response skipped! topic={};", path, topic);
-                        } catch (Throwable cause) {
-                            logger.warn("{}/op/caller/response failure! topic={};", path, topic, cause);
+                        }
+
+                        // 兜底捕获所有异常并记录
+                        catch (Throwable cause) {
+                            logger.warn("{}/op/caller/response occur error! topic={};", path, topic, cause);
                         }
 
                     }))
 
-                    // 转换ThingOpRouteCaller
-                    .<ThingOpRouteCaller<P, R>>thenApply(unused -> new ThingOpRouteCaller<>() {
-                        @Override
-                        public CompletableFuture<R> call(String topic, P data) {
-
-                            // call存根
-                            final var future = new CompletableFuture<R>();
-                            future.orTimeout(option.getTimeoutMs(), TimeUnit.MILLISECONDS)
-                                    .whenComplete((v, ex) -> {
-                                        futureMap.remove(data.token());
-                                        logger.debug("{}/op/caller completed, token={};", path, data.token(), ex);
-                                    });
-
-                            // 记录存根
-                            futureMap.put(data.token(), future);
-
-                            // 发送请求
-                            final var requestF = pahoMqttPublish(topic, 1, JsonHelper.toJson(data).getBytes(UTF_8))
-                                    .whenComplete((v, ex)
-                                            -> logger.debug("{}/op/caller/request completed, token={};topic={};", path, data.token(), topic, ex));
-
-                            // 合并请求
-                            return future.thenCombine(requestF, (r, v) -> r);
-                        }
-
-                        @Override
-                        public CompletableFuture<Void> unbind() {
-                            return pahoMqttUnsubscribe(express)
-                                    .whenComplete((v, ex)
-                                            -> logger.debug("{}/op/caller unbind completed, express={};", path, express, ex));
-                        }
-
-                    })
+                    // 结果转换为caller
+                    .thenApply(v -> caller)
 
                     // 绑定成功或失败都要记录日志
-                    .whenComplete((v, ex)
-                            -> logger.debug("{}/op/caller bind completed, express={};", path, express, ex));
+                    .whenComplete((v, ex) ->
+                            logger.debug("{}/op/caller bind completed, express={};", path, express, ex));
 
         }
 

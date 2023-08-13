@@ -95,7 +95,7 @@ public class ThingBuilder {
     public Thing build() throws Exception {
         return new ThingImpl(
                 path,
-                requireNonNull(mcFactory.make(path), "mqtt-client is required!"),
+                requireNonNull(mcFactory.make(path), "client is required!"),
                 requireNonNull(esFactory.make(path), "executor is required!")
         );
     }

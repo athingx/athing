@@ -60,7 +60,7 @@ public interface ThingOpBind<V> {
         /**
          * 超时(毫秒)
          */
-        private long timeoutMs = 1000 * 30L;
+        private long timeoutMs = -1;
 
         public long getTimeoutMs() {
             return timeoutMs;

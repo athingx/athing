@@ -32,10 +32,12 @@ public class DefaultExecutorServiceFactory implements ExecutorServiceFactory {
 
     @Override
     public ExecutorService make(ThingPath path) {
-        return Executors.newFixedThreadPool(nThreads, r -> new Thread(r) {{
-            setDaemon(true);
-            setName("athing-executor-%s-%d".formatted(path, counter.incrementAndGet()));
-        }});
+        return Executors.newFixedThreadPool(nThreads, r ->
+                new Thread(r) {{
+                    setDaemon(true);
+                    setName("athing-executor-%s-%d".formatted(path, counter.incrementAndGet()));
+                }}
+        );
     }
 
 }
