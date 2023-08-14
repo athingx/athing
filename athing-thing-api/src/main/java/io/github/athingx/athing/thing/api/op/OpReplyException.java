@@ -10,9 +10,10 @@ public class OpReplyException extends RuntimeException {
 
     /**
      * 应答异常
+     *
      * @param token 操作令牌
-     * @param code 应答编码
-     * @param desc 应答消息
+     * @param code  应答编码
+     * @param desc  应答消息
      */
     public OpReplyException(String token, int code, String desc) {
         super(desc);
@@ -22,6 +23,7 @@ public class OpReplyException extends RuntimeException {
 
     /**
      * 获取操作令牌
+     *
      * @return 操作令牌
      */
     public String getToken() {
@@ -30,6 +32,7 @@ public class OpReplyException extends RuntimeException {
 
     /**
      * 获取应答编码
+     *
      * @return 应答编码
      */
     public int getCode() {
