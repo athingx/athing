@@ -3,6 +3,8 @@ package io.github.athingx.athing.thing.api.op;
 import com.google.gson.annotations.SerializedName;
 import io.github.athingx.athing.common.ThingCodes;
 
+import java.util.function.Function;
+
 /**
  * 操作应答
  *
@@ -26,6 +28,20 @@ public record OpReply<T>(
      */
     public boolean isSuccess() {
         return code == OK;
+    }
+
+    /**
+     * 处理数据
+     *
+     * @param handler 处理器
+     * @param <R>     处理结果类型
+     * @return 处理结果
+     */
+    public <R> R handle(Function<T, R> handler) {
+        if (!isSuccess()) {
+            throw new OpReplyException(token, code, desc);
+        }
+        return handler.apply(data);
     }
 
     /**
@@ -73,7 +89,7 @@ public record OpReply<T>(
      * @param <T>   应答数据类型
      * @return 应答
      */
-    public static <T> OpReply<T> failure(String token, int code, String desc) {
+    public static <T> OpReply<T> fail(String token, int code, String desc) {
         return new OpReply<>(token, code, desc, null);
     }
 
@@ -84,8 +100,8 @@ public record OpReply<T>(
      * @param <T>   应答数据类型
      * @return 应答
      */
-    public static <T> OpReply<T> failure(OpReplyException cause) {
-        return failure(cause.getToken(), cause.getCode(), cause.getMessage());
+    public static <T> OpReply<T> fail(OpReplyException cause) {
+        return fail(cause.getToken(), cause.getCode(), cause.getMessage());
     }
 
 }
