@@ -11,10 +11,7 @@ import io.github.athingx.athing.thing.builder.client.DefaultMqttClientFactory;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.net.URI;
-import java.net.URL;
-import java.util.UUID;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import static io.github.athingx.athing.thing.api.op.function.OpFunction.identity;
