@@ -7,6 +7,7 @@ import java.util.concurrent.CompletableFuture;
 
 /**
  * MQTT回调-Future封装
+ *
  * @param <T> 成功返回数据类型
  */
 class MqttActionListenerFuture<T> extends CompletableFuture<T> implements IMqttActionListener {

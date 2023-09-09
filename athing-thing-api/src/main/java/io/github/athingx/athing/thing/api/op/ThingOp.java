@@ -9,14 +9,16 @@ public interface ThingOp {
 
     /**
      * 生成操作令牌
+     *
      * @return 操作令牌
      */
     String genToken();
 
     /**
      * 投递数据
+     *
      * @param topic 主题
-     * @param data 数据
+     * @param data  数据
      * @return 投递操作
      */
     CompletableFuture<Void> post(String topic, OpData data);

@@ -11,8 +11,9 @@ public class OpMapData extends MapData implements OpData {
 
     /**
      * 构造操作数据
+     *
      * @param token 操作令牌
-     * @param map  数据
+     * @param map   数据
      */
     public OpMapData(String token, MapData map) {
         this.token = token;

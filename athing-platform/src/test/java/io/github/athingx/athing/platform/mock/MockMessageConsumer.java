@@ -9,37 +9,37 @@ public class MockMessageConsumer implements MessageConsumer {
     private volatile MessageListener listener;
 
     @Override
-    public String getMessageSelector(){
+    public String getMessageSelector() {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public MessageListener getMessageListener(){
+    public MessageListener getMessageListener() {
         return listener;
     }
 
     @Override
-    public void setMessageListener(MessageListener listener){
+    public void setMessageListener(MessageListener listener) {
         this.listener = listener;
     }
 
     @Override
-    public Message receive(){
+    public Message receive() {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public Message receive(long timeout){
+    public Message receive(long timeout) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public Message receiveNoWait(){
+    public Message receiveNoWait() {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public void close(){
+    public void close() {
 
     }
 

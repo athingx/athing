@@ -237,7 +237,7 @@ public class MockJmsMessage implements Message {
 
     @Override
     public void setStringProperty(String name, String value) {
-        propertyMap.put(name,value);
+        propertyMap.put(name, value);
     }
 
     @Override

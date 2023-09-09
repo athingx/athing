@@ -55,7 +55,7 @@ public class ThingStateMessageDecoder implements ThingMessageDecoder<ThingStateM
     /**
      * 数据
      */
-     private record Data(
+    private record Data(
             @SerializedName("status") String status,
             @SerializedName("productKey") String productId,
             @SerializedName("deviceName") String thingId,

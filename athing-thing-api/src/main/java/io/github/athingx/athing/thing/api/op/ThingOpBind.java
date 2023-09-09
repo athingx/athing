@@ -53,10 +53,11 @@ public interface ThingOpBind<V> {
 
     /**
      * 绑定呼叫操作
+     *
      * @param mapper 操作应答映射函数：{@code V -> R extends OpData}
+     * @param <P>    请求数据类型
+     * @param <R>    应答数据类型
      * @return 操作绑定
-     * @param <P> 请求数据类型
-     * @param <R> 应答数据类型
      */
     <P extends OpData, R extends OpData>
     CompletableFuture<ThingOpRouteCaller<P, R>> caller(OpFunction<? super V, ? extends R> mapper);
