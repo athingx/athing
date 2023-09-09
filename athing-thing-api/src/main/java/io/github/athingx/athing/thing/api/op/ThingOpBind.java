@@ -51,6 +51,15 @@ public interface ThingOpBind<V> {
     <P extends OpData, R extends OpData>
     CompletableFuture<ThingOpRouteCaller<P, R>> caller(Option option, OpFunction<? super V, ? extends R> mapper);
 
+    /**
+     * 绑定呼叫操作
+     * @param mapper 操作应答映射函数：{@code V -> R extends OpData}
+     * @return 操作绑定
+     * @param <P> 请求数据类型
+     * @param <R> 应答数据类型
+     */
+    <P extends OpData, R extends OpData>
+    CompletableFuture<ThingOpRouteCaller<P, R>> caller(OpFunction<? super V, ? extends R> mapper);
 
     /**
      * 操作选项

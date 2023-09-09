@@ -3,7 +3,7 @@ package io.github.athingx.athing.thing.api;
 /**
  * 设备异常
  */
-public class ThingException extends Exception {
+public class ThingException extends RuntimeException {
 
     private final ThingPath path;
 

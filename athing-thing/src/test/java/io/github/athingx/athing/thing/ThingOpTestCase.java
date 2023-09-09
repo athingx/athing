@@ -139,4 +139,11 @@ public class ThingOpTestCase implements LoadingProperties {
 
     }
 
+    @Test
+    public void test() {
+        final var uri = URI.create("mqtt://abcdefg/12345");
+        System.out.println(uri.getHost());
+        System.out.println(uri.getPath().replaceFirst("/", ""));
+    }
+
 }

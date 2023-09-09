@@ -232,6 +232,11 @@ public class ThingOpImpl extends MqttClientSupport implements ThingOp {
 
         }
 
+        @Override
+        public <P extends OpData, R extends OpData> CompletableFuture<ThingOpRouteCaller<P, R>> caller(OpFunction<? super V, ? extends R> mapper) {
+            return caller(new Option(), mapper);
+        }
+
     }
 
 }

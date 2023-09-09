@@ -45,6 +45,15 @@ public record OpReply<T>(
     }
 
     /**
+     * 处理数据
+     *
+     * @return 处理结果
+     */
+    public T handle() {
+        return handle(Function.identity());
+    }
+
+    /**
      * 构造成功应答
      *
      * @param token 操作令牌
