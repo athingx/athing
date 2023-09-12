@@ -34,7 +34,17 @@ public interface ThingPluginInstaller<T extends ThingPlugin> {
      * @param type       插件类型
      * @param properties 插件属性
      */
-    record Meta<T>(String name, T type, Properties properties) {
+    record Meta<T>(String name, Class<T> type, Properties properties) {
+
+        /**
+         * 构造插件元数据
+         *
+         * @param name 插件名称
+         * @param type 插件类型
+         */
+        public Meta(String name, Class<T> type) {
+            this(name, type, new Properties());
+        }
 
     }
 

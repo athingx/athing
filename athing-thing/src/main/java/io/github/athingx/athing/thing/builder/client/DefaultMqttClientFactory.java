@@ -23,9 +23,10 @@ public class DefaultMqttClientFactory implements MqttClientFactory {
     private MqttConnectOptions connOpt = new MqttConnectOptions() {{
         setCleanSession(false);         // 关闭清理会话
         setAutomaticReconnect(false);   // 关闭自动重连
-        setKeepAliveInterval(30);       // 30秒心跳
-        setConnectionTimeout(60);       // 60秒连接超时
-        setMaxReconnectDelay(60);       // 60秒最大重连间隔
+        setKeepAliveInterval(60);       // 60秒心跳
+        setConnectionTimeout(30);       // 30秒连接超时
+        setMaxReconnectDelay(600);      // 10分钟最大重连间隔
+        setExecutorServiceTimeout(1);   // 1秒线程池超时
     }};
 
     private DisconnectedBufferOptions bufferOpt = new DisconnectedBufferOptions() {{

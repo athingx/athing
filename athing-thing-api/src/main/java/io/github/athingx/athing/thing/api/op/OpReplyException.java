@@ -39,4 +39,13 @@ public class OpReplyException extends RuntimeException {
         return code;
     }
 
+    @Override
+    public String getLocalizedMessage() {
+        return "reply failed! token=%s;code=%s;desc=%s;".formatted(
+                getToken(),
+                getCode(),
+                getMessage()
+        );
+    }
+
 }

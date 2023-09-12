@@ -17,7 +17,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 import static io.github.athingx.athing.thing.api.op.function.OpFunction.identity;
 import static io.github.athingx.athing.thing.api.op.function.OpMapper.mappingBytesToJson;
 import static io.github.athingx.athing.thing.api.op.function.OpMapper.mappingJsonToOpReply;
-import static io.github.athingx.athing.thing.api.util.CompletableFutureUtils.thenComposeOpReply;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
@@ -54,7 +53,7 @@ public class ThingOpTestCase implements LoadingProperties {
                                         .putProperty("configScope", "product")
                                         .putProperty("getType", "file")
                                 )))
-                .thenCompose(thenComposeOpReply())
+                .thenApply(OpReply::handle)
                 .get();
 
         Assert.assertNotNull(data.id);
