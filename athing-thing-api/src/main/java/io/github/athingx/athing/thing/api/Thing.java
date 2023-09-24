@@ -1,6 +1,5 @@
 package io.github.athingx.athing.thing.api;
 
-import io.github.athingx.athing.thing.api.op.Codec;
 import io.github.athingx.athing.thing.api.op.ThingOp;
 import io.github.athingx.athing.thing.api.plugin.ThingPlugin;
 import io.github.athingx.athing.thing.api.plugin.ThingPluginInstaller;
@@ -44,6 +43,14 @@ public interface Thing {
      */
     <T extends ThingPlugin> CompletableFuture<T> install(ThingPluginInstaller<T> installer);
 
+    /**
+     * 获取设备插件
+     *
+     * @param name 插件名称
+     * @param type 插件类型
+     * @param <T>  插件类型
+     * @return 插件
+     */
     <T extends ThingPlugin> Optional<CompletableFuture<T>> plugin(String name, Class<T> type);
 
     /**
