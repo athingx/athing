@@ -56,10 +56,9 @@ public class ThingConnectTestCase implements LoadingProperties {
                 .build();
         Assert.assertNotNull(thing);
 
-        var future = thing.op().bind("/hello")
-                .consumer((topic, bytes) -> {
+        var future = thing.op().consumer("/hello", (topic, bytes) -> {
 
-                });
+        });
         latch.countDown();
         future.get().unbind().get();
         thing.destroy();

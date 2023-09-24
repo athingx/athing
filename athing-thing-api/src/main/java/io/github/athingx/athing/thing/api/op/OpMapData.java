@@ -2,15 +2,17 @@ package io.github.athingx.athing.thing.api.op;
 
 import io.github.athingx.athing.thing.api.util.MapData;
 
+import java.util.HashMap;
+
 /**
  * 操作数据
  */
-public class OpMapData extends MapData implements OpData {
+public class OpMapData extends HashMap<String, Object> implements OpData {
 
-    private transient final String token;
+    private final String token;
 
     /**
-     * 构造操作数据
+     * 操作数据
      *
      * @param token 操作令牌
      * @param map   数据

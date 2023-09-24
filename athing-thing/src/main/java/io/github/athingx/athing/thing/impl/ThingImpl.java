@@ -2,6 +2,7 @@ package io.github.athingx.athing.thing.impl;
 
 import io.github.athingx.athing.thing.api.Thing;
 import io.github.athingx.athing.thing.api.ThingPath;
+import io.github.athingx.athing.thing.api.op.Codec;
 import io.github.athingx.athing.thing.api.op.ThingOp;
 import io.github.athingx.athing.thing.api.plugin.ThingPlugin;
 import io.github.athingx.athing.thing.api.plugin.ThingPluginInstaller;
@@ -28,7 +29,7 @@ public class ThingImpl implements Thing {
     private final ThingPath path;
     private final IMqttAsyncClient client;
     private final ExecutorService executor;
-    private final ThingOp thingOp;
+    private final ThingOp<byte[], byte[]> thingOp;
     private final CompletableFuture<Void> destroyF = new CompletableFuture<>();
     private final Map<String, PluginStub> pluginStubMap = new ConcurrentHashMap<>();
 
@@ -36,7 +37,7 @@ public class ThingImpl implements Thing {
         this.path = path;
         this.client = client;
         this.executor = executor;
-        this.thingOp = new ThingOpImpl(path, client, executor);
+        this.thingOp = new ThingOpImpl<>(path, client, executor, Codec.none());
     }
 
     @Override
@@ -45,7 +46,7 @@ public class ThingImpl implements Thing {
     }
 
     @Override
-    public ThingOp op() {
+    public ThingOp<byte[], byte[]> op() {
         return thingOp;
     }
 
@@ -103,37 +104,26 @@ public class ThingImpl implements Thing {
     @Override
     public void destroy() {
 
-        // 尝试进行首次关闭
-        if (destroyF.complete(null)) {
-
-            // 断连MQTT
-            try {
-                client.disconnect();
-                logger.debug("{}/destroy/mqtt/disconnect success!", path);
-            } catch (MqttException cause) {
-                logger.warn("{}/destroy/mqtt/disconnect failure!", path, cause);
-            }
-
-            // 关闭MQTT
-            try {
-                client.close();
-                logger.debug("{}/destroy/mqtt/close success!", path);
-            } catch (MqttException cause) {
-                logger.warn("{}/destroy/mqtt/close failure!", path, cause);
-            }
-
-            // 关闭线程池
-            executor.shutdown();
-            logger.debug("{}/destroy/executor/shutdown success!", path);
-
-            // 设备关闭完成
-            logger.info("{}/destroy success!", path);
+        if(!destroyF.complete(null)){
+            throw new IllegalStateException("already destroyed!");
         }
 
-        // 设备无法被重复关闭
-        else {
-            throw new IllegalStateException("%s already destroyed!".formatted(path));
+        // 断连MQTT
+        try {
+            client.disconnect();
+        } catch (MqttException cause) {
+            logger.warn("{}/destroy/mqtt/disconnect failure!", path, cause);
         }
+
+        // 关闭MQTT
+        try {
+            client.close();
+        } catch (MqttException cause) {
+            logger.warn("{}/destroy/mqtt/close failure!", path, cause);
+        }
+
+        // 关闭线程池
+        executor.shutdown();
 
     }
 

@@ -3,9 +3,9 @@ package io.github.athingx.athing.thing.api.op;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * 设备操作绑定
+ * 操作绑定器
  */
-public interface ThingOpBinder {
+public interface OpBinder {
 
     /**
      * 取消绑定

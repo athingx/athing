@@ -1,5 +1,6 @@
 package io.github.athingx.athing.thing.api;
 
+import io.github.athingx.athing.thing.api.op.Codec;
 import io.github.athingx.athing.thing.api.op.ThingOp;
 import io.github.athingx.athing.thing.api.plugin.ThingPlugin;
 import io.github.athingx.athing.thing.api.plugin.ThingPluginInstaller;
@@ -25,7 +26,7 @@ public interface Thing {
      *
      * @return 设备操作
      */
-    ThingOp op();
+    ThingOp<byte[], byte[]> op();
 
     /**
      * 获取线程池
