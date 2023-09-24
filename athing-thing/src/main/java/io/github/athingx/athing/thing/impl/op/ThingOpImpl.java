@@ -44,6 +44,11 @@ public class ThingOpImpl<T, R> extends MqttClientSupport implements ThingOp<T, R
     }
 
     @Override
+    public ThingPath path() {
+        return null;
+    }
+
+    @Override
     public String genToken() {
         return sequencer.next();
     }
