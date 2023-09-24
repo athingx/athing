@@ -1,5 +1,6 @@
 package io.github.athingx.athing.thing.api.op;
 
+import com.google.gson.reflect.TypeToken;
 import io.github.athingx.athing.common.gson.GsonFactory;
 
 import java.nio.charset.Charset;
@@ -39,6 +40,18 @@ public interface Encoder<U, T> {
      */
     static Encoder<String, byte[]> encodeJsonToBytes(Charset charset) {
         return json -> json.getBytes(charset);
+    }
+
+    /**
+     * 将对象编码为json
+     *
+     * @param type 指定类型
+     * @param <T>  指定类型
+     * @return {@link OpRequest}{@code ->type}
+     */
+    static <T> Encoder<OpRequest<T>, String> encodeOpRequestToJson(Class<T> type) {
+        return request -> GsonFactory.getGson().toJson(request, new TypeToken<OpRequest<T>>() {
+        }.getType());
     }
 
     /**
