@@ -4,6 +4,7 @@ import io.github.athingx.athing.thing.api.ThingPath;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
+import java.util.function.Function;
 
 /**
  * 设备操作
@@ -19,6 +20,10 @@ public interface ThingOp<T, R> {
      * @return 设备路径
      */
     ThingPath path();
+
+    default <X> X self(Function<ThingOp<T, R>, X> function) {
+        return function.apply(this);
+    }
 
     /**
      * 生成一个令牌
@@ -66,14 +71,15 @@ public interface ThingOp<T, R> {
      */
     default <U> ThingOp<U, R> encode(Encoder<U, T> encoder) {
         return codec(new Codec<>() {
+
             @Override
-            public T encode(U u) {
-                return encoder.encode(u);
+            public Encoder<U, T> encoder() {
+                return encoder;
             }
 
             @Override
-            public R decode(String topic, R r) {
-                return r;
+            public Decoder<R, R> decoder() {
+                return (topic, r) -> r;
             }
         });
     }
@@ -87,14 +93,15 @@ public interface ThingOp<T, R> {
      */
     default <U> ThingOp<T, U> decode(Decoder<R, U> decoder) {
         return codec(new Codec<>() {
+
             @Override
-            public T encode(T t) {
-                return t;
+            public Encoder<T, T> encoder() {
+                return t -> t;
             }
 
             @Override
-            public U decode(String topic, R r) {
-                return decoder.decode(topic, r);
+            public Decoder<R, U> decoder() {
+                return decoder;
             }
         });
     }

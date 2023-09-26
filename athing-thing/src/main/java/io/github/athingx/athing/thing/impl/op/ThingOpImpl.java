@@ -56,7 +56,7 @@ public class ThingOpImpl<T, R> extends MqttClientSupport implements ThingOp<T, R
     @Override
     public CompletableFuture<Void> post(String topic, T data) {
         return CompletableFuture
-                .supplyAsync(() -> codec.encode(data))
+                .supplyAsync(() -> codec.encoder().encode(data), executor)
                 .thenCompose(bytes -> pahoMqttPublish(topic, 1, bytes));
     }
 
@@ -65,7 +65,7 @@ public class ThingOpImpl<T, R> extends MqttClientSupport implements ThingOp<T, R
         return pahoMqttSubscribe(express, 1, (topic, message) ->
                 executor.execute(() -> {
                     try {
-                        Optional.ofNullable(codec.decode(topic, message.getPayload()))
+                        Optional.ofNullable(codec.decoder().decode(topic, message.getPayload()))
                                 .ifPresentOrElse(
                                         data -> consumer.accept(topic, data),
                                         () -> logger.debug("{}/op message decode none, ignored! topic={};", path, topic)

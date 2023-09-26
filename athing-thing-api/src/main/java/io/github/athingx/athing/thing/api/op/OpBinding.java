@@ -1,5 +1,7 @@
 package io.github.athingx.athing.thing.api.op;
 
+import io.github.athingx.athing.thing.api.Thing;
+
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -12,9 +14,9 @@ public interface OpBinding<T extends OpBinder> {
     /**
      * 绑定设备操作
      *
-     * @param op 设备操作
+     * @param thing 设备
      * @return 设备操作
      */
-    CompletableFuture<T> binding(ThingOp<byte[], byte[]> op);
+    CompletableFuture<T> bind(Thing thing);
 
 }

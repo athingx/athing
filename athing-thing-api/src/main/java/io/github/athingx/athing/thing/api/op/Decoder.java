@@ -8,6 +8,7 @@ import io.github.athingx.athing.common.gson.GsonFactory;
 
 import java.nio.charset.Charset;
 
+import static io.github.athingx.athing.common.util.JsonObjectUtils.*;
 import static java.util.Optional.ofNullable;
 
 /**
@@ -81,19 +82,10 @@ public interface Decoder<T, U> {
         return (topic, json) -> {
             final JsonObject root = JsonParser.parseString(json).getAsJsonObject();
             return new OpReply<>(
-                    ofNullable(root.get("id"))
-                            .map(JsonElement::getAsString)
-                            .orElseThrow(() -> new IllegalArgumentException("missing id")),
-                    ofNullable(root.get("code"))
-                            .map(JsonElement::getAsInt)
-                            .orElseThrow(() -> new IllegalArgumentException("missing code")),
-                    ofNullable(root.get("message"))
-                            .map(JsonElement::getAsString)
-                            .orElse(null),
-                    ofNullable(root.get("data"))
-                            .filter(element -> !element.getAsJsonObject().keySet().isEmpty())
-                            .map(element -> GsonFactory.getGson().fromJson(element, type))
-                            .orElse(null)
+                    requireAsString(root, "id"),
+                    requireAsInt(root, "code"),
+                    getAsString(root, "message"),
+                    getAsObject(root, "data", element -> GsonFactory.getGson().fromJson(element, type))
             );
         };
     }
@@ -109,23 +101,11 @@ public interface Decoder<T, U> {
         return (topic, json) -> {
             final JsonObject root = JsonParser.parseString(json).getAsJsonObject();
             return new OpRequest<>(
-                    ofNullable(root.get("id"))
-                            .map(JsonElement::getAsString)
-                            .orElseThrow(() -> new IllegalArgumentException("missing id")),
-                    ofNullable(root.get("version"))
-                            .map(JsonElement::getAsString)
-                            .orElse(null),
-                    ofNullable(root.get("method"))
-                            .map(JsonElement::getAsString)
-                            .orElseThrow(() -> new IllegalArgumentException("missing method")),
-                    ofNullable(root.get("sys"))
-                            .filter(element -> !element.getAsJsonObject().keySet().isEmpty())
-                            .map(element -> GsonFactory.getGson().fromJson(element, OpRequest.Ext.class))
-                            .orElse(null),
-                    ofNullable(root.get("params"))
-                            .filter(element -> !element.getAsJsonObject().keySet().isEmpty())
-                            .map(element -> GsonFactory.getGson().fromJson(element, type))
-                            .orElse(null)
+                    requireAsString(root, "id"),
+                    getAsString(root, "version"),
+                    requireAsString(root, "method"),
+                    getAsObject(root, "sys", element -> GsonFactory.getGson().fromJson(element, OpRequest.Ext.class)),
+                    getAsObject(root, "params", element -> GsonFactory.getGson().fromJson(element, type))
             );
         };
     }

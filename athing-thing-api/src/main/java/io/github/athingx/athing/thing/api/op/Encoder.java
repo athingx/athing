@@ -54,8 +54,13 @@ public interface Encoder<U, T> {
         }.getType());
     }
 
+    static <T> Encoder<OpReply<T>, String> encodeOpReplyToJson(Class<T> type) {
+        return reply -> GsonFactory.getGson().toJson(reply, new TypeToken<OpReply<T>>() {
+        }.getType());
+    }
+
     /**
-     * 将对象编码为json
+     * 将指定类型对象编码为json
      *
      * @param type 指定类型
      * @param <T>  指定类型
@@ -63,6 +68,16 @@ public interface Encoder<U, T> {
      */
     static <T> Encoder<T, String> encodeTypeToJson(Class<T> type) {
         return object -> GsonFactory.getGson().toJson(object, type);
+    }
+
+    /**
+     * 将任意类型对象编码为json
+     *
+     * @param <T> 对象类型
+     * @return {@code type->json}
+     */
+    static <T> Encoder<T, String> encodeAnyToJson() {
+        return object -> GsonFactory.getGson().toJson(object);
     }
 
 }

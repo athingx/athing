@@ -1,5 +1,7 @@
 package io.github.athingx.athing.thing.api.op;
 
+import io.github.athingx.athing.common.util.CompletableFutureUtils;
+
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
@@ -30,6 +32,36 @@ public interface OpTopicCaller<T, R> extends OpBinder {
         return topics(t -> topic);
     }
 
+    default <U> OpTopicCaller<U, R> compose(Function<? super U, ? extends T> fn) {
+        return new OpTopicCaller<>() {
+            @Override
+            public CompletableFuture<R> call(String topic, U u) {
+                return CompletableFutureUtils
+                        .supply(() -> fn.apply(u))
+                        .thenCompose(t -> OpTopicCaller.this.call(topic, t));
+            }
+
+            @Override
+            public CompletableFuture<Void> unbind() {
+                return OpTopicCaller.this.unbind();
+            }
+        };
+    }
+
+    default <U> OpTopicCaller<T, U> then(Function<? super R, ? extends U> fn) {
+        return new OpTopicCaller<>() {
+            @Override
+            public CompletableFuture<U> call(String topic, T t) {
+                return OpTopicCaller.this.call(topic, t).thenApply(fn);
+            }
+
+            @Override
+            public CompletableFuture<Void> unbind() {
+                return OpTopicCaller.this.unbind();
+            }
+        };
+    }
+
     /**
      * 主题路由
      *
@@ -40,7 +72,9 @@ public interface OpTopicCaller<T, R> extends OpBinder {
         return new OpCaller<>() {
             @Override
             public CompletableFuture<R> call(T t) {
-                return OpTopicCaller.this.call(topics.apply(t), t);
+                return CompletableFutureUtils
+                        .supply(() -> topics.apply(t))
+                        .thenCompose(topic -> OpTopicCaller.this.call(topic, t));
             }
 
             @Override

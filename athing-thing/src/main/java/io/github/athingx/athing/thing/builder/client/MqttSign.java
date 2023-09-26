@@ -6,7 +6,7 @@ import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.util.UUID;
 
-import static io.github.athingx.athing.thing.impl.util.StringUtils.bytesToHexString;
+import static io.github.athingx.athing.common.util.StringUtils.bytesToHexString;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**

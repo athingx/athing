@@ -107,6 +107,10 @@ public class GsonFactory {
         }
     };
 
+    private static final JsonSerializer<Object> objectNullSerializer = (src, typeOfSrc, context) -> src == null
+            ? new JsonObject()
+            : context.serialize(src);
+
     /**
      * {@link Record}无法被gson反序列化，核心原因在{@link Field#set(Object, Object)}注释中有解释。
      */
@@ -124,6 +128,7 @@ public class GsonFactory {
             .registerTypeAdapter(Void.class, voidTypeAdapter)
             .registerTypeAdapterFactory(enumTypeAdapterFactory)
             .registerTypeAdapterFactory(recordTypeAdapterFactory)
+            .registerTypeAdapter(Object.class, objectNullSerializer)
             .serializeSpecialFloatingPointValues()
 
             // Long/long use text
