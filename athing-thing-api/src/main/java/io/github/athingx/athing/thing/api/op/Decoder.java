@@ -1,6 +1,5 @@
 package io.github.athingx.athing.thing.api.op;
 
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
@@ -9,7 +8,6 @@ import io.github.athingx.athing.common.gson.GsonFactory;
 import java.nio.charset.Charset;
 
 import static io.github.athingx.athing.common.util.JsonObjectUtils.*;
-import static java.util.Optional.ofNullable;
 
 /**
  * 解码器

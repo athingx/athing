@@ -1,7 +1,5 @@
 package io.github.athingx.athing.thing.api.op;
 
-import io.github.athingx.athing.thing.api.ThingPath;
-
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -13,13 +11,6 @@ import java.util.function.Function;
  * @param <R> 操作应答数据类型
  */
 public interface ThingOp<T, R> {
-
-    /**
-     * 设备路径
-     *
-     * @return 设备路径
-     */
-    ThingPath path();
 
     default <X> X self(Function<ThingOp<T, R>, X> function) {
         return function.apply(this);
