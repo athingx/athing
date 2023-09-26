@@ -8,6 +8,16 @@ import java.util.function.Supplier;
  */
 public class ExceptionUtils {
 
+    public static <X extends Throwable> X getCauseBy(Throwable cause, Class<X> causeType) {
+        if (cause == null) {
+            return null;
+        }
+        return causeType.isInstance(cause)
+                ? causeType.cast(cause)
+                : getCauseBy(cause.getCause(), causeType);
+    }
+
+
     /**
      * 获取异常的根异常
      *
@@ -16,13 +26,8 @@ public class ExceptionUtils {
      * @param <X>       异常类型
      * @return 根异常
      */
-    public static <X extends Throwable> Optional<X> getCauseBy(Throwable cause, Class<X> causeType) {
-        if (cause == null) {
-            return Optional.empty();
-        }
-        return causeType.isInstance(cause)
-                ? Optional.of(causeType.cast(cause))
-                : getCauseBy(cause.getCause(), causeType);
+    public static <X extends Throwable> Optional<X> optionalCauseBy(Throwable cause, Class<X> causeType) {
+        return Optional.ofNullable(getCauseBy(cause, causeType));
     }
 
     /**
@@ -33,7 +38,7 @@ public class ExceptionUtils {
      * @return TRUE | FALSE
      */
     public static boolean isCauseBy(Throwable cause, Class<? extends Throwable> causeType) {
-        return getCauseBy(cause, causeType).isPresent();
+        return optionalCauseBy(cause, causeType).isPresent();
     }
 
     /**
