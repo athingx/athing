@@ -56,7 +56,7 @@ public class ThingOpImpl<T, R> extends MqttClientSupport implements ThingOp<T, R
     }
 
     @Override
-    public CompletableFuture<OpConsumer> consumer(String express, BiConsumer<String, R> consumer) {
+    public CompletableFuture<OpBinder> consumer(String express, BiConsumer<String, R> consumer) {
         return pahoMqttSubscribe(express, 1, (topic, message) ->
                 executor.execute(() -> {
                     try {

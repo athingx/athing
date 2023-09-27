@@ -39,7 +39,7 @@ public interface ThingOp<T, R> {
      * @param consumer 消费函数
      * @return 绑定结果
      */
-    CompletableFuture<OpConsumer> consumer(String express, BiConsumer<String, R> consumer);
+    CompletableFuture<OpBinder> consumer(String express, BiConsumer<String, R> consumer);
 
     /**
      * 绑定调用操作
