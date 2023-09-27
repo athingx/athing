@@ -6,6 +6,7 @@ import com.google.gson.reflect.TypeToken;
 import io.github.athingx.athing.common.gson.GsonFactory;
 
 import java.nio.charset.Charset;
+import java.util.function.BiPredicate;
 
 import static io.github.athingx.athing.common.util.JsonObjectUtils.*;
 
@@ -106,6 +107,17 @@ public interface Decoder<T, U> {
                     getAsObject(root, "params", element -> GsonFactory.getGson().fromJson(element, type))
             );
         };
+    }
+
+    /**
+     * 过滤器
+     *
+     * @param filter 过滤器
+     * @param <T>    源类型
+     * @return 过滤解码器
+     */
+    static <T> Decoder<T, T> filter(BiPredicate<String, T> filter) {
+        return (topic, t) -> filter.test(topic, t) ? t : null;
     }
 
 }
