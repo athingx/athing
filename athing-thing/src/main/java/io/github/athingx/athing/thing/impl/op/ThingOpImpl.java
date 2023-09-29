@@ -1,5 +1,6 @@
 package io.github.athingx.athing.thing.impl.op;
 
+import io.github.athingx.athing.common.util.CompletableFutureUtils;
 import io.github.athingx.athing.thing.api.ThingPath;
 import io.github.athingx.athing.thing.api.op.*;
 import io.github.athingx.athing.thing.impl.util.TokenSequencer;
@@ -7,7 +8,6 @@ import org.eclipse.paho.client.mqttv3.IMqttAsyncClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -50,8 +50,8 @@ public class ThingOpImpl<T, R> extends MqttClientSupport implements ThingOp<T, R
 
     @Override
     public CompletableFuture<Void> post(String topic, T data) {
-        return CompletableFuture
-                .supplyAsync(() -> codec.encoder().encode(data), executor)
+        return CompletableFutureUtils
+                .supply(() -> codec.encoder().encode(data))
                 .thenCompose(bytes -> pahoMqttPublish(topic, 1, bytes));
     }
 
@@ -60,11 +60,10 @@ public class ThingOpImpl<T, R> extends MqttClientSupport implements ThingOp<T, R
         return pahoMqttSubscribe(express, 1, (topic, message) ->
                 executor.execute(() -> {
                     try {
-                        Optional.ofNullable(codec.decoder().decode(topic, message.getPayload()))
-                                .ifPresentOrElse(
-                                        data -> consumer.accept(topic, data),
-                                        () -> logger.debug("{}/op message decode none, ignored! topic={};", path, topic)
-                                );
+                        final var data = codec.decoder().decode(topic, message.getPayload());
+                        consumer.accept(topic, data);
+                    } catch (Decoder.DecodeSkipException dsEx) {
+                        logger.debug("{}/op message decode none, ignored! topic={};", path, topic);
                     } catch (Throwable ex) {
                         logger.warn("{}/op message consume error! topic={};", path, topic, ex);
                     }

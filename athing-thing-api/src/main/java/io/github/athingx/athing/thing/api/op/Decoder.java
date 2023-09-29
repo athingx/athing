@@ -117,7 +117,20 @@ public interface Decoder<T, U> {
      * @return 过滤解码器
      */
     static <T> Decoder<T, T> filter(BiPredicate<String, T> filter) {
-        return (topic, t) -> filter.test(topic, t) ? t : null;
+        return (topic, t) -> {
+            if (!filter.test(topic, t)) {
+                throw new DecodeSkipException();
+            } else {
+                return t;
+            }
+        };
+    }
+
+    class DecodeSkipException extends RuntimeException {
+        @Override
+        public synchronized Throwable fillInStackTrace() {
+            return this;
+        }
     }
 
 }

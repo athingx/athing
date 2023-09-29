@@ -1,7 +1,5 @@
 package io.github.athingx.athing.thing.api.op;
 
-import com.google.gson.annotations.SerializedName;
-
 import static io.github.athingx.athing.thing.api.op.OpRequest.Ext.ACK;
 
 /**
@@ -14,13 +12,7 @@ import static io.github.athingx.athing.thing.api.op.OpRequest.Ext.ACK;
  * @param params  参数
  * @param <T>     参数类型
  */
-public record OpRequest<T>(
-        @SerializedName("id") String token,
-        @SerializedName("version") String version,
-        @SerializedName("method") String method,
-        @SerializedName("sys") Ext ext,
-        @SerializedName("params") T params
-) implements OpData {
+public record OpRequest<T>(String token, String version, String method, Ext ext, T params) implements OpData {
 
     public static final String DEFAULT_VERSION = "1.0";
 

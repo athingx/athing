@@ -1,6 +1,5 @@
 package io.github.athingx.athing.thing.api.op;
 
-import com.google.gson.annotations.SerializedName;
 import io.github.athingx.athing.common.ThingCodes;
 
 import java.util.function.Function;
@@ -14,12 +13,7 @@ import java.util.function.Function;
  * @param data  应答数据
  * @param <T>   应答数据类型
  */
-public record OpReply<T>(
-        @SerializedName("id") String token,
-        @SerializedName("code") int code,
-        @SerializedName("message") String desc,
-        @SerializedName("data") T data
-) implements OpData, ThingCodes {
+public record OpReply<T>(String token, int code, String desc, T data) implements OpData, ThingCodes {
 
     /**
      * 是否成功

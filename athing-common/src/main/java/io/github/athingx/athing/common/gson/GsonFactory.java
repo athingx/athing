@@ -13,6 +13,7 @@ import java.util.Arrays;
 import java.util.Date;
 
 import static com.google.gson.FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES;
+import static java.util.Optional.ofNullable;
 
 /**
  * Gson工厂
@@ -107,10 +108,6 @@ public class GsonFactory {
         }
     };
 
-    private static final JsonSerializer<Object> objectNullSerializer = (src, typeOfSrc, context) -> src == null
-            ? new JsonObject()
-            : context.serialize(src);
-
     /**
      * {@link Record}无法被gson反序列化，核心原因在{@link Field#set(Object, Object)}注释中有解释。
      */
@@ -120,6 +117,189 @@ public class GsonFactory {
             .withComponentNamingStrategy(RecordComponentNamingStrategy.LOWER_CASE_WITH_UNDERSCORES)
             .create();
 
+    private static final TypeAdapterFactory opReplyTypeAdapterFactory = new TypeAdapterFactory() {
+
+        @Override
+        public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> tToken) {
+            if ("io.github.athingx.athing.thing.api.op.OpReply".equals(tToken.getRawType().getTypeName())) {
+                final var clazz = (Class<?>) (tToken.getRawType());
+                try {
+                    final var mToken = clazz.getMethod("token");
+                    final var mCode = clazz.getMethod("code");
+                    final var mDesc = clazz.getMethod("desc");
+                    final var mData = clazz.getMethod("data");
+                    final var constructor = clazz.getConstructor(String.class, int.class, String.class, Object.class);
+
+                    return new TypeAdapter<>() {
+                        @Override
+                        public void write(JsonWriter writer, T reply) throws IOException {
+                            if (null == reply) {
+                                return;
+                            }
+                            try {
+                                writer.beginObject();
+                                writer.name("id");
+                                writer.value((String) mToken.invoke(reply));
+                                writer.name("code");
+                                writer.value((int) mCode.invoke(reply));
+                                writer.name("message");
+                                writer.value((String) mDesc.invoke(reply));
+                                writer.name("data");
+                                writer.jsonValue(ofNullable(mData.invoke(reply))
+                                        .map(gson::toJson)
+                                        .orElse("{}"));
+                                writer.endObject();
+                            } catch (Throwable ex) {
+                                throw new IOException(ex);
+                            }
+                        }
+
+                        @SuppressWarnings("unchecked")
+                        @Override
+                        public T read(JsonReader reader) throws IOException {
+                            try {
+                                reader.beginObject();
+                                String token = null;
+                                int code = 0;
+                                String desc = null;
+                                Object data = null;
+                                while (reader.hasNext()) {
+                                    switch (reader.nextName()) {
+                                        case "id":
+                                            token = reader.nextString();
+                                            break;
+                                        case "code":
+                                            code = reader.nextInt();
+                                            break;
+                                        case "message":
+                                            desc = reader.nextString();
+                                            break;
+                                        case "data":
+                                            data = gson.fromJson(reader, Object.class);
+                                            break;
+                                        default:
+                                            reader.skipValue();
+                                            break;
+                                    }
+                                }
+                                reader.endObject();
+                                return (T) constructor.newInstance(token, code, desc, data);
+                            } catch (Throwable ex) {
+                                throw new IOException(ex);
+                            }
+                        }
+                    };
+
+                } catch (Throwable ex) {
+                    throw new RuntimeException(ex);
+                }
+            }
+            return null;
+        }
+    };
+
+    private static final TypeAdapterFactory opRequestTypeAdapterFactory = new TypeAdapterFactory() {
+
+        @Override
+        public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> tToken) {
+            if ("io.github.athingx.athing.thing.api.op.OpRequest".equals(tToken.getRawType().getTypeName())) {
+                try {
+                    final var cRequest = (Class<?>) (tToken.getRawType());
+                    final var mToken = cRequest.getMethod("token");
+                    final var mVersion = cRequest.getMethod("version");
+                    final var mMethod = cRequest.getMethod("method");
+                    final var mExt = cRequest.getMethod("ext");
+                    final var mParams = cRequest.getMethod("params");
+                    final var constructorOfRequest = cRequest.getConstructor(
+                            String.class,
+                            String.class,
+                            String.class,
+                            Class.forName(cRequest.getModule(), "io.github.athingx.athing.thing.api.op.OpRequest$Ext"),
+                            Object.class
+                    );
+
+                    return new TypeAdapter<>() {
+                        @Override
+                        public void write(JsonWriter writer, T request) throws IOException {
+                            if (null == request) {
+                                return;
+                            }
+                            try {
+                                writer.beginObject();
+                                writer.name("id");
+                                writer.value((String) mToken.invoke(request));
+                                writer.name("version");
+                                writer.value((String) mVersion.invoke(request));
+                                writer.name("method");
+                                writer.value((String) mMethod.invoke(request));
+                                writer.name("sys");
+                                writer.jsonValue(ofNullable(mExt.invoke(request))
+                                        .map(gson::toJson)
+                                        .orElse("{}"));
+                                writer.name("params");
+                                writer.jsonValue(ofNullable(mParams.invoke(request))
+                                        .map(gson::toJson)
+                                        .orElse("{}"));
+                                writer.endObject();
+                            } catch (Throwable ex) {
+                                throw new IOException(ex);
+                            }
+                        }
+
+                        @SuppressWarnings("unchecked")
+                        @Override
+                        public T read(JsonReader reader) throws IOException {
+                            try {
+                                reader.beginObject();
+                                String token = null;
+                                String version = null;
+                                String method = null;
+                                Object ext = null;
+                                Object params = null;
+                                while (reader.hasNext()) {
+                                    switch (reader.nextName()) {
+                                        case "id":
+                                            token = reader.nextString();
+                                            break;
+                                        case "version":
+                                            version = reader.nextString();
+                                            break;
+                                        case "method":
+                                            method = reader.nextString();
+                                            break;
+                                        case "sys":
+                                            ext = gson.fromJson(reader, Object.class);
+                                            break;
+                                        case "params":
+                                            params = gson.fromJson(reader, Object.class);
+                                            break;
+                                        default:
+                                            reader.skipValue();
+                                            break;
+                                    }
+                                }
+                                reader.endObject();
+                                return (T) constructorOfRequest.newInstance(
+                                        token,
+                                        version,
+                                        method,
+                                        ext,
+                                        params
+                                );
+                            } catch (Throwable ex) {
+                                throw new IOException(ex);
+                            }
+                        }
+                    };
+
+                } catch (Throwable ex) {
+                    throw new RuntimeException(ex);
+                }
+            }
+            return null;
+        }
+    };
+
     private static final Gson gson = new GsonBuilder()
             .setFieldNamingPolicy(LOWER_CASE_WITH_UNDERSCORES)
             .registerTypeAdapter(Date.class, dateTypeAdapterForAliyun)
@@ -128,7 +308,8 @@ public class GsonFactory {
             .registerTypeAdapter(Void.class, voidTypeAdapter)
             .registerTypeAdapterFactory(enumTypeAdapterFactory)
             .registerTypeAdapterFactory(recordTypeAdapterFactory)
-            .registerTypeAdapter(Object.class, objectNullSerializer)
+            .registerTypeAdapterFactory(opReplyTypeAdapterFactory)
+            .registerTypeAdapterFactory(opRequestTypeAdapterFactory)
             .serializeSpecialFloatingPointValues()
 
             // Long/long use text
