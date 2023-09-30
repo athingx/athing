@@ -28,6 +28,17 @@ public record OpRequest<T>(String token, String version, String method, Ext ext,
     }
 
     /**
+     * 构造操作请求
+     *
+     * @param token  令牌
+     * @param params 参数
+     */
+    public OpRequest(String token, T params) {
+        this(token, DEFAULT_VERSION, null, new Ext(ACK), params);
+    }
+
+
+    /**
      * 操作请求扩展
      *
      * @param ack 是否需要应答
