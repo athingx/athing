@@ -51,8 +51,9 @@ public class ThingPluginsImpl implements ThingPlugins {
             // 检查owner是否已经被占用，如果被占用则判定为重复插件
             if (!stub.owner().compareAndSet(null, installer)) {
                 return CompletableFuture.failedFuture(
-                        new IllegalStateException("duplicate plugin identity: %s!".formatted(
-                                identity
+                        new IllegalStateException("duplicate plugin identity: %s! existed=%s".formatted(
+                                identity,
+                                stub.owner().get().meta().type().getName()
                         ))
                 );
             }
