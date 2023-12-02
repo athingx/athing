@@ -4,8 +4,6 @@ import io.github.athingx.athing.thing.api.Thing;
 import io.github.athingx.athing.thing.api.plugin.ThingPlugin;
 import io.github.athingx.athing.thing.api.plugin.ThingPluginInstaller;
 import io.github.athingx.athing.thing.api.plugin.ThingPlugins;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -14,7 +12,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class ThingPluginsImpl implements ThingPlugins {
 
-    private final Logger logger = LoggerFactory.getLogger(getClass());
     private final Thing thing;
     private final CompletableFuture<Void> destroyF;
     private final Map<String, Stub> stubMap = new ConcurrentHashMap<>();
@@ -62,15 +59,7 @@ public class ThingPluginsImpl implements ThingPlugins {
             return installer.install(thing)
 
                     // 注册插件销毁钩子
-                    .whenComplete((plugin, ex) -> destroyF.whenComplete((v, cause) ->
-                            plugin.uninstall().whenComplete((unused, uex) ->
-                                    logger.debug("{}/plugins/plugin uninstall completed. identity={};type={};",
-                                            thing.path(),
-                                            identity,
-                                            installer.meta().type().getName(),
-                                            uex
-                                    ))
-                    ))
+                    .whenComplete((plugin, ex) -> destroyF.whenComplete((v, cause) -> plugin.uninstall()))
 
                     // 安装结果通知结果
                     .whenComplete((plugin, ex) -> {
@@ -84,16 +73,7 @@ public class ThingPluginsImpl implements ThingPlugins {
                         // 安装成功
                         stub.future().complete(plugin);
 
-                    })
-
-                    // 安装结果输出日志
-                    .whenComplete((plugin, ex) -> logger.debug("{}/plugins/plugin install completed. identity={};type={};",
-                            thing.path(),
-                            identity,
-                            installer.meta().type().getName(),
-                            ex
-                    ))
-                    ;
+                    });
 
         }
 

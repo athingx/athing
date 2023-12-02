@@ -11,7 +11,6 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class DefaultExecutorServiceFactory implements ExecutorServiceFactory {
 
-    private final AtomicInteger counter = new AtomicInteger(1000);
     private final int nThreads;
 
     /**
@@ -32,6 +31,7 @@ public class DefaultExecutorServiceFactory implements ExecutorServiceFactory {
 
     @Override
     public ExecutorService make(ThingPath path) {
+        final var counter = new AtomicInteger(1000);
         return Executors.newFixedThreadPool(nThreads, r ->
                 new Thread(r) {{
                     setDaemon(true);
