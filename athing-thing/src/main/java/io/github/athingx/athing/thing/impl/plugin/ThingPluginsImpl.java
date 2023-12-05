@@ -1,4 +1,4 @@
-package io.github.athingx.athing.thing.plugin;
+package io.github.athingx.athing.thing.impl.plugin;
 
 import io.github.athingx.athing.thing.api.Thing;
 import io.github.athingx.athing.thing.api.plugin.ThingPlugin;
