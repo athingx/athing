@@ -23,7 +23,7 @@ public class DefaultMqttClientFactory implements MqttClientFactory {
 
     private MqttConnectStrategy strategy = always(30 * 1000L, 3 * 60 * 1000L);
 
-    private MqttClientPersistence persistable = new MemoryPersistence();
+    private MqttClientPersistence persistence = new MemoryPersistence();
 
     private MqttConnectOptions connOpt = new MqttConnectOptions() {{
         setCleanSession(false);         // 关闭清理会话
@@ -46,8 +46,8 @@ public class DefaultMqttClientFactory implements MqttClientFactory {
         return this;
     }
 
-    public DefaultMqttClientFactory persistable(MqttClientPersistence persistable) {
-        this.persistable = persistable;
+    public DefaultMqttClientFactory persistence(MqttClientPersistence persistence) {
+        this.persistence = persistence;
         return this;
     }
 
@@ -88,7 +88,7 @@ public class DefaultMqttClientFactory implements MqttClientFactory {
         Objects.requireNonNull(secret, "secret is required");
 
         final var sign = new MqttSign(path);
-        final var client = new MqttAsyncClient(remote, sign.getClientId(), persistable);
+        final var client = new MqttAsyncClient(remote, sign.getClientId(), persistence);
 
         // 设置离线缓存选项
         if (Objects.nonNull(bufferOpt)) {
