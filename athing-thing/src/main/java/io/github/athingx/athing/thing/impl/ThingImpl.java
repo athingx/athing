@@ -64,6 +64,11 @@ public class ThingImpl implements Thing {
     }
 
     @Override
+    public boolean isConnected() {
+        return client.isConnected();
+    }
+
+    @Override
     public void destroy() {
 
         if (!destroyF.complete(null)) {

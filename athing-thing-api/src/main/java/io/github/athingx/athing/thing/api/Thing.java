@@ -39,11 +39,18 @@ public interface Thing {
     ThingPlugins plugins();
 
     /**
-     * 判断设备已被销毁
+     * 判断设备是否已被销毁
      *
      * @return TRUE | FALSE
      */
     boolean isDestroyed();
+
+    /**
+     * 判断设备是否已连接
+     *
+     * @return TRUE | FALSE
+     */
+    boolean isConnected();
 
     /**
      * 销毁设备
