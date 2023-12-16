@@ -7,6 +7,8 @@ import io.github.athingx.athing.thing.builder.executor.DefaultExecutorServiceFac
 import io.github.athingx.athing.thing.builder.executor.ExecutorServiceFactory;
 import io.github.athingx.athing.thing.impl.ThingImpl;
 
+import java.util.concurrent.CompletableFuture;
+
 import static java.util.Objects.requireNonNull;
 
 /**
@@ -73,6 +75,21 @@ public class ThingBuilder {
                 requireNonNull(mcFactory.make(path), "client is required!"),
                 requireNonNull(esFactory.make(path), "executor is required!")
         );
+    }
+
+    /**
+     * 异步构造设备
+     *
+     * @return 设备构造操作
+     */
+    public CompletableFuture<Thing> asyncBuild() {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                return build();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 
 }
